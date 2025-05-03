@@ -3,7 +3,7 @@
 
 if [ ! -z "$OSC_HOSTNAME" ]; then
   SERVER_API_URL="https://$OSC_HOSTNAME"
-  RENDERER_API_URL="ws://$OSC_HOSTNAME"
+  RENDERER_API_URL="wss://$OSC_HOSTNAME"
 else
   SERVER_API_URL="http://localhost:8080"
   RENDERER_API_URL="ws://localhost:8080"
