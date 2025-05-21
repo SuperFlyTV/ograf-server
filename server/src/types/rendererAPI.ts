@@ -14,7 +14,7 @@ import {
   RendererStatus,
   RenderTargetStatus,
 } from "./renderer";
-import { GraphicInvokeActionTarget } from "./serverAPI";
+import { GraphicInvokeActionTarget } from "./_serverAPI";
 
 /*
  * ================================================================================================
@@ -57,7 +57,12 @@ export interface MethodsOnRenderer {
   /** Instantiate a Graphic on a RenderTarget. Returns when the load has finished. */
   loadGraphic: (
     params: { renderTargetId: string } & RendererLoadGraphicPayload
-  ) => PromiseLike<{ graphicInstanceId: string } & VendorExtend>;
+  ) => PromiseLike<
+    {
+      graphicInstanceId: string;
+      result: Awaited<ReturnType<GraphicsAPI.Graphic["load"]>>;
+    } & VendorExtend
+  >;
   /** Clear/unloads a GraphicInstance on a RenderTarget */
   clearGraphic: (
     params: RendererClearGraphicPayload
@@ -71,7 +76,10 @@ export interface MethodsOnRenderer {
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["updateAction"]>[0];
     } & VendorExtend
-  ) => PromiseLike<ReturnType<GraphicsAPI.Graphic["updateAction"]>>;
+  ) => PromiseLike<{
+    graphicsInstanceId: string;
+    result: Awaited<ReturnType<GraphicsAPI.Graphic["updateAction"]>>;
+  }>;
 
   /** Invokes an playAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicPlayAction: (
@@ -80,7 +88,10 @@ export interface MethodsOnRenderer {
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["playAction"]>[0];
     } & VendorExtend
-  ) => PromiseLike<ReturnType<GraphicsAPI.Graphic["playAction"]>>;
+  ) => PromiseLike<{
+    graphicsInstanceId: string;
+    result: Awaited<ReturnType<GraphicsAPI.Graphic["playAction"]>>;
+  }>;
 
   /** Invokes an stopAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicStopAction: (
@@ -89,7 +100,10 @@ export interface MethodsOnRenderer {
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["stopAction"]>[0];
     } & VendorExtend
-  ) => PromiseLike<ReturnType<GraphicsAPI.Graphic["stopAction"]>>;
+  ) => PromiseLike<{
+    graphicsInstanceId: string;
+    result: Awaited<ReturnType<GraphicsAPI.Graphic["stopAction"]>>;
+  }>;
 
   /** Invokes an customAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicCustomAction: (
@@ -98,7 +112,10 @@ export interface MethodsOnRenderer {
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["customAction"]>[0];
     } & VendorExtend
-  ) => PromiseLike<ReturnType<GraphicsAPI.Graphic["customAction"]>>;
+  ) => PromiseLike<{
+    graphicsInstanceId: string;
+    result: Awaited<ReturnType<GraphicsAPI.Graphic["customAction"]>>;
+  }>;
 }
 
 /**
@@ -109,11 +126,11 @@ export interface MethodsOnServer {
   /**
    * MUST be emitted when the Renderer has spawned and is ready to receive commands.
    * Payload:
-   * Partial<RendererInfo>
-   * If the id is not set, the Server will pick an id
+   * RendererInfo
+   * If the id is empty, the Server will pick an id
    */
   register: (
-    params: { info: Partial<RendererInfo> } & VendorExtend
+    params: { info: RendererInfo } & VendorExtend
   ) => PromiseLike<{ rendererId: string } & VendorExtend>;
   /** CAN be emitted when a Renderer is about to shut down. */
   unregister: (params: EmptyPayload) => PromiseLike<EmptyPayload>;

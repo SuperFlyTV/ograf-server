@@ -1,5 +1,6 @@
 import { EmptyPayload, VendorSpecific } from "ograf";
-import { GraphicInfo } from "./serverAPI";
+import { GraphicInfo } from "./_serverAPI";
+import { ServerApi } from "./ograf-ts-lib/main";
 
 export type Action = {
   label: string;
@@ -8,13 +9,8 @@ export type Action = {
   schema: Record<string, any>; // TBD, JSON Schema
 };
 
-export interface RendererInfo {
-  id: string;
-  name: string;
-  description?: string;
+export type RendererInfo = ServerApi.components["schemas"]["RendererInfo"];
 
-  [vendorSpecific: VendorSpecific]: unknown;
-}
 export interface RendererManifest {
   // Forwarded from the Renderer: -------------------------------------------------------
   actions: { [method: string]: Action };
@@ -51,7 +47,8 @@ export interface RenderTargetStatus {
 }
 
 export interface RendererLoadGraphicPayload {
-  graphic: { id: string; version: number };
+  graphic: { id: string; version: string | undefined };
+  params: { data: unknown };
   [vendorSpecific: VendorSpecific]: unknown;
 }
 export interface RendererClearGraphicPayload {
@@ -60,14 +57,8 @@ export interface RendererClearGraphicPayload {
    *
    * If multiple filters are defined, only instances that match all filters will be cleared.
    */
-  filters?: {
-    /** (Optional) If set, will only clear instances from a certain RenderTarget */
-    renderTargetId?: string;
-    /** (Optional) If set, will only clear instance of a certain Graphic */
-    graphic?: { id: string; version: number };
-    /** (Optional) If set, will only clear a specific graphicInstanceId */
-    graphicInstanceId?: string;
-  };
+  filters?: ServerApi.components["schemas"]["GraphicFilter"];
+
   [vendorSpecific: VendorSpecific]: unknown;
 }
 
@@ -76,5 +67,5 @@ export interface GraphicInstanceOnTarget {
   graphicInstanceId: string;
   renderTargetId: string;
   graphicId: string;
-  graphicVersion: number;
+  graphicVersion: string;
 }

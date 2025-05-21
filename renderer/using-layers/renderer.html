@@ -67,6 +67,7 @@
         const urlParams = new URLSearchParams(window.location.search);
 
         constants.name = urlParams.get("name") || "Unnamed Renderer";
+        constants.id = urlParams.get("id") || undefined;
 
         document.title = `Renderer | ${constants.name}`;
       }
@@ -78,19 +79,89 @@
           this.waitingForReply = new Map();
           this.ws = null;
           this.status = {}; // TBD
-          this.actions = {}; // RendererActions
+          this.actions = {
+            "shake-it": (params) => {
+              console.log("params", params);
+
+              const endTime = Date.now() + (params.duration || 0);
+
+              const shakeIt = () => {
+                const el = document.querySelector("#main-container");
+                if (Date.now() < endTime) {
+                  el.style.transform = `rotate3d(${Math.random()}, ${Math.random()}, ${Math.random()}, ${
+                    Math.random() * 5
+                  }deg)`;
+
+                  setTimeout(() => {
+                    shakeIt();
+                  }, 1000 / 30);
+                } else {
+                  el.style.transform = "";
+                }
+              };
+
+              shakeIt();
+            },
+          }; // RendererActions
           this.rendererId = "N/A";
+
+          this.connected = false;
+
+          /** Unix timestamp, last reconnect attempt*/
+          this.lastReconnect = 0;
+
+          // Reconnection logic:
+          setInterval(() => {
+            if (!this.rendererApiUrl) return;
+            if (this.connected) return;
+
+            const timeSinceLastReconnect = Date.now() - this.lastReconnect;
+            if (timeSinceLastReconnect < 5000) return;
+
+            this.lastReconnect = Date.now();
+            this.connect();
+          }, 1000);
         }
         connect(rendererApiUrl) {
-          console.log("connecting to Renderer API at", rendererApiUrl);
-          this.ws = new WebSocket(rendererApiUrl);
+          if (rendererApiUrl) this.rendererApiUrl = rendererApiUrl;
+
+          console.log("connecting to Renderer API at", this.rendererApiUrl);
+          this.ws = new WebSocket(this.rendererApiUrl);
 
           this.ws.onopen = (ev) => {
             console.log("Connected to Renderer API", ev);
 
+            this.connected = true;
+
             // The first thing the render MUST do after connecting is send a "register" message
             this._sendMessage("register", {
-              info: { name: constants.name },
+              info: {
+                id: constants.id || "",
+                name: constants.name,
+                // description?: string
+                targets: this.layersManager.getAllLayers().map((layer) => ({
+                  id: layer.id,
+                  name: `Layer ${layer.id}`,
+                  // description: `Layer ${layer.id}`
+                })),
+                customActions: [
+                  {
+                    id: "shake-it",
+                    name: "Shake it up!",
+                    schema: {
+                      type: "object",
+                      properties: {
+                        duration: {
+                          type: "number",
+                          title: "Duration (ms)",
+                          default: 2000,
+                        },
+                      },
+                    },
+                  },
+                ],
+                // renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
+              },
             })
               .then((response) => {
                 console.log("Registered, ready to go!");
@@ -148,6 +219,8 @@
 
           this.ws.onclose = (ev) => {
             console.log("Connection to Renderer API closed", ev);
+
+            this.connected = false;
           };
 
           this.ws.onerror = (error) => {
@@ -240,8 +313,8 @@
         /** Invokes an action on the Renderer. Actions are defined by the Renderer Manifest */
         async invokeRendererAction(params) {
           // JSON RPC Method
-          const fcn = this.actions[params.action.method];
-          if (!fcn) throw new Error(`Unknown action: ${params.action.method}`);
+          const fcn = this.actions[params.action.id];
+          if (!fcn) throw new Error(`Unknown action: ${params.action.id}`);
           return { value: await fcn(params.action.payload) };
         }
 
@@ -251,9 +324,12 @@
           const layer = this.layersManager.getLayer(params.renderTargetId);
           if (!layer)
             throw new Error(`Layer not found: ${params.renderTargetId}`);
-          const graphicInstanceId = await layer.loadGraphic(
+
+          console.log("params", params);
+          return layer.loadGraphic(
             params.graphic.id,
-            params.graphic.version
+            params.graphic.version,
+            params.params
           );
         }
         /** Clear/unloads a GraphicInstance on a RenderTarget */
@@ -393,7 +469,7 @@
           return []; // TODO
         }
 
-        async loadGraphic(id, version) {
+        async loadGraphic(id, version, params) {
           // Clear any existing GraphicInstance:
           const existing = this.getGraphicInstance();
           if (existing) {
@@ -409,12 +485,18 @@
           this.graphicInstance = new GraphicInstance(id, version, element);
 
           // Load the element:
-          await element.load({
-            // baseUrl: `${this.graphicCache.serverApiUrl}/serverApi/internal/graphics/graphic/${id}/${version}`, // /:localPath
+          let result = await element.load({
             renderType: "realtime",
+            // renderCharacteristics: {} // TODO
+            data: params.data,
           });
 
-          return graphicInstanceId;
+          if (!result) result = { statusCode: 200 };
+
+          return {
+            graphicInstanceId: this.graphicInstance.id,
+            result,
+          };
         }
         async clearGraphic() {
           const existing = this.getGraphicInstance();
@@ -455,31 +537,52 @@
         }
         async invokeUpdateAction(params) {
           const graphicsInstance = this._findGraphicsInstance(params);
+          let result = await graphicsInstance.element.updateAction(
+            params.params
+          );
+          if (!result) result = { statusCode: 200 };
           return {
-            value: await graphicsInstance.element.updateAction(params.params),
+            graphicsInstanceId: graphicsInstance.id,
+            result,
           };
         }
         async invokePlayAction(params) {
           const graphicsInstance = this._findGraphicsInstance(params);
 
+          let result = await graphicsInstance.element.playAction(params.params);
+          if (!result) result = { statusCode: 200 }; // Not valid in spec, by cheap to handle
+          if (!result.statusCode) result.statusCode = 200;
+
           return {
-            value: await graphicsInstance.element.playAction(params.params),
+            graphicsInstanceId: graphicsInstance.id,
+            result,
           };
         }
         async invokeStopAction(params) {
           const graphicsInstance = this._findGraphicsInstance(params);
 
+          let result = await graphicsInstance.element.stopAction(params.params);
+          if (!result) result = { statusCode: 200 };
           return {
-            value: await graphicsInstance.element.stopAction(params.params),
+            graphicsInstanceId: graphicsInstance.id,
+            result,
           };
         }
         async invokeCustomAction(params) {
           const graphicsInstance = this._findGraphicsInstance(params);
 
+          let result = await graphicsInstance.element.customAction(
+            params.params
+          );
+          if (!result) result = { statusCode: 200 };
           return {
-            value: await graphicsInstance.element.customAction(params.params),
+            graphicsInstanceId: graphicsInstance.id,
+            result,
           };
         }
+        // Not supported in a realtime renderer, so not implemented here:
+        // gotoTime
+        // setActionsSchedule
       }
       let graphicInstanceId = 0;
       class GraphicInstance {
@@ -514,8 +617,6 @@
 
           console.log(`Loading Graphic "${graphicIdVersion}"`);
 
-          // const manifestPath = `${this.serverApiUrl}/serverApi/internal/graphics/graphic/${id}/${version}/manifest`;
-
           console.log(`Loading manifest...`);
           const manifest = await this.fetchManifest(id, version);
 
@@ -529,17 +630,16 @@
           return graphicIdVersion;
         }
         async fetchManifest(graphicId, graphicVersion) {
-          const manifestUrl = `${this.serverApiUrl}/serverApi/internal/graphics/graphic/${graphicId}/${graphicVersion}/manifest`;
+          const manifestUrl = `${this.serverApiUrl}/ograf/v1/graphics/${graphicId}/${graphicVersion}/manifest`;
 
           const response = await fetch(manifestUrl);
           if (response.status === 200) {
             const responseData = await response.json();
 
-            const manifest = responseData.graphicManifest;
+            console.log("responseData", responseData);
+            const manifest = responseData.manifest;
             if (!manifest)
-              throw new Error(
-                'No "graphicManifest" property found in response'
-              );
+              throw new Error('No "manifest" property found in response');
 
             return manifest;
           } else {
@@ -553,7 +653,7 @@
         async fetchModule(id, version, manifest) {
           const modulePath = `${
             this.serverApiUrl
-          }/serverApi/internal/graphics/graphic/${id}/${version}/${
+          }/ograf/v1/graphics/${id}/${version}/${
             manifest.main ?? "graphic.mjs"
           }`;
 
@@ -598,8 +698,17 @@
     </script>
 
     <style>
-      #background-logo {
+      #main-container {
         position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        z-index: -2;
+      }
+
+      #background-logo {
+        position: absolute;
         top: 0;
         left: 0;
         right: 0;
@@ -610,7 +719,7 @@
         z-index: -1;
       }
       #background-checkerboard {
-        position: fixed;
+        position: absolute;
         top: 0;
         left: 0;
         right: 0;
@@ -619,10 +728,12 @@
       }
     </style>
 
-    <div id="background-logo"></div>
-    <div id="background-checkerboard"></div>
-    <div>
-      <div id="layers"></div>
+    <div id="main-container">
+      <div id="background-logo"></div>
+      <div id="background-checkerboard"></div>
+      <div>
+        <div id="layers"></div>
+      </div>
     </div>
   </body>
 </html>

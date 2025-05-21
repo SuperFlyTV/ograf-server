@@ -1,3 +1,4 @@
+import { ServerApi } from "./ograf-ts-lib/main";
 import {
   RendererInfo,
   RendererManifest,
@@ -21,8 +22,9 @@ import {
  * The GraphicInstance can be identified either by the id-version of the Graphic, or by the GraphicInstance id.
  */
 export type GraphicInvokeActionTarget =
-  // Address the graphicInstance either by id-version or by graphicInstance id:
-  { graphic: { id: string; version: string } } | { graphicInstanceId: string };
+  ServerApi.components["schemas"]["GraphicTarget"];
+// Address the graphicInstance either by id-version or by graphicInstance id:
+// { graphic: { id: string; version: string } } | { graphicInstanceId: string };
 /*
  * ================================================================================================
  *

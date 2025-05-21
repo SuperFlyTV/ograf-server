@@ -83,12 +83,9 @@ async function retrieveServerData(serverApiUrl) {
   const data = {
     graphics: [],
     renderers: [],
-    rendererManifests: {},
   };
   {
-    const response = await fetch(
-      `${serverApiUrl}/serverApi/internal/graphics/list`
-    );
+    const response = await fetch(`${serverApiUrl}/ograf/v1/graphics`);
     if (response.status >= 300)
       throw new Error(
         `HTTP response error: [${response.status}] ${JSON.stringify(
@@ -101,9 +98,7 @@ async function retrieveServerData(serverApiUrl) {
     data.graphics = responseData.graphics;
   }
   {
-    const response = await fetch(
-      `${serverApiUrl}/serverApi/internal/renderers/list`
-    );
+    const response = await fetch(`${serverApiUrl}/ograf/v1/renderers`);
     if (response.status >= 300)
       throw new Error(
         `HTTP response error: [${response.status}] ${JSON.stringify(
@@ -116,37 +111,67 @@ async function retrieveServerData(serverApiUrl) {
     data.renderers = responseData.renderers;
   }
 
-  for (const renderer of data.renderers) {
-    const response = await fetch(
-      `${serverApiUrl}/serverApi/internal/renderers/renderer/${renderer.id}/manifest`
-    );
-    if (response.status >= 300)
-      throw new Error(
-        `HTTP response error: [${response.status}] ${JSON.stringify(
-          response.body
-        )}`
-      );
-
-    const responseData = await response.json();
-    if (!responseData.rendererManifest)
-      throw new Error(`Invalid response data: ${JSON.stringify(responseData)}`);
-    data.rendererManifests[renderer.id] = responseData.rendererManifest;
-  }
-
   return data;
 }
 
 function Renderer({ serverApiUrl, serverData, renderer }) {
-  const rendererManifest = serverData.rendererManifests[renderer.id];
+  // console.log("renderer", renderer);
+
+  const onCustomAction = (actionId, payload) => {
+    fetch(
+      `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/customActions/${actionId}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          payload: payload,
+        }),
+      }
+    )
+      .then((response) => {
+        if (response.status >= 300)
+          throw new Error(
+            `HTTP response error: [${response.status}] ${JSON.stringify(
+              response.body
+            )}`
+          );
+      })
+      .catch(console.error);
+  };
+
   return (
     <div className="card">
       <div className="card-body">
         <h3 className="card-title">{renderer.name}</h3>
-        <i className="card-subtitle">{rendererManifest.description}</i>
+        <i className="card-subtitle">{renderer.description}</i>
+        <div>
+          {renderer.customActions && renderer.customActions.length > 0 && (
+            <div>
+              <h4>Renderer Custom actions</h4>
+
+              {(renderer.customActions || []).map((action) => {
+                return (
+                  <div
+                    key={action.id}
+                    className="card"
+                    style={{ width: "30em", display: "inline-block" }}
+                  >
+                    <div className="card-body">
+                      <RendererCustomAction
+                        action={action}
+                        onAction={onCustomAction}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <div>
           <h4>Render Targets</h4>
           <div>
-            {rendererManifest.renderTargets.map((rt) => (
+            {renderer.targets.map((rt) => (
               <RenderTarget
                 key={rt.id}
                 serverApiUrl={serverApiUrl}
@@ -169,6 +194,35 @@ function Renderer({ serverApiUrl, serverData, renderer }) {
   );
 }
 
+function RendererCustomAction({ action, onAction }) {
+  const initialData = action.schema
+    ? getDefaultDataFromSchema(action.schema)
+    : {};
+  const schema = action.schema;
+
+  const [data, setData] = React.useState(initialData);
+
+  const onDataSave = (d) => {
+    setData(JSON.parse(JSON.stringify(d)));
+  };
+
+  return (
+    <div>
+      <div>
+        {schema && <GDDGUI schema={schema} data={data} setData={onDataSave} />}
+      </div>
+      <Button
+        onClick={() => {
+          // Invoke action:
+          onAction(action.id, data);
+        }}
+      >
+        {action.name || action.id}
+      </Button>
+    </div>
+  );
+}
+
 function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
   return (
     <div className="card" style={{ width: "10em", display: "inline-block" }}>
@@ -179,7 +233,7 @@ function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
           <Button
             onClick={() => {
               fetch(
-                `${serverApiUrl}/serverApi/internal/renderers/renderer/${renderer.id}/clear`,
+                `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/graphic/clear`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -209,8 +263,6 @@ function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
 
 function GraphicPlaylist({ serverApiUrl, serverData, renderer }) {
   const [graphicQueue, setGraphicQueue] = React.useState([]);
-  console.log("graphicQueue", graphicQueue);
-  console.log("serverData.graphics");
 
   return (
     <div>
@@ -249,17 +301,33 @@ function GraphicPlaylist({ serverApiUrl, serverData, renderer }) {
   );
 }
 function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
-  const rendererManifest = serverData.rendererManifests[renderer.id];
-
-  const [renderTarget, setRenderTarget] = React.useState(
-    rendererManifest.renderTargets[0]
-  );
+  const [renderTarget, setRenderTarget] = React.useState(renderer.targets[0]);
 
   const manifest = getGraphicManifest(serverApiUrl, graphic);
 
+  const [data, setData] = React.useState({});
+
+  React.useEffect(() => {
+    const initialData = manifest?.schema
+      ? getDefaultDataFromSchema(manifest.schema)
+      : undefined;
+
+    if (
+      initialData !== undefined &&
+      Object.keys(data).length === 0 &&
+      Object.keys(initialData).length > 0
+    ) {
+      setData(initialData);
+    }
+  }, [manifest?.schema]);
+
+  const onDataSave = (d) => {
+    setData(JSON.parse(JSON.stringify(d)));
+  };
+
   const onAction = (actionName, params) => {
     fetch(
-      `${serverApiUrl}/serverApi/internal/renderers/renderer/${renderer.id}/target/${renderTarget.id}/${actionName}`,
+      `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/targets/${renderTarget.id}/${actionName}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -294,7 +362,7 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
                 {renderTarget.name || renderTarget.id}
               </Dropdown.Toggle>
               <Dropdown.Menu>
-                {rendererManifest.renderTargets.map((rt) => {
+                {renderer.targets.map((rt) => {
                   return (
                     <Dropdown.Item
                       key={rt.id}
@@ -313,12 +381,15 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
             <Button
               onClick={() => {
                 fetch(
-                  `${serverApiUrl}/serverApi/internal/renderers/renderer/${renderer.id}/target/${renderTarget.id}/load`,
+                  `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/targets/${renderTarget.id}/load`,
                   {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       graphic: { id: graphic.id, version: graphic.version },
+                      params: {
+                        data: data,
+                      },
                     }),
                   }
                 )
@@ -340,7 +411,9 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
             {manifest && (
               <GraphicsDefaultActions
                 schema={manifest.schema}
+                data={data}
                 onAction={onAction}
+                onDataSave={onDataSave}
               />
             )}
           </div>
@@ -382,7 +455,7 @@ function getGraphicManifest(serverApiUrl, graphic) {
   React.useEffect(() => {
     if (!manifest) {
       fetch(
-        `${serverApiUrl}/serverApi/internal/graphics/graphic/${graphic.id}/${graphic.version}/manifest`
+        `${serverApiUrl}/ograf/v1/graphics/${graphic.id}/${graphic.version}/manifest`
       )
         .then((response) => {
           if (response.status >= 300)
@@ -394,13 +467,13 @@ function getGraphicManifest(serverApiUrl, graphic) {
           return response.json();
         })
         .then((responseData) => {
-          if (!responseData.graphicManifest)
+          if (!responseData.manifest)
             throw new Error(
               `Invalid response data: ${JSON.stringify(responseData)}`
             );
 
-          graphicsManifestCache[graphic.id] = responseData.graphicManifest;
-          setManifest(responseData.graphicManifest);
+          graphicsManifestCache[graphic.id] = responseData.manifest;
+          setManifest(responseData.manifest);
         })
         .catch(console.error);
     }
@@ -412,15 +485,7 @@ function getGraphicManifest(serverApiUrl, graphic) {
   return;
 }
 
-function GraphicsDefaultActions({ schema, onAction }) {
-  const initialData = schema ? getDefaultDataFromSchema(schema) : {};
-
-  const [data, setData] = React.useState(initialData);
-
-  const onDataSave = (d) => {
-    setData(JSON.parse(JSON.stringify(d)));
-  };
-
+function GraphicsDefaultActions({ schema, onAction, onDataSave, data }) {
   return (
     <div>
       <div>
@@ -440,7 +505,7 @@ function GraphicsDefaultActions({ schema, onAction }) {
           <Button
             onClick={() => {
               onAction("playAction", {
-                delta: undefined,
+                // delta: undefined,
                 // goto: undefined,
                 // skipAnimation: undefined
               });

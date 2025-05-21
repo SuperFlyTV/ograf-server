@@ -1,5 +1,6 @@
 import * as RendererAPI from "../types/rendererAPI";
-import * as ServerAPI from "../types/serverAPI";
+// import * as ServerAPI from "../types/_serverAPI";
+import { ServerApi } from "../types/ograf-ts-lib/main";
 import {
   RendererInfo,
   RendererManifest,
@@ -32,265 +33,270 @@ export class RendererManager {
   }
 
   /** A ServerAPI Method */
-  async listRenderers(ctx: CTX): Promise<void> {
-    const renderers: RendererInfo[] = [];
+  async listRenderers(): Promise<
+    ServerApi.components["schemas"]["RendererInfo"][]
+  > {
+    const renderers: ServerApi.components["schemas"]["RendererInfo"][] = [];
     for (const rendererInstance of this.rendererInstances) {
-      if (rendererInstance.info) renderers.push(rendererInstance.info);
+      if (!rendererInstance.info) continue;
+      renderers.push(rendererInstance.info);
     }
-    ctx.body = literal<ServerAPI.Endpoints["listRenderers"]["returnValue"]>({
-      renderers,
-    });
+    return renderers;
   }
   /** A ServerAPI Method */
-  async getRendererManifest(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["getRendererManifest"]["params"];
-
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.getManifest({});
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["getRendererManifest"]["returnValue"]>(
-        result
-      );
+  async getRendererInstance(id: string): Promise<RendererInstance | undefined> {
+    return this.registeredRenderers.get(id);
   }
-  async getRendererStatus(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["getRendererStatus"]["params"];
+  /** A ServerAPI Method */
+  // async getRendererManifest(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["getRendererManifest"]["params"];
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.getManifest({});
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["getRendererManifest"]["returnValue"]>(
+  //       result
+  //     );
+  // }
+  // async getRendererStatus(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["getRendererStatus"]["params"];
 
-    const status: RendererStatus = {
-      // TBD
-    };
-    ctx.status = 200;
-    ctx.body = literal<ServerAPI.Endpoints["getRendererStatus"]["returnValue"]>(
-      { status }
-    );
-  }
-  async getRenderTargetStatus(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["getRenderTargetStatus"]["params"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.getTargetStatus({
-      renderTargetId: params.renderTargetId,
-    });
+  //   const status: RendererStatus = {
+  //     // TBD
+  //   };
+  //   ctx.status = 200;
+  //   ctx.body = literal<ServerAPI.Endpoints["getRendererStatus"]["returnValue"]>(
+  //     { status }
+  //   );
+  // }
+  // async getRenderTargetStatus(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["getRenderTargetStatus"]["params"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["getRenderTargetStatus"]["returnValue"]>(
-        result
-      );
-  }
-  async invokeRendererAction(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["invokeRendererAction"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["invokeRendererAction"]["body"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.getTargetStatus({
+  //     renderTargetId: params.renderTargetId,
+  //   });
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.invokeRendererAction(reqBody);
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["getRenderTargetStatus"]["returnValue"]>(
+  //       result
+  //     );
+  // }
+  // async invokeRendererAction(): Promise<void> {
+  //   // const params =
+  //   //   ctx.params as ServerAPI.Endpoints["invokeRendererAction"]["params"];
+  //   // const reqBody = ctx.request
+  //   //   .body as ServerAPI.Endpoints["invokeRendererAction"]["body"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["invokeRendererAction"]["returnValue"]>(
-        result
-      );
-  }
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.invokeRendererAction(reqBody);
 
-  async loadGraphic(ctx: CTX): Promise<void> {
-    const params = ctx.params as ServerAPI.Endpoints["loadGraphic"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["loadGraphic"]["body"];
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["invokeRendererAction"]["returnValue"]>(
+  //       result
+  //     );
+  // }
 
-    console.log("ctx", ctx);
-    if (!reqBody.graphic) throw new Error("No body.graphic provided");
+  // async loadGraphic(ctx: CTX): Promise<void> {
+  //   const params = ctx.params as ServerAPI.Endpoints["loadGraphic"]["params"];
+  //   const reqBody = ctx.request
+  //     .body as ServerAPI.Endpoints["loadGraphic"]["body"];
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.loadGraphic({
-      renderTargetId: params.renderTargetId,
-      ...reqBody,
-    });
+  //   console.log("ctx", ctx);
+  //   if (!reqBody.graphic) throw new Error("No body.graphic provided");
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["loadGraphic"]["returnValue"]>(result);
-  }
-  async clearGraphic(ctx: CTX): Promise<void> {
-    console.log("clearGraphic", ctx);
-    const params = ctx.params as ServerAPI.Endpoints["clearGraphic"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["clearGraphic"]["body"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.loadGraphic({
+  //     renderTargetId: params.renderTargetId,
+  //     ...reqBody,
+  //   });
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.clearGraphic(reqBody);
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["loadGraphic"]["returnValue"]>(result);
+  // }
+  // async clearGraphic(ctx: CTX): Promise<void> {
+  //   console.log("clearGraphic", ctx);
+  //   const params = ctx.params as ServerAPI.Endpoints["clearGraphic"]["params"];
+  //   const reqBody = ctx.request
+  //     .body as ServerAPI.Endpoints["clearGraphic"]["body"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["clearGraphic"]["returnValue"]>(result);
-  }
-  async invokeGraphicUpdateAction(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["invokeGraphicUpdateAction"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["invokeGraphicUpdateAction"]["body"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.clearGraphic(reqBody);
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.invokeGraphicUpdateAction({
-      renderTargetId: params.renderTargetId,
-      ...reqBody,
-    });
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["clearGraphic"]["returnValue"]>(result);
+  // }
+  // async invokeGraphicUpdateAction(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["invokeGraphicUpdateAction"]["params"];
+  //   const reqBody = ctx.request
+  //     .body as ServerAPI.Endpoints["invokeGraphicUpdateAction"]["body"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["invokeGraphicUpdateAction"]["returnValue"]>(
-        result
-      );
-  }
-  async invokeGraphicPlayAction(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["invokeGraphicPlayAction"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["invokeGraphicPlayAction"]["body"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.invokeGraphicUpdateAction({
+  //     renderTargetId: params.renderTargetId,
+  //     ...reqBody,
+  //   });
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.invokeGraphicPlayAction({
-      renderTargetId: params.renderTargetId,
-      ...reqBody,
-    });
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["invokeGraphicUpdateAction"]["returnValue"]>(
+  //       result
+  //     );
+  // }
+  // async invokeGraphicPlayAction(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["invokeGraphicPlayAction"]["params"];
+  //   const reqBody = ctx.request
+  //     .body as ServerAPI.Endpoints["invokeGraphicPlayAction"]["body"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["invokeGraphicPlayAction"]["returnValue"]>(
-        result
-      );
-  }
-  async invokeGraphicStopAction(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["invokeGraphicStopAction"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["invokeGraphicStopAction"]["body"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.invokeGraphicPlayAction({
+  //     renderTargetId: params.renderTargetId,
+  //     ...reqBody,
+  //   });
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.invokeGraphicStopAction({
-      renderTargetId: params.renderTargetId,
-      ...reqBody,
-    });
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["invokeGraphicPlayAction"]["returnValue"]>(
+  //       result
+  //     );
+  // }
+  // async invokeGraphicStopAction(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["invokeGraphicStopAction"]["params"];
+  //   const reqBody = ctx.request
+  //     .body as ServerAPI.Endpoints["invokeGraphicStopAction"]["body"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["invokeGraphicStopAction"]["returnValue"]>(
-        result
-      );
-  }
-  async invokeGraphicCustomAction(ctx: CTX): Promise<void> {
-    const params =
-      ctx.params as ServerAPI.Endpoints["invokeGraphicCustomAction"]["params"];
-    const reqBody = ctx.request
-      .body as ServerAPI.Endpoints["invokeGraphicCustomAction"]["body"];
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.invokeGraphicStopAction({
+  //     renderTargetId: params.renderTargetId,
+  //     ...reqBody,
+  //   });
 
-    const rendererInstance = this.registeredRenderers.get(params.rendererId);
-    if (!rendererInstance) {
-      ctx.status = 404;
-      ctx.body = literal<ServerAPI.ErrorReturnValue>({
-        code: 404,
-        message: `Renderer ${params.rendererId} not found`,
-      });
-      return;
-    }
-    // Just forward the request to the Renderer:
-    const result = await rendererInstance.api.invokeGraphicCustomAction({
-      renderTargetId: params.renderTargetId,
-      ...reqBody,
-    });
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["invokeGraphicStopAction"]["returnValue"]>(
+  //       result
+  //     );
+  // }
+  // async invokeGraphicCustomAction(ctx: CTX): Promise<void> {
+  //   const params =
+  //     ctx.params as ServerAPI.Endpoints["invokeGraphicCustomAction"]["params"];
+  //   const reqBody = ctx.request
+  //     .body as ServerAPI.Endpoints["invokeGraphicCustomAction"]["body"];
 
-    ctx.status = 200;
-    ctx.body =
-      literal<ServerAPI.Endpoints["invokeGraphicCustomAction"]["returnValue"]>(
-        result
-      );
-  }
+  //   const rendererInstance = this.registeredRenderers.get(params.rendererId);
+  //   if (!rendererInstance) {
+  //     ctx.status = 404;
+  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
+  //       code: 404,
+  //       message: `Renderer ${params.rendererId} not found`,
+  //     });
+  //     return;
+  //   }
+  //   // Just forward the request to the Renderer:
+  //   const result = await rendererInstance.api.invokeGraphicCustomAction({
+  //     renderTargetId: params.renderTargetId,
+  //     ...reqBody,
+  //   });
+
+  //   ctx.status = 200;
+  //   ctx.body =
+  //     literal<ServerAPI.Endpoints["invokeGraphicCustomAction"]["returnValue"]>(
+  //       result
+  //     );
+  // }
 }
 
 class RendererInstance implements RendererAPI.MethodsOnServer {
@@ -336,20 +342,24 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
   ) {}
 
   public register = async (payload: {
-    info: Partial<RendererInfo>;
+    info: RendererInfo;
   }): Promise<{ rendererId: string } & VendorExtend> => {
     // JSONRPC METHOD, called by the Renderer
     this.isRegistered = true;
 
-    const id =
-      payload.info.id !== undefined
-        ? `renderer:${payload.info.id}`
-        : `renderer-${RendererInstance.RandomIndex++}`;
+    let id: string;
+    if (payload.info.id === undefined || payload.info.id === "") {
+      id = `renderer:${RendererInstance.RandomIndex++}`;
+    } else {
+      id = `renderer-${payload.info.id}`;
+    }
+
     this.info = {
+      ...payload.info,
       id,
-      name: payload.info.name ?? id,
-      description: payload.info.description ?? "",
     };
+    if (!this.info.name) this.info.name = id;
+
     this.manager.registerRenderer(this, this.info.id);
 
     console.log(`Renderer "${id}" registered`);
