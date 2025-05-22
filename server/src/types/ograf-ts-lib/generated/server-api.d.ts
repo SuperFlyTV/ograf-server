@@ -21,7 +21,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description Returns a string with the version number */
+                /** @description Returns information about the server */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -29,10 +29,27 @@ export interface paths {
                     content: {
                         "application/json": {
                             /**
-                             * @description A name of the server
+                             * @description Name of the server
                              * @example My Ograf Server
                              */
                             name: string;
+                            /**
+                             * @description Longer description of the server
+                             * @example This server handles graphics for the main news shows
+                             */
+                            description?: string;
+                            /** @description Information about the author/manufacturer of the Server */
+                            author?: components["schemas"]["Author"];
+                            /**
+                             * @description Version of the Server
+                             * @example 1.0
+                             */
+                            version?: string;
+                            /**
+                             * @description Server uptime (in milliseconds)
+                             * @example 3600000
+                             */
+                            uptime?: number;
                         } & {
                             [key: string]: unknown;
                         };
@@ -113,58 +130,6 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Retrieve list of versions of a graphic */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description ID of the graphic to retrieve */
-                    graphicId: components["schemas"]["GraphicId"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Returns a list of versions of an Ograf Graphic */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            graphics: components["schemas"]["GraphicInfo"][];
-                        } & {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/graphics/{graphicId}/{graphicVersion}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
         /** Retrieve info about a graphic */
         get: {
             parameters: {
@@ -173,8 +138,6 @@ export interface paths {
                 path: {
                     /** @description ID of the graphic to retrieve */
                     graphicId: components["schemas"]["GraphicId"];
-                    /** @description Version of the graphic to retrieve. */
-                    graphicVersion: components["schemas"]["GraphicVersion"];
                 };
                 cookie?: never;
             };
@@ -188,6 +151,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             graphic: components["schemas"]["GraphicInfo"];
+                            manifest: components["schemas"]["schema-2"];
                         } & {
                             [key: string]: unknown;
                         };
@@ -226,8 +190,6 @@ export interface paths {
                 path: {
                     /** @description ID of the graphic to delete */
                     graphicId: components["schemas"]["GraphicId"];
-                    /** @description Version of the graphic to delete. */
-                    graphicVersion: components["schemas"]["GraphicVersion"];
                 };
                 cookie?: never;
             };
@@ -267,135 +229,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/graphics/{graphicId}/{graphicVersion}/manifest": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Retrieve the manifest of a graphic */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description ID of the graphic */
-                    graphicId: components["schemas"]["GraphicId"];
-                    /** @description Version of the graphic. */
-                    graphicVersion: components["schemas"]["GraphicVersion"];
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Returns info of an OGraf Graphic */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            manifest: components["schemas"]["schema-2"];
-                        } & {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-                /** @description No Graphic found with the given ID and version */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["GraphicNotFoundResponse"];
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/graphics/{graphicId}/{graphicVersion}/{localPath}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Retrieve a resource (file) in a graphic */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description ID of the graphic */
-                    graphicId: components["schemas"]["GraphicId"];
-                    /** @description Version of the graphic. */
-                    graphicVersion: components["schemas"]["GraphicVersion"];
-                    /** @description The local path to a resource in the graphic */
-                    localPath: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Returns the content of the resource / file */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/octet-stream": string;
-                    };
-                };
-                /** @description No resource / find on the given localPath */
-                404: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @example Resource not found */
-                            error: string;
-                        } & {
-                            [key: string]: unknown;
-                        };
-                    };
-                };
-                /** @description Internal Server Error */
-                500: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": components["schemas"]["ErrorResponse"];
-                    };
-                };
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/renderers": {
         parameters: {
             query?: never;
@@ -422,16 +255,8 @@ export interface paths {
                         "application/json": {
                             renderers: ({
                                 id: components["schemas"]["RendererId"];
-                                /**
-                                 * @description Short name of the renderer
-                                 * @example My Renderer
-                                 */
-                                name: string;
-                                /**
-                                 * @description Description of the renderer
-                                 * @example A simple, layer-based renderer
-                                 */
-                                description?: string;
+                                name: components["schemas"]["RendererInfo"]["name"];
+                                description?: components["schemas"]["RendererInfo"]["description"];
                             } & {
                                 [key: string]: unknown;
                             })[];
@@ -520,6 +345,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/renderers/{rendererId}/target": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retrieve info about a RenderTarget */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description ID of the Renderer */
+                    rendererId: components["schemas"]["RendererId"];
+                };
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        /** @description The RenderTarget to retrieve info about */
+                        renderTarget?: components["schemas"]["RenderTargetIdentifier"];
+                    } & {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            responses: {
+                /** @description Returns info of a Renderer */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            renderTarget: components["schemas"]["RenderTargetInfo"];
+                        } & {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+                /** @description No RenderTarget found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["NotFoundResponse"];
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ErrorResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/renderers/{rendererId}/customActions/{customActionId}": {
         parameters: {
             query?: never;
@@ -601,7 +496,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/graphic/clear": {
+    "/renderers/{rendererId}/target/graphic/clear": {
         parameters: {
             query?: never;
             header?: never;
@@ -666,7 +561,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/load": {
+    "/renderers/{rendererId}/target/graphic/load": {
         parameters: {
             query?: never;
             header?: never;
@@ -683,21 +578,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
+                        /** @description The RenderTarget to load the graphic onto */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
                         /** @description The graphic to load */
-                        graphic: {
-                            id: components["schemas"]["GraphicId"];
-                            version?: components["schemas"]["GraphicVersion"];
-                        } & {
-                            [key: string]: unknown;
-                        };
+                        graphicId: components["schemas"]["GraphicId"];
                         /** @description Params to send to the load() method of the graphic */
                         params: {
                             /**
@@ -764,7 +654,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/updateAction": {
+    "/renderers/{rendererId}/target/graphic/updateAction": {
         parameters: {
             query?: never;
             header?: never;
@@ -781,15 +671,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        target: components["schemas"]["GraphicTarget"];
+                        /** @description The RenderTarget to target with the command */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                        /** @description The Graphic to target with the command */
+                        graphicTarget: components["schemas"]["GraphicTarget"];
                         params: components["schemas"]["UpdateActionParams"];
                     } & {
                         [key: string]: unknown;
@@ -844,7 +735,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/playAction": {
+    "/renderers/{rendererId}/target/graphic/playAction": {
         parameters: {
             query?: never;
             header?: never;
@@ -861,15 +752,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        target: components["schemas"]["GraphicTarget"];
+                        /** @description The RenderTarget to target with the command */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                        /** @description The Graphic to target with the command */
+                        graphicTarget: components["schemas"]["GraphicTarget"];
                         params: components["schemas"]["PlayActionParams"];
                     } & {
                         [key: string]: unknown;
@@ -932,7 +824,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/stopAction": {
+    "/renderers/{rendererId}/target/graphic/stopAction": {
         parameters: {
             query?: never;
             header?: never;
@@ -949,15 +841,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        target: components["schemas"]["GraphicTarget"];
+                        /** @description The RenderTarget to target with the command */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                        /** @description The Graphic to target with the command */
+                        graphicTarget: components["schemas"]["GraphicTarget"];
                         params: components["schemas"]["StopActionParams"];
                     } & {
                         [key: string]: unknown;
@@ -1015,7 +908,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/customAction": {
+    "/renderers/{rendererId}/target/graphic/customAction": {
         parameters: {
             query?: never;
             header?: never;
@@ -1032,15 +925,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        target: components["schemas"]["GraphicTarget"];
+                        /** @description The RenderTarget to target with the command */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                        /** @description The Graphic to target with the command */
+                        graphicTarget: components["schemas"]["GraphicTarget"];
                         params: components["schemas"]["CustomActionParams"];
                     } & {
                         [key: string]: unknown;
@@ -1098,7 +992,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/goToTime": {
+    "/renderers/{rendererId}/target/graphic/goToTime": {
         parameters: {
             query?: never;
             header?: never;
@@ -1115,15 +1009,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        target: components["schemas"]["GraphicTarget"];
+                        /** @description The RenderTarget to target with the command */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                        /** @description The Graphic to target with the command */
+                        graphicTarget: components["schemas"]["GraphicTarget"];
                         /** @description Params to send to the goToTime() method of the graphic */
                         params: {
                             /**
@@ -1190,7 +1085,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/renderers/{rendererId}/targets/{renderTargetId}/setActionsSchedule": {
+    "/renderers/{rendererId}/target/graphic/setActionsSchedule": {
         parameters: {
             query?: never;
             header?: never;
@@ -1207,15 +1102,16 @@ export interface paths {
                 path: {
                     /** @description ID of the Renderer */
                     rendererId: components["schemas"]["RendererId"];
-                    /** @description ID of the Renderer Target */
-                    renderTargetId: components["schemas"]["RendererTargetId"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        target: components["schemas"]["GraphicTarget"];
+                        /** @description The RenderTarget to target with the command */
+                        renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                        /** @description The Graphic to target with the command */
+                        graphicTarget: components["schemas"]["GraphicTarget"];
                         /** @description Params to send to the setActionsSchedule() method of the graphic */
                         params: {
                             /**
@@ -1335,26 +1231,61 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        ClearGraphicsResponse: {
+            /** @description A list of the GraphicInstances that were cleared */
+            graphicInstances: ({
+                /** @description ID of the RenderTarget that the graphic was cleared from */
+                renderTarget: components["schemas"]["RenderTargetIdentifier"];
+                /** @description Unique ID of the instance of the graphic that was just cleared */
+                graphicInstanceId: components["schemas"]["GraphicInstanceId"];
+                /** @description The graphic that was cleared */
+                graphic: {
+                    /** @description ID of the graphic that was cleared */
+                    id: components["schemas"]["GraphicId"];
+                } & {
+                    [key: string]: unknown;
+                };
+            } & {
+                [key: string]: unknown;
+            })[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description If set, apply filters to which GraphicInstances to affect. If no filters are defined, ALL graphics will be cleared. If multiple filters are defined, only instances that match all filters will be affected. */
+        GraphicFilter: {
+            /** @description (Optional) If set, will only affect GraphicInstances from a certain RenderTarget */
+            renderTarget?: components["schemas"]["RenderTargetIdentifier"];
+            /** @description (Optional) If set, will only affect GraphicInstances of a certain Graphic id */
+            graphicId?: components["schemas"]["GraphicId"];
+            /** @description (Optional) If set, will only affect a specific GraphicInstance */
+            graphicInstanceId?: string;
+        } & {
+            [key: string]: unknown;
+        };
+        /** @description If set, apply filters to which GraphicInstances to affect. If no filters are defined, ALL graphics will be cleared. If multiple filters are defined, only instances that match all filters will be affected. */
+        GraphicTarget: {
+            /** @description (Optional) If set, will only affect GraphicInstances of a certain Graphic id and version */
+            graphicId?: components["schemas"]["GraphicId"];
+            /** @description (Optional) If set, will only affect a specific GraphicInstance */
+            graphicInstanceId?: components["schemas"]["GraphicInstanceId"];
+        } & {
+            [key: string]: unknown;
+        };
         /**
-         * @description Version of the Renderer
+         * @description ID of the Renderer
          * @example renderer-0
          */
         RendererId: string;
         /**
-         * @description Version of the RendererTarget
-         * @example layer-0
+         * @description Identifier of a RenderTarget. The type of this is defined by the renderTarget schema of a Renderer.
+         * @example "layer-0" or { "bank": 1, "layer": 14 }
          */
-        RendererTargetId: string;
+        RenderTargetIdentifier: unknown;
         /**
          * @description ID of the Ograf Graphic
          * @example simple-l3rd
          */
         GraphicId: string;
-        /**
-         * @description Version of the Ograf Graphic
-         * @example 1.0
-         */
-        GraphicVersion: string;
         /**
          * @description ID of the GraphicInstance
          * @example graphic-instance-0
@@ -1363,7 +1294,8 @@ export interface components {
         /** GraphicInfo */
         GraphicInfo: {
             id: components["schemas"]["GraphicId"];
-            version?: components["schemas"]["GraphicVersion"];
+            /** @description Version of the Graphic */
+            version?: string;
             /**
              * @description Short name of the graphic
              * @example Simple LowerThird
@@ -1374,22 +1306,18 @@ export interface components {
              * @example A simple lower third for the Main news show
              */
             description?: string;
+            /** @description Information about the author of the graphic */
+            author?: components["schemas"]["Author"];
             /**
-             * @description Unix timestamp of last modified
+             * @description Unix timestamp of when the Graphic was created
              * @example 1735689600000
              */
-            modified: number;
-            /** @description Information about the author of the graphic */
-            author?: {
-                /** @example John Doe */
-                name: string;
-                /** @example john.doe@ograf.io */
-                email?: string;
-                /** @example https://ograf.ebu.io/ */
-                url?: string;
-            } & {
-                [key: string]: unknown;
-            };
+            created?: number;
+            /**
+             * @description Unix timestamp of when the Graphic was last modified
+             * @example 1735689600000
+             */
+            modified?: number;
         } & {
             [key: string]: unknown;
         };
@@ -1408,17 +1336,54 @@ export interface components {
              * @example A simple, layer-based renderer
              */
             description?: string;
-            /** @description List of available RenderTargets on the renderer */
-            targets: ({
-                id?: components["schemas"]["RendererTargetId"];
-                name?: string;
-                description?: string;
-            } & {
-                [key: string]: unknown;
-            })[];
             /** @description Custom Actions that can be invoked on the Renderer. */
             customActions?: components["schemas"]["action"][];
             renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
+            /**
+             * @description Schema of the RenderTarget. This is a GDD/JSON-object schema that describes the structure of the RenderTarget identifier. See https://superflytv.github.io/GraphicsDataDefinition
+             * @example { "type": "string" } or { "type": "object", "properties": { "bank": { "type": "integer" }, "layer": { "type": "integer" } }, "required": [ "bank", "layer" ] }
+             */
+            renderTargetSchema?: Record<string, never>;
+            /** @description Status of the renderer */
+            status: {
+                /**
+                 * @example OK
+                 * @enum {string}
+                 */
+                status: "OK" | "WARNING" | "ERROR";
+                /** @example Renderer is running */
+                message?: string;
+                /** @description List of active RenderTargets and their contents */
+                renderTargets: components["schemas"]["RenderTargetInfo"][];
+            } & {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        RenderTargetInfo: {
+            /** @description Identifier of the RenderTarget */
+            renderTarget: components["schemas"]["RenderTargetIdentifier"];
+            /**
+             * @description Name of the RenderTarget
+             * @example Layer 0
+             */
+            name: string;
+            /** @description Longer description of the RenderTarget */
+            description?: string;
+            /**
+             * @example OK
+             * @enum {string}
+             */
+            status: "OK" | "WARNING" | "ERROR";
+            /** @example RenderTarget is running */
+            statusMessage?: string;
+            graphicInstances?: ({
+                graphicInstanceId?: components["schemas"]["GraphicInstanceId"];
+                graphic?: components["schemas"]["GraphicInfo"];
+            } & {
+                [key: string]: unknown;
+            })[];
         } & {
             [key: string]: unknown;
         };
@@ -1439,55 +1404,13 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
-        /** @description If set, apply filters to which GraphicInstances to affect. If no filters are defined, ALL graphics will be cleared. If multiple filters are defined, only instances that match all filters will be affected. */
-        GraphicFilter: {
-            /** @description (Optional) If set, will only affect GraphicInstances from a certain RenderTarget */
-            renderTargetId?: string;
-            /** @description (Optional) If set, will only affect GraphicInstances of a certain Graphic id and version */
-            graphic?: {
-                id: components["schemas"]["GraphicId"];
-                version?: components["schemas"]["GraphicVersion"];
-            } & {
-                [key: string]: unknown;
-            };
-            /** @description (Optional) If set, will only affect a specific GraphicInstance */
-            graphicInstanceId?: string;
-        } & {
-            [key: string]: unknown;
-        };
-        /** @description If set, apply filters to which GraphicInstances to affect. If no filters are defined, ALL graphics will be cleared. If multiple filters are defined, only instances that match all filters will be affected. */
-        GraphicTarget: {
-            /** @description (Optional) If set, will only affect GraphicInstances of a certain Graphic id and version */
-            graphic?: {
-                id?: components["schemas"]["GraphicId"];
-                version?: components["schemas"]["GraphicVersion"];
-            } & {
-                [key: string]: unknown;
-            };
-            /** @description (Optional) If set, will only affect a specific GraphicInstance */
-            graphicInstanceId?: components["schemas"]["GraphicInstanceId"];
-        } & {
-            [key: string]: unknown;
-        };
-        ClearGraphicsResponse: {
-            /** @description A list of the GraphicInstances that were cleared */
-            graphicInstances: ({
-                /** @description ID of the RenderTarget that the graphic was cleared from */
-                renderTargetId: components["schemas"]["RendererTargetId"];
-                /** @description Unique ID of the instance of the graphic that was just cleared */
-                graphicInstanceId: components["schemas"]["GraphicInstanceId"];
-                /** @description The graphic that was cleared */
-                graphic: {
-                    /** @description ID of the graphic that was cleared */
-                    id: components["schemas"]["GraphicId"];
-                    /** @description Version of the graphic that was cleared */
-                    version?: components["schemas"]["GraphicVersion"];
-                } & {
-                    [key: string]: unknown;
-                };
-            } & {
-                [key: string]: unknown;
-            })[];
+        Author: {
+            /** @example John Doe */
+            name: string;
+            /** @example john.doe@ograf.io */
+            email?: string;
+            /** @example https://ograf.ebu.io/ */
+            url?: string;
         } & {
             [key: string]: unknown;
         };

@@ -33,21 +33,11 @@ export interface GraphicInstance {
   // status: any // TBD?
   [vendorSpecific: VendorSpecific]: unknown;
 }
-export interface RendererStatus {
-  // TBD
-  [vendorSpecific: VendorSpecific]: unknown;
-}
-export interface RenderTargetStatus {
-  graphicInstances: {
-    graphicInstance: GraphicInstance;
-    status: EmptyPayload;
-  }[];
-  // TBD
-  [vendorSpecific: VendorSpecific]: unknown;
-}
+export type RenderTargetInfo =
+  ServerApi.components["schemas"]["RenderTargetInfo"];
 
 export interface RendererLoadGraphicPayload {
-  graphic: { id: string; version: string | undefined };
+  graphicId: string;
   params: { data: unknown };
   [vendorSpecific: VendorSpecific]: unknown;
 }
@@ -65,7 +55,7 @@ export interface RendererClearGraphicPayload {
 /** Identifies a GraphicInstance on a RenderTarget */
 export interface GraphicInstanceOnTarget {
   graphicInstanceId: string;
-  renderTargetId: string;
+  renderTarget: unknown;
   graphicId: string;
   graphicVersion: string;
 }

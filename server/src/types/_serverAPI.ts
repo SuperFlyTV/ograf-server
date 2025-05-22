@@ -3,8 +3,8 @@ import {
   RendererInfo,
   RendererManifest,
   GraphicInstance,
-  RendererStatus,
-  RenderTargetStatus,
+  RendererInfo,
+  RenderTargetInfo,
   RendererLoadGraphicPayload,
   RendererClearGraphicPayload,
   GraphicInstanceOnTarget,
@@ -180,7 +180,7 @@ export interface Endpoints {
     body: EmptyPayload;
     returnValue:
       | {
-          status: RendererStatus;
+          status: RendererInfo;
           [vendorSpecific: VendorSpecific]: unknown;
         }
       | ErrorReturnValue;
@@ -195,7 +195,7 @@ export interface Endpoints {
     body: EmptyPayload;
     returnValue:
       | {
-          renderTargetStatus: RenderTargetStatus;
+          renderTargetStatus: RenderTargetInfo;
           [vendorSpecific: VendorSpecific]: unknown;
         }
       | ErrorReturnValue;

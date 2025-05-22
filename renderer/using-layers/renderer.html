@@ -78,7 +78,6 @@
           this.id = 0;
           this.waitingForReply = new Map();
           this.ws = null;
-          this.status = {}; // TBD
           this.actions = {
             "shake-it": (params) => {
               console.log("params", params);
@@ -135,33 +134,7 @@
 
             // The first thing the render MUST do after connecting is send a "register" message
             this._sendMessage("register", {
-              info: {
-                id: constants.id || "",
-                name: constants.name,
-                // description?: string
-                targets: this.layersManager.getAllLayers().map((layer) => ({
-                  id: layer.id,
-                  name: `Layer ${layer.id}`,
-                  // description: `Layer ${layer.id}`
-                })),
-                customActions: [
-                  {
-                    id: "shake-it",
-                    name: "Shake it up!",
-                    schema: {
-                      type: "object",
-                      properties: {
-                        duration: {
-                          type: "number",
-                          title: "Duration (ms)",
-                          default: 2000,
-                        },
-                      },
-                    },
-                  },
-                ],
-                // renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
-              },
+              info: this.getInfo().rendererInfo,
             })
               .then((response) => {
                 console.log("Registered, ready to go!");
@@ -232,7 +205,7 @@
           /*
                         register: (params: { info: Partial<RendererInfo> } & VendorExtend) => PromiseLike<EmptyPayload>
                         unregister: (params: EmptyPayload) => PromiseLike<EmptyPayload>
-                        status: (params: { status: RendererStatus } & VendorExtend) => PromiseLike<EmptyPayload>
+                        status: (params: { status: RendererInfo } & VendorExtend) => PromiseLike<EmptyPayload>
                         debug: (params: { message: string } & VendorExtend) => PromiseLike<EmptyPayload>
                     */
 
@@ -293,21 +266,91 @@
         //     // JSON RPC Method
         //     return { graphicInstances: layersManager.listGraphicInstances() }
         // }
-        getStatus(_params) {
+        getInfo(_params) {
           // JSON RPC Method
           return {
-            rendererStatus: this.status,
+            rendererInfo: {
+              id: constants.id || "",
+              name: constants.name,
+              // description?: string
+              // targets: this.layersManager.getAllLayers().map((layer) => ({
+              //   id: layer.id,
+              //   name: `Layer ${layer.id}`,
+              //   // description: `Layer ${layer.id}`
+              // })),
+              customActions: [
+                {
+                  id: "shake-it",
+                  name: "Shake it up!",
+                  schema: {
+                    type: "object",
+                    properties: {
+                      duration: {
+                        type: "number",
+                        title: "Duration (ms)",
+                        default: 2000,
+                      },
+                    },
+                  },
+                },
+              ],
+              renderTargetSchema: {
+                type: "object",
+                properties: {
+                  layerId: {
+                    /**
+                     * This Renderer uses a string to identify its layers:
+                     * Using the GDD Select to define the layer.
+                     * @see https://superflytv.github.io/GraphicsDataDefinition/#select
+                     */
+                    type: "string",
+                    title: "Layer",
+                    enum: this.layersManager
+                      .getAllLayers()
+                      .map((layer) => layer.renderTarget.layerId),
+                    gddType: "select",
+                    gddOptions: {
+                      labels: Object.fromEntries(
+                        this.layersManager
+                          .getAllLayers()
+                          .map((layer) => [
+                            layer.renderTarget.layerId,
+                            layer.name,
+                          ])
+                      ),
+                    },
+                  },
+                },
+                default: this.layersManager.getAllLayers()[0].renderTarget,
+              },
+              // renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
+              status: {
+                status: "ok", // OK, WARNING, ERROR
+                // message: ''
+                renderTargets: this.layersManager
+                  .getAllLayers()
+                  .map((layer) => {
+                    if (!layer.graphicInstance) return null;
+
+                    return layer.getInfo();
+                  })
+                  .filter(Boolean),
+              },
+            },
           };
         }
         getTargetStatus(params) {
           // JSON RPC Method
+          console.log("getTargetStatus", getTargetStatus);
 
-          const layer = this.layersManager.getLayer(params.renderTargetId);
+          const layer = this.layersManager.getLayer(params.renderTarget);
           if (!layer)
-            throw new Error(`Layer not found: ${params.renderTargetId}`);
+            throw new Error(
+              `Layer not found: ${JSON.stringify(params.renderTarget)}`
+            );
 
           return {
-            renderTargetStatus: layer.getStatus(),
+            renderTargetInfo: layer.getInfo(),
           };
         }
         /** Invokes an action on the Renderer. Actions are defined by the Renderer Manifest */
@@ -321,16 +364,14 @@
         /** Instantiate a Graphic on a RenderTarget. Returns when the load has finished. */
         async loadGraphic(params) {
           // JSON RPC Method
-          const layer = this.layersManager.getLayer(params.renderTargetId);
+          const layer = this.layersManager.getLayer(params.renderTarget);
           if (!layer)
-            throw new Error(`Layer not found: ${params.renderTargetId}`);
+            throw new Error(
+              `Layer not found: ${JSON.stringify(params.renderTarget)}`
+            );
 
           console.log("params", params);
-          return layer.loadGraphic(
-            params.graphic.id,
-            params.graphic.version,
-            params.params
-          );
+          return layer.loadGraphic(params.graphicId, params.params);
         }
         /** Clear/unloads a GraphicInstance on a RenderTarget */
         clearGraphic(params) {
@@ -338,13 +379,13 @@
           // console.log('params', params)
 
           let layers = [];
-          if (params.filters?.renderTargetId) {
+          if (params.filters?.renderTarget) {
             const layer = this.layersManager.getLayer(
-              params.filters?.renderTargetId
+              params.filters?.renderTarget
             );
             if (!layer)
               throw new Error(
-                `Layer not found: ${params.filters?.renderTargetId}`
+                `Layer not found: ${JSON.stringify(params.renderTarget)}`
               );
             layers = [layer];
           } else {
@@ -354,8 +395,7 @@
           const clearedGraphicInstancesOnLayer = [];
           for (const layer of layers) {
             const graphicInstance = layer.getGraphicInstance(
-              params.filters?.graphic?.id,
-              params.filters?.graphic?.version
+              params.filters?.graphicId
             );
 
             if (graphicInstance) {
@@ -363,9 +403,7 @@
               let clear = true;
               if (
                 params.filters?.graphic &&
-                (graphicInstance.graphicId !== params.filters?.graphic.id ||
-                  graphicInstance.graphicVersion !==
-                    params.filters?.graphic.version)
+                graphicInstance.graphicId !== params.filters?.graphicId
               )
                 clear = false;
               if (
@@ -378,10 +416,9 @@
                 layer.clearGraphic();
 
                 clearedGraphicInstancesOnLayer.push({
-                  renderTargetId: layer.id,
+                  renderTarget: layer.id,
                   graphicInstanceId: graphicInstance.id,
                   graphicId: graphicInstance.graphicId,
-                  graphicVersion: graphicInstance.graphicVersion,
                 });
               }
             }
@@ -394,33 +431,41 @@
         /** Invokes an action on a graphicInstance. Actions are defined by the Graphic's manifest */
         async invokeGraphicUpdateAction(params) {
           // JSON RPC Method
-          const layer = this.layersManager.getLayer(params.renderTargetId);
+          const layer = this.layersManager.getLayer(params.renderTarget);
           if (!layer)
-            throw new Error(`Layer not found: ${params.renderTargetId}`);
+            throw new Error(
+              `Layer not found: ${JSON.stringify(params.renderTarget)}`
+            );
 
           return layer.invokeUpdateAction(params);
         }
         async invokeGraphicPlayAction(params) {
           // JSON RPC Method
-          const layer = this.layersManager.getLayer(params.renderTargetId);
+          const layer = this.layersManager.getLayer(params.renderTarget);
           if (!layer)
-            throw new Error(`Layer not found: ${params.renderTargetId}`);
+            throw new Error(
+              `Layer not found: ${JSON.stringify(params.renderTarget)}`
+            );
 
           return layer.invokePlayAction(params);
         }
         async invokeGraphicStopAction(params) {
           // JSON RPC Method
-          const layer = this.layersManager.getLayer(params.renderTargetId);
+          const layer = this.layersManager.getLayer(params.renderTarget);
           if (!layer)
-            throw new Error(`Layer not found: ${params.renderTargetId}`);
+            throw new Error(
+              `Layer not found: ${JSON.stringify(params.renderTarget)}`
+            );
 
           return layer.invokeStopAction(params);
         }
         async invokeGraphicCustomAction(params) {
           // JSON RPC Method
-          const layer = this.layersManager.getLayer(params.renderTargetId);
+          const layer = this.layersManager.getLayer(params.renderTarget);
           if (!layer)
-            throw new Error(`Layer not found: ${params.renderTargetId}`);
+            throw new Error(
+              `Layer not found: ${JSON.stringify(params.renderTarget)}`
+            );
 
           return layer.invokeCustomAction(params);
         }
@@ -434,22 +479,31 @@
 
           // Create 10 layers
           for (let i = 0; i < 5; i++) {
-            const id = `layer-${i}`;
-            this.layers[id] = new LayerHandler(graphicCache, id, i);
+            const renderTarget = {
+              layerId: `layer-${i}`,
+            };
+
+            this.layers[renderTarget.layerId] = new LayerHandler(
+              graphicCache,
+              renderTarget,
+              `Layer ${i}`,
+              i
+            );
           }
         }
 
-        getLayer(layerId) {
-          return this.layers[layerId];
+        getLayer(renderTarget) {
+          return this.layers[renderTarget.layerId];
         }
         getAllLayers() {
           return Object.values(this.layers);
         }
       }
       class LayerHandler {
-        constructor(graphicCache, id, zIndex) {
+        constructor(graphicCache, renderTarget, name, zIndex) {
           this.graphicCache = graphicCache;
-          this.id = id;
+          this.renderTarget = renderTarget;
+          this.name = name;
           this.graphicInstance = null;
 
           this.element = document.createElement("div");
@@ -462,27 +516,48 @@
 
           document.getElementById("layers").appendChild(this.element);
         }
-        getStatus() {
+        getInfo() {
+          console.log("this.graphicInstance", this.graphicInstance);
+          // RenderTargetInfo
+          return {
+            renderTarget: this.renderTarget,
+            name: this.name,
+            status: "OK", // enum: OK, WARNING, ERROR
+            // statusMessage: ''
+            graphicInstances: this.graphicInstance
+              ? [
+                  {
+                    graphicInstanceId: this.graphicInstance.id,
+                    graphic: this.graphicInstance.graphicInfo.graphic,
+                  },
+                ]
+              : [],
+          };
           return {}; // RenderTargetStatus, TBD
         }
         listGraphicInstances() {
           return []; // TODO
         }
 
-        async loadGraphic(id, version, params) {
+        async loadGraphic(graphicId, params) {
           // Clear any existing GraphicInstance:
           const existing = this.getGraphicInstance();
           if (existing) {
             this.clearGraphic();
           }
 
-          const elementName = await this.graphicCache.loadGraphic(id, version);
+          const { elementName, graphicInfo } =
+            await this.graphicCache.loadGraphic(graphicId);
 
           // Add element to DOM:
           const element = document.createElement(elementName);
           this.element.appendChild(element);
 
-          this.graphicInstance = new GraphicInstance(id, version, element);
+          this.graphicInstance = new GraphicInstance(
+            graphicId,
+            element,
+            graphicInfo
+          );
 
           // Load the element:
           let result = await element.load({
@@ -520,17 +595,16 @@
           const graphicInstance = this.getGraphicInstance();
           if (!graphicInstance)
             throw new Error(
-              `No GraphicInstance on Layer ${params.renderTargetId}`
+              `No GraphicInstance on Layer ${params.renderTarget}`
             );
 
-          const targetMatch = params.target.graphic
-            ? params.target.graphic.id === graphicInstance.graphicId &&
-              params.target.graphic.version === graphicInstance.graphicVersion
+          const targetMatch = params.target.graphicId
+            ? params.target.graphicId === graphicInstance.graphicId
             : params.target.graphicInstanceId === graphicInstance.id;
           if (!targetMatch)
             throw new Error(
-              `No GraphicInstance found matching target: ${JSON.stringify(
-                params.target
+              `No GraphicInstance found matching graphicTarget: ${JSON.stringify(
+                params.graphicTarget
               )}`
             );
           return graphicInstance;
@@ -586,62 +660,63 @@
       }
       let graphicInstanceId = 0;
       class GraphicInstance {
-        constructor(id, version, element) {
+        constructor(id, element, graphicInfo) {
           this.id = `${graphicInstanceId++}`;
           this.element = element;
           this.graphicId = id;
-          this.graphicVersion = version;
+          this.graphicInfo = graphicInfo;
         }
       }
 
       class GraphicCache {
         constructor(serverApiUrl) {
           this.serverApiUrl = serverApiUrl;
+          this.cachedGraphicInfo = {};
         }
-        async loadGraphic(id, version) {
-          let graphicIdVersion = `${id}-${version}`;
-
-          // TODO:
-          // if (`${version}` === '0') {
-          //     // If the version is 0, we consider the graphic to be mutable
-          //     // and we should always load the latest version.
-
-          //     // This makes graphicIdVersion be unique, so we'll never hit the cache:
-          //     graphicIdVersion += `--${Date.now()}`
-          // }
-          // console.log('graphicIdVersion', graphicIdVersion)
-
+        async loadGraphic(graphicId) {
           // Check if the Graphic is already registered:
-          const cachedGraphic = customElements.get(graphicIdVersion);
-          if (cachedGraphic) return graphicIdVersion;
+          const cachedGraphic = customElements.get(graphicId);
+          const cachedGraphicInfo = this.cachedGraphicInfo[graphicId];
+          if (cachedGraphic && cachedGraphicInfo)
+            return { elementName: graphicId, graphicInfo: cachedGraphicInfo };
 
-          console.log(`Loading Graphic "${graphicIdVersion}"`);
+          console.log(`Loading Graphic "${graphicId}"`);
 
           console.log(`Loading manifest...`);
-          const manifest = await this.fetchManifest(id, version);
+          const graphicInfo = await this.fetchGraphicInfo(graphicId);
+
+          this.cachedGraphicInfo[graphicId] = graphicInfo;
 
           // Load the Graphic:
-          console.log(`Loading Graphic...`);
-          const webComponent = await this.fetchModule(id, version, manifest);
+          console.log(`Loading Graphic...`, graphicInfo);
+          const webComponent = await this.fetchModule(
+            graphicId,
+            graphicInfo.manifest
+          );
 
           // register the web component
-          customElements.define(graphicIdVersion, webComponent);
+          customElements.define(graphicId, webComponent);
 
-          return graphicIdVersion;
+          return {
+            elementName: graphicId,
+            graphicInfo,
+          };
         }
-        async fetchManifest(graphicId, graphicVersion) {
-          const manifestUrl = `${this.serverApiUrl}/ograf/v1/graphics/${graphicId}/${graphicVersion}/manifest`;
+        async fetchGraphicInfo(graphicId) {
+          const manifestUrl = `${this.serverApiUrl}/ograf/v1/graphics/${graphicId}`;
 
           const response = await fetch(manifestUrl);
           if (response.status === 200) {
             const responseData = await response.json();
 
-            console.log("responseData", responseData);
-            const manifest = responseData.manifest;
-            if (!manifest)
+            // console.log("responseData", responseData);
+
+            if (!responseData.graphic)
+              throw new Error('No "graphic" property found in response');
+            if (!responseData.manifest)
               throw new Error('No "manifest" property found in response');
 
-            return manifest;
+            return responseData;
           } else {
             throw new Error(
               `Failed to load manifest from ${manifestUrl}: [${
@@ -650,10 +725,10 @@
             );
           }
         }
-        async fetchModule(id, version, manifest) {
+        async fetchModule(id, manifest) {
           const modulePath = `${
             this.serverApiUrl
-          }/ograf/v1/graphics/${id}/${version}/${
+          }/serverApi/internal/graphics/${id}/${
             manifest.main ?? "graphic.mjs"
           }`;
 

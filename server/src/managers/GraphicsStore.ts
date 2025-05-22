@@ -6,7 +6,6 @@ import { GraphicsManifest } from "ograf";
 import { ServerApi } from "../types/ograf-ts-lib/main";
 import { CTX, literal } from "../lib/lib";
 import decompress from "decompress";
-import { GraphicInfo } from "../types/_serverAPI";
 
 export class GraphicsStore {
   /** File path where to store Graphics */
@@ -25,32 +24,40 @@ export class GraphicsStore {
     this.removeExpiredGraphics().catch(console.error);
   }
 
-  async listGraphics(filter?: {
-    graphicId?: string;
-  }): Promise<ServerApi.components["schemas"]["GraphicInfo"][]> {
+  async listGraphics(): Promise<
+    ServerApi.components["schemas"]["GraphicInfo"][]
+  > {
     const folderList = await fs.promises.readdir(this.FILE_PATH);
 
     const graphics: ServerApi.components["schemas"]["GraphicInfo"][] = [];
     for (const folder of folderList) {
-      const { id, version } = this.fromFileName(folder);
+      let id: string;
+      try {
+        const o = this.fromFileName(folder);
+        id = o.id;
+      } catch (e) {
+        console.error(e);
+        continue;
+      }
 
-      if (filter?.graphicId && filter.graphicId !== id) continue;
-
-      const graphicInfo = await this.getGraphicInfo(id, version);
+      const graphicInfo = await this.getGraphicInfo(id);
       if (!graphicInfo) continue;
 
-      graphics.push(graphicInfo);
+      graphics.push(graphicInfo.info);
     }
     return graphics;
   }
-  async getGraphicInfo(
-    id: string,
-    version: string
-  ): Promise<ServerApi.components["schemas"]["GraphicInfo"] | undefined> {
-    const folder = this.toFileName(id, version);
+  async getGraphicInfo(id: string): Promise<
+    | {
+        info: ServerApi.components["schemas"]["GraphicInfo"];
+        manifest: ServerApi.components["schemas"]["GraphicManifest"];
+      }
+    | undefined
+  > {
+    const folder = this.toFileName(id);
 
     // Don't list Graphics that are marked for removal:
-    if (await this.isGraphicMarkedForRemoval(id, version)) return undefined;
+    if (await this.isGraphicMarkedForRemoval(id)) return undefined;
 
     const manifestFilePath = path.join(this.FILE_PATH, folder, "manifest.json");
 
@@ -60,13 +67,10 @@ export class GraphicsStore {
       await fs.promises.readFile(manifestFilePath, "utf8")
     ) as GraphicsManifest;
 
-    // Ensure the id and version match:
-    if (
-      id !== manifest.id ||
-      (manifest.version !== undefined && version !== manifest.version)
-    ) {
+    // Ensure the id match:
+    if (id !== manifest.id) {
       console.error(
-        `Folder name ${folder} does not match manifest id ${manifest.id} or version ${manifest.version}`
+        `Folder name ${folder} does not match manifest id ${manifest.id}`
       );
       return undefined;
     }
@@ -74,22 +78,24 @@ export class GraphicsStore {
     const stat = await pStat;
 
     return {
-      id: manifest.id,
-      version: manifest.version,
-      name: manifest.name,
-      description: manifest.description,
-      author: manifest.author,
-      modified: Math.floor(stat.mtimeMs),
+      info: {
+        id: manifest.id,
+        version: manifest.version,
+        name: manifest.name,
+        description: manifest.description,
+        author: manifest.author,
+        modified: Math.floor(stat.mtimeMs),
+      },
+      manifest: manifest as any, // the types don't exactly match, due to differences in generation
     };
   }
 
   async getGraphicManifest(
-    id: string,
-    version: string | undefined
+    id: string
   ): Promise<ServerApi.components["schemas"]["GraphicManifest"] | undefined> {
     const manifestPath = path.join(
       this.FILE_PATH,
-      this.toFileName(id, version),
+      this.toFileName(id),
       "manifest.json"
     );
     console.log("manifestPath", manifestPath);
@@ -103,18 +109,16 @@ export class GraphicsStore {
   }
   async deleteGraphic(
     id: string,
-    version: string | undefined,
     force: boolean | undefined
   ): Promise<boolean> {
     if (force) {
-      return this.actuallyDeleteGraphic(id, version);
+      return this.actuallyDeleteGraphic(id);
     } else {
-      return this.markGraphicForRemoval(id, version);
+      return this.markGraphicForRemoval(id);
     }
   }
   async getGraphicResource(
     id: string,
-    version: string | undefined,
     localPath: string
   ): Promise<ServeFile | undefined> {
     console.log("getGraphicResource");
@@ -128,7 +132,7 @@ export class GraphicsStore {
       "url aaaa",
       path.join(
         this.FILE_PATH,
-        this.toFileName(id, version),
+        this.toFileName(id),
 
         localPath
       )
@@ -137,7 +141,7 @@ export class GraphicsStore {
     return this.serveFile(
       path.join(
         this.FILE_PATH,
-        this.toFileName(id, version),
+        this.toFileName(id),
 
         localPath
       )
@@ -244,12 +248,8 @@ export class GraphicsStore {
         ) as GraphicsManifest;
 
         const id = manifestData.id;
-        const version = manifestData.version;
 
-        const folderPath = path.join(
-          this.FILE_PATH,
-          this.toFileName(id, version)
-        );
+        const folderPath = path.join(this.FILE_PATH, this.toFileName(id));
 
         // Check if the Graphic already exists
         let alreadyExists = false;
@@ -257,7 +257,7 @@ export class GraphicsStore {
           alreadyExists = true;
 
           // Remove the graphic if it already exists:
-          await this.actuallyDeleteGraphic(id, version);
+          await this.actuallyDeleteGraphic(id);
           alreadyExists = false;
 
           // if (await this.isGraphicMarkedForRemoval(id, version)) {
@@ -306,7 +306,7 @@ export class GraphicsStore {
           // Copy data:
           await fs.promises.writeFile(outputFilePath, innerFile.data);
         }
-        uploadedGraphics.push({ id, version });
+        uploadedGraphics.push({ id });
       }
 
       ctx.status = 200;
@@ -404,13 +404,13 @@ export class GraphicsStore {
     }
   }
 
-  private toFileName(id: string, version: string | undefined) {
-    return `${id}-${version ?? "undefined"}`;
+  private toFileName(id: string) {
+    return `graphic-${id}`;
   }
-  private fromFileName(filename: string): { id: string; version: string } {
-    const m = filename.match(/(.+)-([^-]+)/);
+  private fromFileName(filename: string): { id: string } {
+    const m = filename.match(/graphic-(.+)/);
     if (!m) throw new Error(`Invalid filename ${filename}`);
-    return { id: m[1], version: m[2] };
+    return { id: m[1] };
   }
   isImmutable(version: string | undefined) {
     // If the version is "0", the graphic is considered mutable
@@ -475,26 +475,20 @@ export class GraphicsStore {
     };
   }
 
-  private async actuallyDeleteGraphic(
-    id: string,
-    version: string | undefined
-  ): Promise<boolean> {
-    const folderPath = path.join(this.FILE_PATH, this.toFileName(id, version));
+  private async actuallyDeleteGraphic(id: string): Promise<boolean> {
+    const folderPath = path.join(this.FILE_PATH, this.toFileName(id));
 
     if (!(await this.fileExists(folderPath))) return false;
     await fs.promises.rm(folderPath, { recursive: true });
 
     return true;
   }
-  private async markGraphicForRemoval(
-    id: string,
-    version: string | undefined
-  ): Promise<boolean> {
+  private async markGraphicForRemoval(id: string): Promise<boolean> {
     // Mark the Graphic for removal, but keep it for a while.
     // The reason for this is to not delete a Graphic that is currently on-air
     // (which might break due to missing resources)
 
-    const folderPath = path.join(this.FILE_PATH, this.toFileName(id, version));
+    const folderPath = path.join(this.FILE_PATH, this.toFileName(id));
 
     const removalFilePath = path.join(folderPath, "__markedForRemoval");
 
@@ -510,9 +504,9 @@ export class GraphicsStore {
   private async removeExpiredGraphics() {
     const folderList = await fs.promises.readdir(this.FILE_PATH);
     for (const folder of folderList) {
-      const { id, version } = this.fromFileName(folder);
+      const { id } = this.fromFileName(folder);
 
-      if (!(await this.isGraphicMarkedForRemoval(id, version))) continue;
+      if (!(await this.isGraphicMarkedForRemoval(id))) continue;
 
       const removalFilePath = path.join(
         this.FILE_PATH,
@@ -531,19 +525,16 @@ export class GraphicsStore {
 
       if (Date.now() > removalTime) {
         // Time to remove the Graphic
-        await this.actuallyDeleteGraphic(id, version);
+        await this.actuallyDeleteGraphic(id);
       }
     }
   }
 
   /** Returns true if a graphic exists (and is not marked for removal) */
-  private async isGraphicMarkedForRemoval(
-    id: string,
-    version: string
-  ): Promise<boolean> {
+  private async isGraphicMarkedForRemoval(id: string): Promise<boolean> {
     const removalFilePath = path.join(
       this.FILE_PATH,
-      this.toFileName(id, version),
+      this.toFileName(id),
       "__markedForRemoval"
     );
     return await this.fileExists(removalFilePath);

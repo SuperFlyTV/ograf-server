@@ -8,6 +8,7 @@ const SERVER_API_URL = "http://localhost:8080";
 export function App() {
   const [serverApiUrl, setServerApiUrl] = React.useState(SERVER_API_URL);
   const [serverData, setServerData] = React.useState({});
+  const [serverDataLoadedCount, setServerDataLoadedCount] = React.useState(0);
 
   const reloadServerData = React.useCallback(() => {
     console.log("Loading server data...");
@@ -15,6 +16,7 @@ export function App() {
       .then((data) => {
         console.log("server data loaded", data);
         setServerData(data);
+        setServerDataLoadedCount((org) => org + 1);
       })
       .catch((err) => {
         console.error(err);
@@ -69,6 +71,7 @@ export function App() {
               serverApiUrl={serverApiUrl}
               renderer={renderer}
               serverData={serverData}
+              serverDataLoadedCount={serverDataLoadedCount}
             />
           ))}
         </div>
@@ -114,8 +117,33 @@ async function retrieveServerData(serverApiUrl) {
   return data;
 }
 
-function Renderer({ serverApiUrl, serverData, renderer }) {
-  // console.log("renderer", renderer);
+function Renderer({
+  serverApiUrl,
+  serverData,
+  renderer,
+  serverDataLoadedCount,
+}) {
+  const [rendererInfo, setRendererInfo] = React.useState(undefined);
+  React.useEffect(() => {
+    fetch(`${serverApiUrl}/ograf/v1/renderers/${renderer.id}`)
+      .then(async (response) => {
+        if (response.status >= 300)
+          throw new Error(
+            `HTTP response error: [${response.status}] ${JSON.stringify(
+              response.body
+            )}`
+          );
+        const responseData = await response.json();
+        if (!responseData.renderer)
+          throw new Error(
+            `Invalid response data: ${JSON.stringify(responseData)}`
+          );
+        setRendererInfo(responseData.renderer);
+      })
+      .catch(console.error);
+  }, [renderer.id, serverDataLoadedCount]);
+
+  console.log("rendererInfo", rendererInfo);
 
   const onCustomAction = (actionId, payload) => {
     fetch(
@@ -139,57 +167,191 @@ function Renderer({ serverApiUrl, serverData, renderer }) {
       .catch(console.error);
   };
 
+  if (!rendererInfo) return "Loading Renderer...";
+
   return (
     <div className="card">
       <div className="card-body">
-        <h3 className="card-title">{renderer.name}</h3>
-        <i className="card-subtitle">{renderer.description}</i>
+        <h3 className="card-title">{rendererInfo.name}</h3>
+        <i className="card-subtitle">{rendererInfo.description}</i>
         <div>
-          {renderer.customActions && renderer.customActions.length > 0 && (
-            <div>
-              <h4>Renderer Custom actions</h4>
+          {rendererInfo.customActions &&
+            rendererInfo.customActions.length > 0 && (
+              <div>
+                <h4>Renderer Custom actions</h4>
 
-              {(renderer.customActions || []).map((action) => {
-                return (
-                  <div
-                    key={action.id}
-                    className="card"
-                    style={{ width: "30em", display: "inline-block" }}
-                  >
-                    <div className="card-body">
-                      <RendererCustomAction
-                        action={action}
-                        onAction={onCustomAction}
-                      />
+                {(rendererInfo.customActions || []).map((action) => {
+                  return (
+                    <div
+                      key={action.id}
+                      className="card"
+                      style={{ width: "30em", display: "inline-block" }}
+                    >
+                      <div className="card-body">
+                        <RendererCustomAction
+                          action={action}
+                          onAction={onCustomAction}
+                        />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+              </div>
+            )}
         </div>
         <div>
           <h4>Render Targets</h4>
           <div>
-            {renderer.targets.map((rt) => (
-              <RenderTarget
-                key={rt.id}
-                serverApiUrl={serverApiUrl}
-                serverData={serverData}
-                renderer={renderer}
-                renderTarget={rt}
-              />
-            ))}
+            <RenderTargets
+              serverApiUrl={serverApiUrl}
+              serverData={serverData}
+              renderer={rendererInfo}
+            />
           </div>
         </div>
         <div>
           <GraphicPlaylist
             serverApiUrl={serverApiUrl}
             serverData={serverData}
-            renderer={renderer}
+            rendererInfo={rendererInfo}
           />
         </div>
       </div>
+    </div>
+  );
+}
+function RenderTargets({ serverApiUrl, serverData, renderer }) {
+  const [renderTargets, setRenderTargets] = React.useState([]);
+
+  // Loop to keep list of renderTargets updated:
+  React.useEffect(() => {
+    let timeoutActive = true;
+    let timeout = null;
+
+    const updateData = () => {
+      if (!timeoutActive) return;
+
+      fetch(`${serverApiUrl}/ograf/v1/renderers/${renderer.id}/`)
+        .then((response) => {
+          if (!timeoutActive) return;
+
+          if (response.status >= 300)
+            throw new Error(
+              `HTTP response error: [${response.status}] ${JSON.stringify(
+                response.body
+              )}`
+            );
+          return response.json();
+        })
+        .then((responseData) => {
+          if (!timeoutActive) return;
+
+          if (!responseData.renderer)
+            throw new Error(
+              `Invalid response data: ${JSON.stringify(responseData)}`
+            );
+
+          if (!timeoutActive) return;
+
+          setRenderTargets((prevTargets) => {
+            const targets = JSON.parse(JSON.stringify(prevTargets));
+
+            for (const oldTarget of targets) {
+              // Clear any pre-existing graphicInstances, to be populated again below:
+              oldTarget.graphicInstances = [];
+            }
+            // Update the array with new values
+            for (const newTarget of responseData.renderer.status
+              .renderTargets) {
+              const existingIndex = targets.findIndex((old) =>
+                isEqual(old.renderTarget, newTarget.renderTarget)
+              );
+
+              if (existingIndex !== -1) {
+                // Update existing
+                targets[existingIndex] = newTarget;
+              } else {
+                targets.push(newTarget);
+              }
+            }
+
+            if (!isEqual(prevTargets, targets)) {
+              return targets;
+            } else {
+              // No change, return old data:
+              return prevTargets;
+            }
+          });
+        })
+        .catch(console.error)
+        .finally(() => {
+          if (!timeoutActive) return;
+          timeout = setTimeout(() => {
+            updateData();
+          }, 1000);
+        });
+    };
+
+    updateData();
+
+    return () => {
+      clearTimeout(timeout);
+      timeoutActive = false;
+    };
+  });
+
+  return (
+    <div>
+      {renderTargets.map((renderTarget) => {
+        return (
+          <RenderTarget
+            key={JSON.stringify(renderTarget.renderTarget)}
+            serverApiUrl={serverApiUrl}
+            serverData={serverData}
+            renderer={renderer}
+            renderTarget={renderTarget}
+          />
+        );
+
+        // return (
+        //   <div
+        //     key={JSON.stringify(renderTarget.renderTarget)}
+        //     className="card"
+        //     style={{ width: "10em", display: "inline-block" }}
+        //   >
+        //     <div className="card-body">
+        //       <h4 className="card-title">
+        //         {renderTarget.name || renderTarget.id}
+        //       </h4>
+        //       <i className="card-subtitle">{renderTarget.description}</i>
+        //       <div></div>
+        //     </div>
+        //   </div>
+        // );
+      })}
+    </div>
+  );
+}
+function RenderTargetPicker({ rendererInfo, onSelectRenderTarget }) {
+  const schema = rendererInfo.renderTargetSchema;
+
+  const initialData = schema ? getDefaultDataFromSchema(schema) : {};
+
+  const [data, setData] = React.useState(undefined);
+
+  const onDataSave = (d) => {
+    const newData = JSON.parse(JSON.stringify(d));
+    setData(newData);
+    onSelectRenderTarget(newData);
+  };
+
+  React.useEffect(() => {
+    onDataSave(initialData);
+  }, []);
+
+  return (
+    <div>
+      <GDDGUI schema={schema} data={data} setData={onDataSave} />
     </div>
   );
 }
@@ -224,6 +386,7 @@ function RendererCustomAction({ action, onAction }) {
 }
 
 function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
+  console.log("renderTarget", renderTarget);
   return (
     <div className="card" style={{ width: "10em", display: "inline-block" }}>
       <div className="card-body">
@@ -233,12 +396,12 @@ function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
           <Button
             onClick={() => {
               fetch(
-                `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/graphic/clear`,
+                `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/clear`,
                 {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
-                    filters: { renderTargetId: renderTarget.id },
+                    filters: { renderTarget: renderTarget.renderTarget },
                   }),
                 }
               )
@@ -256,60 +419,94 @@ function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
             Clear
           </Button>
         </div>
+        <div>
+          {renderTarget.graphicInstances.map((graphicInstance) => {
+            return (
+              <div>
+                {graphicInstance.graphic.name} ({graphicInstance.graphic.id})
+              </div>
+            );
+            // return null;
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-function GraphicPlaylist({ serverApiUrl, serverData, renderer }) {
+function GraphicPlaylist({ serverApiUrl, serverData, rendererInfo }) {
   const [graphicQueue, setGraphicQueue] = React.useState([]);
+  const [renderTarget, setRenderTarget] = React.useState(undefined);
+
+  const onSelectRenderTarget = (renderTarget) => {
+    setRenderTarget(renderTarget);
+  };
 
   return (
     <div>
       <div>
-        {graphicQueue.map((graphic, index) => (
+        <RenderTargetPicker
+          rendererInfo={rendererInfo}
+          onSelectRenderTarget={onSelectRenderTarget}
+        />
+      </div>
+
+      {renderTarget && (
+        <Dropdown>
+          <Dropdown.Toggle variant="success" id="dropdown-basic">
+            Add Graphic
+          </Dropdown.Toggle>
+          <Dropdown.Menu>
+            {serverData.graphics.map((graphic) => {
+              return (
+                <Dropdown.Item
+                  key={`${graphic.id}-${graphic.version}`}
+                  onClick={() => {
+                    setGraphicQueue([
+                      ...graphicQueue,
+                      clone({ renderTarget, graphic }),
+                    ]);
+                  }}
+                >
+                  {graphic.name}
+                </Dropdown.Item>
+              );
+            })}
+          </Dropdown.Menu>
+        </Dropdown>
+      )}
+
+      <div>
+        {graphicQueue.map((item, index) => (
           <QueuedGraphic
             key={index}
             serverApiUrl={serverApiUrl}
             serverData={serverData}
-            renderer={renderer}
-            graphic={graphic}
+            renderer={rendererInfo}
+            graphic={item.graphic}
+            renderTarget={item.renderTarget}
           />
         ))}
       </div>
-
-      <Dropdown>
-        <Dropdown.Toggle variant="success" id="dropdown-basic">
-          Add Graphic
-        </Dropdown.Toggle>
-        <Dropdown.Menu>
-          {serverData.graphics.map((graphic) => {
-            return (
-              <Dropdown.Item
-                key={`${graphic.id}-${graphic.version}`}
-                onClick={() => {
-                  setGraphicQueue([...graphicQueue, graphic]);
-                }}
-              >
-                {graphic.name}
-              </Dropdown.Item>
-            );
-          })}
-        </Dropdown.Menu>
-      </Dropdown>
     </div>
   );
 }
-function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
-  const [renderTarget, setRenderTarget] = React.useState(renderer.targets[0]);
+function QueuedGraphic({
+  serverApiUrl,
+  serverData,
+  renderer,
+  graphic,
+  renderTarget,
+}) {
+  // const [renderTarget, setRenderTarget] = React.useState(renderer.targets[0]);
 
-  const manifest = getGraphicManifest(serverApiUrl, graphic);
+  const graphicInfo = getGraphicInfo(serverApiUrl, graphic);
 
   const [data, setData] = React.useState({});
 
   React.useEffect(() => {
-    const initialData = manifest?.schema
-      ? getDefaultDataFromSchema(manifest.schema)
+    const initialData = graphicInfo
+      ? getDefaultDataFromSchema(graphicInfo.manifest.schema)
       : undefined;
 
     if (
@@ -319,7 +516,7 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
     ) {
       setData(initialData);
     }
-  }, [manifest?.schema]);
+  }, [graphicInfo]);
 
   const onDataSave = (d) => {
     setData(JSON.parse(JSON.stringify(d)));
@@ -327,13 +524,14 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
 
   const onAction = (actionName, params) => {
     fetch(
-      `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/targets/${renderTarget.id}/${actionName}`,
+      `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/${actionName}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          target: {
-            graphic: { id: graphic.id, version: graphic.version },
+          renderTarget,
+          graphicTarget: {
+            graphicId: graphic.id,
           },
           params: params,
         }),
@@ -350,6 +548,8 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
       .catch(console.error);
   };
 
+  if (!graphicInfo) return <div>Loading Graphic...</div>;
+  console.log("graphicInfo", graphicInfo);
   return (
     <div>
       <h4>{graphic.name}</h4>
@@ -357,11 +557,12 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
         <Form>
           <div className="mb-3">
             <label className="form-label">RenderTarget</label>
-            <Dropdown>
+            <div>{JSON.stringify(renderTarget)}</div>
+            {/* <Dropdown>
               <Dropdown.Toggle variant="success" id="dropdown-basic">
                 {renderTarget.name || renderTarget.id}
               </Dropdown.Toggle>
-              <Dropdown.Menu>
+              {<Dropdown.Menu>
                 {renderer.targets.map((rt) => {
                   return (
                     <Dropdown.Item
@@ -374,19 +575,21 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
                     </Dropdown.Item>
                   );
                 })}
-              </Dropdown.Menu>
-            </Dropdown>
+              </Dropdown.Menu>}
+            </Dropdown> */}
           </div>
           <div className="mb-3">
             <Button
               onClick={() => {
+                console.log("renderTarget", renderTarget);
                 fetch(
-                  `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/targets/${renderTarget.id}/load`,
+                  `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/load`,
                   {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      graphic: { id: graphic.id, version: graphic.version },
+                      renderTarget,
+                      graphicId: graphic.id,
                       params: {
                         data: data,
                       },
@@ -408,19 +611,17 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
             </Button>
           </div>
           <div>
-            {manifest && (
-              <GraphicsDefaultActions
-                schema={manifest.schema}
-                data={data}
-                onAction={onAction}
-                onDataSave={onDataSave}
-              />
-            )}
+            <GraphicsDefaultActions
+              schema={graphicInfo.manifest.schema}
+              data={data}
+              onAction={onAction}
+              onDataSave={onDataSave}
+            />
           </div>
           <div>
-            {manifest && (
+            {graphicInfo && (
               <div>
-                {(manifest.customActions || []).map((action) => {
+                {(graphicInfo.manifest.customActions || []).map((action) => {
                   return (
                     <div
                       key={action.id}
@@ -445,18 +646,16 @@ function QueuedGraphic({ serverApiUrl, serverData, renderer, graphic }) {
   );
 }
 
-const graphicsManifestCache = {};
-function getGraphicManifest(serverApiUrl, graphic) {
+const graphicsInfoCache = {};
+function getGraphicInfo(serverApiUrl, graphic) {
   console.log("graphic", graphic);
-  const [manifest, setManifest] = React.useState(
-    graphicsManifestCache[graphic.id]
+  const [graphicInfo, setGraphicInfo] = React.useState(
+    graphicsInfoCache[graphic.id]
   );
 
   React.useEffect(() => {
-    if (!manifest) {
-      fetch(
-        `${serverApiUrl}/ograf/v1/graphics/${graphic.id}/${graphic.version}/manifest`
-      )
+    if (!graphicInfo) {
+      fetch(`${serverApiUrl}/ograf/v1/graphics/${graphic.id}/`)
         .then((response) => {
           if (response.status >= 300)
             throw new Error(
@@ -467,20 +666,24 @@ function getGraphicManifest(serverApiUrl, graphic) {
           return response.json();
         })
         .then((responseData) => {
+          if (!responseData.graphic)
+            throw new Error(
+              `Invalid response data: ${JSON.stringify(responseData)}`
+            );
           if (!responseData.manifest)
             throw new Error(
               `Invalid response data: ${JSON.stringify(responseData)}`
             );
 
-          graphicsManifestCache[graphic.id] = responseData.manifest;
-          setManifest(responseData.manifest);
+          graphicsInfoCache[graphic.id] = responseData;
+          setGraphicInfo(responseData);
         })
         .catch(console.error);
     }
   }, []);
 
   // use cache?
-  if (manifest) return manifest;
+  if (graphicInfo) return graphicInfo;
 
   return;
 }
@@ -557,4 +760,33 @@ function GraphicsCustomAction({ action, onAction }) {
       </Button>
     </div>
   );
+}
+
+function isEqual(a, b) {
+  if (typeof a !== typeof b) return false;
+
+  if (typeof a === "object") {
+    if (Array.isArray(a)) {
+      if (!Array.isArray(b)) return false;
+      // Compare arrays
+      if (a.length !== b.length) return false;
+      for (let i = 0; i < a.length; i++) {
+        if (!isEqual(a[i], b[i])) return false;
+      }
+      return true;
+    } else {
+      // Compare objects
+      if (Object.keys(a).length !== Object.keys(b).length) return false;
+
+      for (const key of Object.keys(a)) {
+        if (!isEqual(a[key], b[key])) return false;
+      }
+      return true;
+    }
+  } else {
+    return a === b;
+  }
+}
+function clone(o) {
+  return JSON.parse(JSON.stringify(o));
 }

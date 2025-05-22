@@ -11,8 +11,7 @@ import {
   RendererInfo,
   RendererLoadGraphicPayload,
   RendererManifest,
-  RendererStatus,
-  RenderTargetStatus,
+  RenderTargetInfo,
 } from "./renderer";
 import { GraphicInvokeActionTarget } from "./_serverAPI";
 
@@ -43,12 +42,12 @@ export interface MethodsOnRenderer {
     { rendererManifest: RendererInfo & RendererManifest } & VendorExtend
   >;
   // listGraphicInstances: (params: EmptyPayload) => PromiseLike<{ graphicInstances: GraphicInstance[] } & VendorExtend>
-  getStatus: (
+  getInfo: (
     params: EmptyPayload
-  ) => PromiseLike<{ rendererStatus: RendererStatus } & VendorExtend>;
+  ) => PromiseLike<{ rendererInfo: RendererInfo } & VendorExtend>;
   getTargetStatus: (
-    params: { renderTargetId: string } & VendorExtend
-  ) => PromiseLike<{ renderTargetStatus: RenderTargetStatus } & VendorExtend>;
+    params: { renderTarget: unknown } & VendorExtend
+  ) => PromiseLike<{ renderTargetInfo: RenderTargetInfo } & VendorExtend>;
   /** Invokes an action on the Renderer. Actions are defined by the Renderer Manifest */
   invokeRendererAction: (
     params: { action: ActionInvokeParams } & VendorExtend
@@ -56,7 +55,7 @@ export interface MethodsOnRenderer {
 
   /** Instantiate a Graphic on a RenderTarget. Returns when the load has finished. */
   loadGraphic: (
-    params: { renderTargetId: string } & RendererLoadGraphicPayload
+    params: { renderTarget: unknown } & RendererLoadGraphicPayload
   ) => PromiseLike<
     {
       graphicInstanceId: string;
@@ -72,7 +71,7 @@ export interface MethodsOnRenderer {
   /** Invokes an updateAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicUpdateAction: (
     params: {
-      renderTargetId: string;
+      renderTarget: unknown;
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["updateAction"]>[0];
     } & VendorExtend
@@ -84,7 +83,7 @@ export interface MethodsOnRenderer {
   /** Invokes an playAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicPlayAction: (
     params: {
-      renderTargetId: string;
+      renderTarget: unknown;
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["playAction"]>[0];
     } & VendorExtend
@@ -96,7 +95,7 @@ export interface MethodsOnRenderer {
   /** Invokes an stopAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicStopAction: (
     params: {
-      renderTargetId: string;
+      renderTarget: unknown;
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["stopAction"]>[0];
     } & VendorExtend
@@ -108,7 +107,7 @@ export interface MethodsOnRenderer {
   /** Invokes an customAction on a graphicInstance. Actions are defined by the Graphic's manifest */
   invokeGraphicCustomAction: (
     params: {
-      renderTargetId: string;
+      renderTarget: unknown;
       target: GraphicInvokeActionTarget;
       params: Parameters<GraphicsAPI.Graphic["customAction"]>[0];
     } & VendorExtend
@@ -134,9 +133,9 @@ export interface MethodsOnServer {
   ) => PromiseLike<{ rendererId: string } & VendorExtend>;
   /** CAN be emitted when a Renderer is about to shut down. */
   unregister: (params: EmptyPayload) => PromiseLike<EmptyPayload>;
-  /** CAN be emitted when the status changes */
-  status: (
-    params: { status: RendererStatus } & VendorExtend
+  /** CAN be emitted when the RenderInfo changes */
+  onInfo: (
+    params: { info: RendererInfo } & VendorExtend
   ) => PromiseLike<EmptyPayload>;
   /** CAN be emitted with debugging info (for developers) */
   debug: (
