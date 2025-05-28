@@ -6,6 +6,18 @@ import { CTX, literal } from "./lib/lib";
 import { ServerApi } from "./types/ograf-ts-lib/main";
 import multer from "@koa/multer";
 import { RendererManager } from "./managers/RendererManager";
+import {
+  CustomActionParams,
+  GraphicFilter,
+  GraphicId,
+  GraphicTarget,
+  PlayActionParams,
+  RendererId,
+  RenderTargetIdentifier,
+  StopActionParams,
+  UpdateActionParams,
+} from "./types/OpenApiTypes";
+import { z, ZodError } from "zod/v4";
 const upload = multer({
   storage: multer.diskStorage({
     // destination: './localGraphicsStorage',
@@ -66,7 +78,18 @@ export function setupServerApi(
   router.get(getKoaUrl("/graphics/{graphicId}"), async (ctx) => {
     type Method = ServerApi.paths["/graphics/{graphicId}"]["get"];
     try {
-      const request: Request<Method> = getRequestObject(ctx);
+      const Req = z.object({
+        parameters: z.object({
+          path: z.object({
+            graphicId: GraphicId,
+          }),
+        }),
+        requestBody: z.any(),
+      });
+
+      const request: Request<Method> = Req.parse(
+        getRequestObject(ctx)
+      ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
       const graphicInfo = await graphicsStore.getGraphicInfo(
         request.parameters.path.graphicId
@@ -99,7 +122,23 @@ export function setupServerApi(
   router.delete(getKoaUrl("/graphics/{graphicId}"), async (ctx) => {
     type Method = ServerApi.paths["/graphics/{graphicId}"]["delete"];
     try {
-      const request: Request<Method> = getRequestObject(ctx);
+      const Req = z.object({
+        parameters: z.object({
+          path: z.object({
+            graphicId: GraphicId,
+          }),
+          query: z.optional(
+            z.object({
+              force: z.optional(z.boolean()),
+            })
+          ),
+        }),
+        requestBody: z.any(),
+      });
+
+      const request: Request<Method> = Req.parse(
+        getRequestObject(ctx)
+      ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
       const found = await graphicsStore.deleteGraphic(
         request.parameters.path.graphicId,
@@ -131,8 +170,6 @@ export function setupServerApi(
   router.get(getKoaUrl("/renderers"), async (ctx) => {
     type Method = ServerApi.paths["/renderers"]["get"];
     try {
-      // const request: Request<Method> = getRequestObject(ctx);
-
       const renderers = await rendererManager.listRenderers();
 
       return handleReturn<Method>(ctx, 200, {
@@ -154,7 +191,18 @@ export function setupServerApi(
   router.get(getKoaUrl("/renderers/{rendererId}"), async (ctx) => {
     type Method = ServerApi.paths["/renderers/{rendererId}"]["get"];
     try {
-      const request: Request<Method> = getRequestObject(ctx);
+      const Req = z.object({
+        parameters: z.object({
+          path: z.object({
+            rendererId: RendererId,
+          }),
+        }),
+        requestBody: z.any(),
+      });
+
+      const request: Request<Method> = Req.parse(
+        getRequestObject(ctx)
+      ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
       const rendererInstance = await rendererManager.getRendererInstance(
         request.parameters.path.rendererId
@@ -188,7 +236,24 @@ export function setupServerApi(
   router.post(getKoaUrl("/renderers/{rendererId}/target"), async (ctx) => {
     type Method = ServerApi.paths["/renderers/{rendererId}/target"]["post"];
     try {
-      const request: Request<Method> = getRequestObject(ctx);
+      const Req = z.object({
+        parameters: z.object({
+          path: z.object({
+            rendererId: RendererId,
+          }),
+        }),
+        requestBody: z.object({
+          content: z.object({
+            "application/json": z.object({
+              renderTarget: RenderTargetIdentifier,
+            }),
+          }),
+        }),
+      });
+
+      const request: Request<Method> = Req.parse(
+        getRequestObject(ctx)
+      ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
       const rendererInstance = await rendererManager.getRendererInstance(
         request.parameters.path.rendererId
@@ -228,7 +293,25 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/customActions/{customActionId}"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+              customActionId: z.string(),
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                payload: z.unknown(),
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -271,7 +354,24 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/target/graphic/clear"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                filters: GraphicFilter,
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -319,7 +419,28 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/target/graphic/load"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                renderTarget: RenderTargetIdentifier,
+                graphicId: GraphicId,
+                params: z.object({
+                  data: z.unknown(),
+                }),
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -334,8 +455,6 @@ export function setupServerApi(
             },
           });
         }
-
-        console.log("request.requestBody", request.requestBody);
 
         const result = await rendererInstance.api.loadGraphic({
           renderTarget:
@@ -366,7 +485,26 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/target/graphic/updateAction"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                renderTarget: RenderTargetIdentifier,
+                graphicTarget: GraphicTarget,
+                params: UpdateActionParams,
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -411,7 +549,26 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/target/graphic/playAction"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                renderTarget: RenderTargetIdentifier,
+                graphicTarget: GraphicTarget,
+                params: PlayActionParams,
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -456,7 +613,26 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/target/graphic/stopAction"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                renderTarget: RenderTargetIdentifier,
+                graphicTarget: GraphicTarget,
+                params: StopActionParams,
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -501,7 +677,26 @@ export function setupServerApi(
       type Method =
         ServerApi.paths["/renderers/{rendererId}/target/graphic/customAction"]["post"];
       try {
-        const request: Request<Method> = getRequestObject(ctx);
+        const Req = z.object({
+          parameters: z.object({
+            path: z.object({
+              rendererId: RendererId,
+            }),
+          }),
+          requestBody: z.object({
+            content: z.object({
+              "application/json": z.object({
+                renderTarget: RenderTargetIdentifier,
+                graphicTarget: GraphicTarget,
+                params: CustomActionParams,
+              }),
+            }),
+          }),
+        });
+
+        const request: Request<Method> = Req.parse(
+          getRequestObject(ctx)
+        ) satisfies Request<Method> satisfies z.infer<typeof Req>;
 
         const rendererInstance = await rendererManager.getRendererInstance(
           request.parameters.path.rendererId
@@ -550,9 +745,17 @@ export function setupServerApi(
     async (ctx) => {
       try {
         // Note: We DO serve resources even if the Graphic is marked for removal!
+
+        const Req = z.object({
+          graphicId: z.string(),
+          localPath: z.string(),
+        });
+
+        const params = Req.parse(ctx.params);
+
         const resource = await graphicsStore.getGraphicResource(
-          ctx.params.graphicId,
-          ctx.params.localPath
+          params.graphicId,
+          params.localPath
         );
 
         if (!resource) {
@@ -662,7 +865,6 @@ function getRequestObject<Method extends AnyMethod>(
 }
 function getKoaUrl(openApiUrl: string): string {
   const str = "/ograf/v1" + openApiUrl.replace(/\{([^}]+)\}/g, ":$1");
-  console.log("getKoaUrl", str);
   return str;
 }
 function handleReturn<Method extends AnyMethod>(
@@ -715,7 +917,20 @@ function handleErrorReturn<_Method extends AnyMethodErrorResponse>(
   err: any
 ): void {
   console.error(err);
-  return handleReturn<AnyMethodErrorResponse>(ctx, 500, {
+
+  if (err instanceof ZodError) {
+    return handleReturn(ctx, 400, {
+      headers: {},
+      content: {
+        "application/json": {
+          error: "Bad Request: " + err.message,
+          stack: err instanceof Error ? err.stack : undefined,
+        },
+      },
+    });
+  }
+
+  return handleReturn<AnyMethodErrorResponse>(ctx, err.statusCode || 500, {
     headers: {},
     content: {
       "application/json": {
