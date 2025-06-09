@@ -233,22 +233,19 @@ export function setupServerApi(
       return handleErrorReturn<Method>(ctx, err);
     }
   });
-  router.post(getKoaUrl("/renderers/{rendererId}/target"), async (ctx) => {
-    type Method = ServerApi.paths["/renderers/{rendererId}/target"]["post"];
+  router.get(getKoaUrl("/renderers/{rendererId}/target"), async (ctx) => {
+    type Method = ServerApi.paths["/renderers/{rendererId}/target"]["get"];
     try {
       const Req = z.object({
         parameters: z.object({
           path: z.object({
             rendererId: RendererId,
           }),
-        }),
-        requestBody: z.object({
-          content: z.object({
-            "application/json": z.object({
-              renderTarget: RenderTargetIdentifier,
-            }),
+          query: z.object({
+            renderTarget: RenderTargetIdentifier,
           }),
         }),
+        requestBody: z.any(),
       });
 
       const request: Request<Method> = Req.parse(
@@ -271,8 +268,7 @@ export function setupServerApi(
       }
 
       const result = await rendererInstance.api.getTargetStatus({
-        renderTarget:
-          request.requestBody.content["application/json"].renderTarget,
+        renderTarget: request.parameters.query.renderTarget,
       });
 
       return handleReturn<Method>(ctx, 200, {
@@ -348,11 +344,11 @@ export function setupServerApi(
       }
     }
   );
-  router.post(
+  router.put(
     getKoaUrl("/renderers/{rendererId}/target/graphic/clear"),
     async (ctx) => {
       type Method =
-        ServerApi.paths["/renderers/{rendererId}/target/graphic/clear"]["post"];
+        ServerApi.paths["/renderers/{rendererId}/target/graphic/clear"]["put"];
       try {
         const Req = z.object({
           parameters: z.object({
@@ -413,22 +409,24 @@ export function setupServerApi(
       }
     }
   );
-  router.post(
+  router.put(
     getKoaUrl("/renderers/{rendererId}/target/graphic/load"),
     async (ctx) => {
       type Method =
-        ServerApi.paths["/renderers/{rendererId}/target/graphic/load"]["post"];
+        ServerApi.paths["/renderers/{rendererId}/target/graphic/load"]["put"];
       try {
         const Req = z.object({
           parameters: z.object({
             path: z.object({
               rendererId: RendererId,
             }),
+            query: z.object({
+              renderTarget: RenderTargetIdentifier,
+            }),
           }),
           requestBody: z.object({
             content: z.object({
               "application/json": z.object({
-                renderTarget: RenderTargetIdentifier,
                 graphicId: GraphicId,
                 params: z.object({
                   data: z.unknown(),
@@ -457,8 +455,7 @@ export function setupServerApi(
         }
 
         const result = await rendererInstance.api.loadGraphic({
-          renderTarget:
-            request.requestBody.content["application/json"].renderTarget,
+          renderTarget: request.parameters.query.renderTarget,
           graphicId: request.requestBody.content["application/json"].graphicId,
           params: request.requestBody.content["application/json"].params,
         });
@@ -490,12 +487,14 @@ export function setupServerApi(
             path: z.object({
               rendererId: RendererId,
             }),
+            query: z.object({
+              renderTarget: RenderTargetIdentifier,
+              graphicTarget: GraphicTarget,
+            }),
           }),
           requestBody: z.object({
             content: z.object({
               "application/json": z.object({
-                renderTarget: RenderTargetIdentifier,
-                graphicTarget: GraphicTarget,
                 params: UpdateActionParams,
               }),
             }),
@@ -521,9 +520,8 @@ export function setupServerApi(
         }
 
         const result = await rendererInstance.api.invokeGraphicUpdateAction({
-          renderTarget:
-            request.requestBody.content["application/json"].renderTarget,
-          target: request.requestBody.content["application/json"].graphicTarget,
+          renderTarget: request.parameters.query.renderTarget,
+          target: request.parameters.query.graphicTarget,
           params: request.requestBody.content["application/json"].params,
         });
 
@@ -554,12 +552,14 @@ export function setupServerApi(
             path: z.object({
               rendererId: RendererId,
             }),
+            query: z.object({
+              renderTarget: RenderTargetIdentifier,
+              graphicTarget: GraphicTarget,
+            }),
           }),
           requestBody: z.object({
             content: z.object({
               "application/json": z.object({
-                renderTarget: RenderTargetIdentifier,
-                graphicTarget: GraphicTarget,
                 params: PlayActionParams,
               }),
             }),
@@ -585,9 +585,8 @@ export function setupServerApi(
         }
 
         const result = await rendererInstance.api.invokeGraphicPlayAction({
-          renderTarget:
-            request.requestBody.content["application/json"].renderTarget,
-          target: request.requestBody.content["application/json"].graphicTarget,
+          renderTarget: request.parameters.query.renderTarget,
+          target: request.parameters.query.graphicTarget,
           params: request.requestBody.content["application/json"].params,
         });
 
@@ -618,12 +617,14 @@ export function setupServerApi(
             path: z.object({
               rendererId: RendererId,
             }),
+            query: z.object({
+              renderTarget: RenderTargetIdentifier,
+              graphicTarget: GraphicTarget,
+            }),
           }),
           requestBody: z.object({
             content: z.object({
               "application/json": z.object({
-                renderTarget: RenderTargetIdentifier,
-                graphicTarget: GraphicTarget,
                 params: StopActionParams,
               }),
             }),
@@ -649,9 +650,8 @@ export function setupServerApi(
         }
 
         const result = await rendererInstance.api.invokeGraphicStopAction({
-          renderTarget:
-            request.requestBody.content["application/json"].renderTarget,
-          target: request.requestBody.content["application/json"].graphicTarget,
+          renderTarget: request.parameters.query.renderTarget,
+          target: request.parameters.query.graphicTarget,
           params: request.requestBody.content["application/json"].params,
         });
 
@@ -682,12 +682,14 @@ export function setupServerApi(
             path: z.object({
               rendererId: RendererId,
             }),
+            query: z.object({
+              renderTarget: RenderTargetIdentifier,
+              graphicTarget: GraphicTarget,
+            }),
           }),
           requestBody: z.object({
             content: z.object({
               "application/json": z.object({
-                renderTarget: RenderTargetIdentifier,
-                graphicTarget: GraphicTarget,
                 params: CustomActionParams,
               }),
             }),
@@ -713,9 +715,8 @@ export function setupServerApi(
         }
 
         const result = await rendererInstance.api.invokeGraphicCustomAction({
-          renderTarget:
-            request.requestBody.content["application/json"].renderTarget,
-          target: request.requestBody.content["application/json"].graphicTarget,
+          renderTarget: request.parameters.query.renderTarget,
+          target: request.parameters.query.graphicTarget,
           params: request.requestBody.content["application/json"].params,
         });
 
@@ -861,6 +862,21 @@ function getRequestObject<Method extends AnyMethod>(
       },
     },
   };
+  // auto-convert any JSON in query:
+  if (request.parameters?.query) {
+    for (const key of Object.keys(request.parameters.query)) {
+      const value = request.parameters.query[key];
+      if (typeof value === "string" && value.trim().startsWith("{")) {
+        try {
+          request.parameters.query[key] = JSON.parse(value);
+        } catch (e) {
+          // If parsing fails, keep the original value:
+          console.warn(`Failed to parse query parameter ${key}:`, e);
+        }
+      }
+    }
+  }
+
   return request as any;
 }
 function getKoaUrl(openApiUrl: string): string {

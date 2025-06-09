@@ -59,7 +59,11 @@ export class GraphicsStore {
     // Don't list Graphics that are marked for removal:
     if (await this.isGraphicMarkedForRemoval(id)) return undefined;
 
-    const manifestFilePath = path.join(this.FILE_PATH, folder, "manifest.json");
+    const manifestFilePath = path.join(
+      this.FILE_PATH,
+      folder,
+      this.manifestFilePath
+    );
 
     const pStat = fs.promises.stat(manifestFilePath);
 
@@ -96,7 +100,7 @@ export class GraphicsStore {
     const manifestPath = path.join(
       this.FILE_PATH,
       this.toFileName(id),
-      "manifest.json"
+      this.manifestFilePath
     );
     console.log("manifestPath", manifestPath);
     if (!(await this.fileExists(manifestPath))) return undefined;
@@ -121,22 +125,12 @@ export class GraphicsStore {
     id: string,
     localPath: string
   ): Promise<ServeFile | undefined> {
-    console.log("getGraphicResource");
+    // console.log("getGraphicResource");
     // const params =
     //   ctx.params as ServerAPI.Endpoints["getGraphicResource"]["params"];
     // const id: string = params.graphicId;
     // const version: string = params.graphicVersion;
     // const localPath: string = params.localPath;
-
-    console.log(
-      "url aaaa",
-      path.join(
-        this.FILE_PATH,
-        this.toFileName(id),
-
-        localPath
-      )
-    );
 
     return this.serveFile(
       path.join(
@@ -213,39 +207,27 @@ export class GraphicsStore {
 
       const files = await decompress(tempZipPath, decompressPath);
 
-      console.log("files", files);
-
       const uploadedGraphics: { id: string; version?: string }[] = [];
 
-      const manifests = files.filter((f) => f.path.endsWith("manifest.json"));
-      if (!manifests.length)
-        throw new Error("No manifest.json found in zip file");
-
-      // Use content to determine which files are manifest files:
-      //{
-      //  "$schema": "https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"
-      //}
-      // const manifests = []
+      // const manifests = [];
       // for (const f of files) {
-      //   if (!f.path.endsWith(".json")) continue
-      //   // Check if the file is a manifest file:
-      //   const content = await fs.promises.readFile(f.path, "utf-8");
-      //   if (
-      //     content.includes(`"$schema"`) &&
-      //     // content.includes(`"https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"`) &&
-      //     content.includes(`"https://ograf.ebu.io/
-      //   ) {
-      //     manifests.push(f)
+      //   if (await this.isManifestFile(f.path, f.data)) {
+      //     manifests.push(f);
       //   }
       // }
+      // if (!manifests.length)
+      //   throw new Error("No manifest files found in zip file");
+      let foundManifestCount = 0;
+      for (const file of files) {
+        const basePath = path.dirname(file.path);
 
-      for (const manifest of manifests) {
-        const basePath = path.dirname(manifest.path);
-        console.log("basePath", basePath);
+        if (!(await this.isManifestFile(file.path, file.data))) {
+          continue;
+        }
+        foundManifestCount++;
 
-        const manifestData = JSON.parse(
-          manifest.data.toString("utf8")
-        ) as GraphicsManifest;
+        const manifestDataStr = file.data.toString("utf8");
+        const manifestData = JSON.parse(manifestDataStr) as GraphicsManifest;
 
         const id = manifestData.id;
 
@@ -306,7 +288,18 @@ export class GraphicsStore {
           // Copy data:
           await fs.promises.writeFile(outputFilePath, innerFile.data);
         }
+        // Also, copy manifest to special file:
+
+        await fs.promises.writeFile(
+          path.join(folderPath, this.manifestFilePath),
+          manifestDataStr
+        );
+
         uploadedGraphics.push({ id });
+      }
+
+      if (foundManifestCount === 0) {
+        throw new Error("No manifest files found in zip file");
       }
 
       ctx.status = 200;
@@ -538,6 +531,73 @@ export class GraphicsStore {
       "__markedForRemoval"
     );
     return await this.fileExists(removalFilePath);
+  }
+  private async isManifestFile(
+    filePath: string,
+    fileContents: Buffer | string
+  ): Promise<boolean> {
+    if (!filePath.endsWith(".json")) return false;
+
+    // Use content to determine which files are manifest files:
+    //{
+    //  "$schema": "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json"
+    //}
+
+    // console.log("---", filePath);
+    let contentStr = undefined;
+    if (fileContents instanceof Buffer) {
+      try {
+        contentStr = fileContents.toString("utf8");
+      } catch (_err) {
+        console.log(`isManifestFile "${filePath}" check failed`, _err);
+        return false;
+      }
+    } else if (typeof fileContents === "string") {
+      contentStr = fileContents;
+    }
+    // const contentStr = await fs.promises.readFile(filePath, "utf-8");
+    const expectSchemaContent = `https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json`;
+    if (
+      !(
+        typeof contentStr === "string" &&
+        contentStr.includes(`"$schema"`) &&
+        contentStr.includes(`"${expectSchemaContent}"`)
+      )
+    ) {
+      console.log(
+        `isManifestFile "${filePath}" check failed`,
+        "initial content"
+      );
+      return false;
+    }
+
+    // Check that it's valid JSON:
+    try {
+      const content = JSON.parse(contentStr);
+
+      if (content.$schema !== expectSchemaContent) {
+        console.log(
+          `isManifestFile "${filePath}" check failed`,
+          "bad $schema",
+          content.$schema,
+          expectSchemaContent
+        );
+        return false;
+      }
+
+      return true;
+    } catch (err) {
+      console.error(
+        `isManifestFile "${filePath}" check failed`,
+        "Invalid JSON in manifest file",
+        filePath,
+        err
+      );
+      return false;
+    }
+  }
+  private get manifestFilePath(): string {
+    return "manifest.json";
   }
 }
 

@@ -89,12 +89,8 @@ async function retrieveServerData(serverApiUrl) {
   };
   {
     const response = await fetch(`${serverApiUrl}/ograf/v1/graphics`);
-    if (response.status >= 300)
-      throw new Error(
-        `HTTP response error: [${response.status}] ${JSON.stringify(
-          response.body
-        )}`
-      );
+    await handleBadResponse(response);
+
     const responseData = await response.json();
     if (!responseData.graphics)
       throw new Error(`Invalid response data: ${JSON.stringify(responseData)}`);
@@ -102,12 +98,8 @@ async function retrieveServerData(serverApiUrl) {
   }
   {
     const response = await fetch(`${serverApiUrl}/ograf/v1/renderers`);
-    if (response.status >= 300)
-      throw new Error(
-        `HTTP response error: [${response.status}] ${JSON.stringify(
-          response.body
-        )}`
-      );
+    await handleBadResponse(response);
+
     const responseData = await response.json();
     if (!responseData.renderers)
       throw new Error(`Invalid response data: ${JSON.stringify(responseData)}`);
@@ -127,12 +119,8 @@ function Renderer({
   React.useEffect(() => {
     fetch(`${serverApiUrl}/ograf/v1/renderers/${renderer.id}`)
       .then(async (response) => {
-        if (response.status >= 300)
-          throw new Error(
-            `HTTP response error: [${response.status}] ${JSON.stringify(
-              response.body
-            )}`
-          );
+        await handleBadResponse(response);
+
         const responseData = await response.json();
         if (!responseData.renderer)
           throw new Error(
@@ -156,13 +144,8 @@ function Renderer({
         }),
       }
     )
-      .then((response) => {
-        if (response.status >= 300)
-          throw new Error(
-            `HTTP response error: [${response.status}] ${JSON.stringify(
-              response.body
-            )}`
-          );
+      .then(async (response) => {
+        await handleBadResponse(response);
       })
       .catch(console.error);
   };
@@ -232,15 +215,10 @@ function RenderTargets({ serverApiUrl, serverData, renderer }) {
       if (!timeoutActive) return;
 
       fetch(`${serverApiUrl}/ograf/v1/renderers/${renderer.id}/`)
-        .then((response) => {
+        .then(async (response) => {
           if (!timeoutActive) return;
+          await handleBadResponse(response);
 
-          if (response.status >= 300)
-            throw new Error(
-              `HTTP response error: [${response.status}] ${JSON.stringify(
-                response.body
-              )}`
-            );
           return response.json();
         })
         .then((responseData) => {
@@ -386,7 +364,7 @@ function RendererCustomAction({ action, onAction }) {
 }
 
 function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
-  console.log("renderTarget", renderTarget);
+  // console.log("renderTarget", renderTarget);
   return (
     <div className="card" style={{ width: "10em", display: "inline-block" }}>
       <div className="card-body">
@@ -398,20 +376,15 @@ function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
               fetch(
                 `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/clear`,
                 {
-                  method: "POST",
+                  method: "PUT",
                   headers: { "Content-Type": "application/json" },
                   body: JSON.stringify({
                     filters: { renderTarget: renderTarget.renderTarget },
                   }),
                 }
               )
-                .then((response) => {
-                  if (response.status >= 300)
-                    throw new Error(
-                      `HTTP response error: [${
-                        response.status
-                      }] ${JSON.stringify(response.body)}`
-                    );
+                .then(async (response) => {
+                  await handleBadResponse(response);
                 })
                 .catch(console.error);
             }}
@@ -422,7 +395,7 @@ function RenderTarget({ serverApiUrl, serverData, renderer, renderTarget }) {
         <div>
           {renderTarget.graphicInstances.map((graphicInstance) => {
             return (
-              <div>
+              <div key={graphicInstance.graphicInstanceId}>
                 {graphicInstance.graphic.name} ({graphicInstance.graphic.id})
               </div>
             );
@@ -523,27 +496,23 @@ function QueuedGraphic({
   };
 
   const onAction = (actionName, params) => {
+    const queryParams = new URLSearchParams();
+    queryParams.append("renderTarget", JSON.stringify(renderTarget));
+    queryParams.append(
+      "graphicTarget",
+      JSON.stringify({ graphicId: graphic.id })
+    );
+
     fetch(
-      `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/${actionName}`,
+      `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/${actionName}?${queryParams}`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          renderTarget,
-          graphicTarget: {
-            graphicId: graphic.id,
-          },
-          params: params,
-        }),
+        body: JSON.stringify({ params: params }),
       }
     )
-      .then((response) => {
-        if (response.status >= 300)
-          throw new Error(
-            `HTTP response error: [${response.status}] ${JSON.stringify(
-              response.body
-            )}`
-          );
+      .then(async (response) => {
+        await handleBadResponse(response);
       })
       .catch(console.error);
   };
@@ -581,14 +550,17 @@ function QueuedGraphic({
           <div className="mb-3">
             <Button
               onClick={() => {
-                console.log("renderTarget", renderTarget);
+                const queryParams = new URLSearchParams();
+                queryParams.append(
+                  "renderTarget",
+                  JSON.stringify(renderTarget)
+                );
                 fetch(
-                  `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/load`,
+                  `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/load?${queryParams}`,
                   {
-                    method: "POST",
+                    method: "PUT",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
-                      renderTarget,
                       graphicId: graphic.id,
                       params: {
                         data: data,
@@ -596,13 +568,8 @@ function QueuedGraphic({
                     }),
                   }
                 )
-                  .then((response) => {
-                    if (response.status >= 300)
-                      throw new Error(
-                        `HTTP response error: [${
-                          response.status
-                        }] ${JSON.stringify(response.body)}`
-                      );
+                  .then(async (response) => {
+                    await handleBadResponse(response);
                   })
                   .catch(console.error);
               }}
@@ -656,13 +623,9 @@ function getGraphicInfo(serverApiUrl, graphic) {
   React.useEffect(() => {
     if (!graphicInfo) {
       fetch(`${serverApiUrl}/ograf/v1/graphics/${graphic.id}/`)
-        .then((response) => {
-          if (response.status >= 300)
-            throw new Error(
-              `HTTP response error: [${response.status}] ${JSON.stringify(
-                response.body
-              )}`
-            );
+        .then(async (response) => {
+          await handleBadResponse(response);
+
           return response.json();
         })
         .then((responseData) => {
@@ -789,4 +752,14 @@ function isEqual(a, b) {
 }
 function clone(o) {
   return JSON.parse(JSON.stringify(o));
+}
+async function handleBadResponse(response) {
+  if (!response.ok) {
+    // console.log(response.text);
+    throw new Error(
+      `HTTP response error: [${response.status}] ${JSON.stringify(
+        await response.text()
+      )}`
+    );
+  }
 }
