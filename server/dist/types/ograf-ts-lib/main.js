@@ -36,10 +36,12 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.GeneratedGraphicsManifest = exports.GraphicsAPI = void 0;
+exports.ServerApi = exports.GeneratedGraphicsManifest = exports.GraphicsAPI = void 0;
 exports.GraphicsAPI = __importStar(require("./apis/graphicsAPI"));
 __exportStar(require("./definitions/render"), exports);
 __exportStar(require("./definitions/types"), exports);
 __exportStar(require("./definitions/vendor"), exports);
 const GeneratedGraphicsManifest = __importStar(require("./generated/graphics-manifest"));
 exports.GeneratedGraphicsManifest = GeneratedGraphicsManifest;
+const ServerApi = __importStar(require("./generated/server-api"));
+exports.ServerApi = ServerApi;

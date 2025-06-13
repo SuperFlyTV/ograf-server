@@ -1,8 +1,6 @@
 import { ServerApi } from "./ograf-ts-lib/main";
 import {
-  RendererInfo,
   RendererManifest,
-  GraphicInstance,
   RendererInfo,
   RenderTargetInfo,
   RendererLoadGraphicPayload,

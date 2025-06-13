@@ -7,7 +7,6 @@ exports.GraphicsStore = void 0;
 const fs_1 = __importDefault(require("fs"));
 const mime_types_1 = __importDefault(require("mime-types"));
 const path_1 = __importDefault(require("path"));
-const lib_1 = require("../lib/lib");
 const decompress_1 = __importDefault(require("decompress"));
 class GraphicsStore {
     constructor() {
@@ -23,65 +22,78 @@ class GraphicsStore {
         // Also do a check now:
         this.removeExpiredGraphics().catch(console.error);
     }
-    async listGraphics(ctx) {
+    async listGraphics() {
         const folderList = await fs_1.default.promises.readdir(this.FILE_PATH);
         const graphics = [];
         for (const folder of folderList) {
-            const { id, version } = this.fromFileName(folder);
-            // Don't list Graphics that are marked for removal:
-            if (await this.isGraphicMarkedForRemoval(id, version))
-                continue;
-            const manifest = JSON.parse(await fs_1.default.promises.readFile(path_1.default.join(this.FILE_PATH, folder, "manifest.json"), "utf8"));
-            // Ensure the id and version match:
-            if (id !== manifest.id ||
-                (manifest.version !== undefined && version !== manifest.version)) {
-                console.error(`Folder name ${folder} does not match manifest id ${manifest.id} or version ${manifest.version}`);
+            let id;
+            try {
+                const o = this.fromFileName(folder);
+                id = o.id;
+            }
+            catch (e) {
+                console.error(e);
                 continue;
             }
-            graphics.push({
+            const graphicInfo = await this.getGraphicInfo(id);
+            if (!graphicInfo)
+                continue;
+            graphics.push(graphicInfo.info);
+        }
+        return graphics;
+    }
+    async getGraphicInfo(id) {
+        const folder = this.toFileName(id);
+        // Don't list Graphics that are marked for removal:
+        if (await this.isGraphicMarkedForRemoval(id))
+            return undefined;
+        const manifestFilePath = path_1.default.join(this.FILE_PATH, folder, this.manifestFilePath);
+        const pStat = fs_1.default.promises.stat(manifestFilePath);
+        const manifest = JSON.parse(await fs_1.default.promises.readFile(manifestFilePath, "utf8"));
+        // Ensure the id match:
+        if (id !== manifest.id) {
+            console.error(`Folder name ${folder} does not match manifest id ${manifest.id}`);
+            return undefined;
+        }
+        const stat = await pStat;
+        return {
+            info: {
                 id: manifest.id,
                 version: manifest.version,
                 name: manifest.name,
                 description: manifest.description,
                 author: manifest.author,
-            });
-        }
-        ctx.body = (0, lib_1.literal)({
-            graphics,
-        });
+                modified: Math.floor(stat.mtimeMs),
+            },
+            manifest: manifest, // the types don't exactly match, due to differences in generation
+        };
     }
-    async getGraphicManifest(ctx) {
-        const params = ctx.params;
-        const id = params.graphicId;
-        const version = params.graphicVersion;
-        const manifestPath = path_1.default.join(this.FILE_PATH, this.toFileName(id, version), "manifest.json");
-        // Don't return manifest if the Graphic is marked for removal:
-        if ((await this.fileExists(manifestPath)) &&
-            !(await this.isGraphicMarkedForRemoval(id, version))) {
-            const graphicManifest = JSON.parse(await fs_1.default.promises.readFile(manifestPath, "utf8"));
-            // TODO
-            // graphicManifest.totalSize =
-            // graphicManifest.fileCount =
-            if (graphicManifest) {
-                ctx.status = 200;
-                if (this.isImmutable(version)) {
-                    ctx.header["Cache-Control"] = "public, max-age=31536000, immutable";
-                }
-                else {
-                    // Never cache:
-                    ctx.header["Cache-Control"] = "no-store";
-                }
-                ctx.body = (0, lib_1.literal)({ graphicManifest });
-                return;
-            }
+    async getGraphicManifest(id) {
+        const manifestPath = path_1.default.join(this.FILE_PATH, this.toFileName(id), this.manifestFilePath);
+        console.log("manifestPath", manifestPath);
+        if (!(await this.fileExists(manifestPath)))
+            return undefined;
+        const graphicManifest = JSON.parse(await fs_1.default.promises.readFile(manifestPath, "utf8"));
+        if (!graphicManifest)
+            return undefined;
+        return graphicManifest;
+    }
+    async deleteGraphic(id, force) {
+        if (force) {
+            return this.actuallyDeleteGraphic(id);
         }
-        // else:
-        ctx.status = 404;
-        ctx.body = (0, lib_1.literal)({
-            code: 404,
-            message: `Graphic ${params.graphicId}-${params.graphicVersion} not found`,
-        });
-        return;
+        else {
+            return this.markGraphicForRemoval(id);
+        }
+    }
+    async getGraphicResource(id, localPath) {
+        // console.log("getGraphicResource");
+        // const params =
+        //   ctx.params as ServerAPI.Endpoints["getGraphicResource"]["params"];
+        // const id: string = params.graphicId;
+        // const version: string = params.graphicVersion;
+        // const localPath: string = params.localPath;
+        return this.serveFile(path_1.default.join(this.FILE_PATH, this.toFileName(id), localPath));
     }
     // async getGraphicModule(ctx: CTX): Promise<void> {
     //   const params =
@@ -103,29 +115,7 @@ class GraphicsStore {
     //     this.isImmutable(version)
     //   );
     // }
-    async getGraphicResource(ctx) {
-        console.log("getGraphicResource");
-        const params = ctx.params;
-        const id = params.graphicId;
-        const version = params.graphicVersion;
-        const localPath = params.localPath;
-        console.log("url aaaa", path_1.default.join(this.FILE_PATH, this.toFileName(id, version), localPath));
-        // Note: We DO serve resources even if the Graphic is marked for removal!
-        await this.serveFile(ctx, path_1.default.join(this.FILE_PATH, this.toFileName(id, version), localPath), this.isImmutable(version));
-    }
-    async deleteGraphic(ctx) {
-        const params = ctx.params;
-        const reqBody = ctx.request
-            .body;
-        if (reqBody.force) {
-            await this.actuallyDeleteGraphic(params.graphicId, params.graphicVersion);
-        }
-        else {
-            await this.markGraphicForRemoval(params.graphicId, params.graphicVersion);
-        }
-    }
     async uploadGraphic(ctx) {
-        var _a;
         console.log("uploadGraphic");
         // ctx.status = 501
         // ctx.body = literal<ServerAPI.ErrorReturnValue>({code: 501, message: 'Not implemented yet'})
@@ -137,10 +127,10 @@ class GraphicsStore {
         console.log("Uploaded file", file.originalname, file.size);
         if (!["application/x-zip-compressed", "application/zip"].includes(file.mimetype)) {
             ctx.status = 400;
-            ctx.body = (0, lib_1.literal)({
+            ctx.body = {
                 code: 400,
                 message: "Expected a zip file",
-            });
+            };
             return;
         }
         const tempZipPath = file.path;
@@ -157,41 +147,32 @@ class GraphicsStore {
         try {
             await cleanup();
             const files = await (0, decompress_1.default)(tempZipPath, decompressPath);
-            console.log("files", files);
             const uploadedGraphics = [];
-            const manifests = files.filter((f) => f.path.endsWith("manifest.json"));
-            if (!manifests.length)
-                throw new Error("No manifest.json found in zip file");
-            // Use content to determine which files are manifest files:
-            //{
-            //  "$schema": "https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"
-            //}
-            // const manifests = []
+            // const manifests = [];
             // for (const f of files) {
-            //   if (!f.path.endsWith(".json")) continue
-            //   // Check if the file is a manifest file:
-            //   const content = await fs.promises.readFile(f.path, "utf-8");
-            //   if (
-            //     content.includes(`"$schema"`) &&
-            //     // content.includes(`"https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"`) &&
-            //     content.includes(`"https://ograf.ebu.io/
-            //   ) {
-            //     manifests.push(f)
+            //   if (await this.isManifestFile(f.path, f.data)) {
+            //     manifests.push(f);
             //   }
             // }
-            for (const manifest of manifests) {
-                const basePath = path_1.default.dirname(manifest.path);
-                console.log("basePath", basePath);
-                const manifestData = JSON.parse(manifest.data.toString("utf8"));
+            // if (!manifests.length)
+            //   throw new Error("No manifest files found in zip file");
+            let foundManifestCount = 0;
+            for (const file of files) {
+                const basePath = path_1.default.dirname(file.path);
+                if (!(await this.isManifestFile(file.path, file.data))) {
+                    continue;
+                }
+                foundManifestCount++;
+                const manifestDataStr = file.data.toString("utf8");
+                const manifestData = JSON.parse(manifestDataStr);
                 const id = manifestData.id;
-                const version = (_a = manifestData.version) !== null && _a !== void 0 ? _a : "undefined";
-                const folderPath = path_1.default.join(this.FILE_PATH, this.toFileName(id, version));
+                const folderPath = path_1.default.join(this.FILE_PATH, this.toFileName(id));
                 // Check if the Graphic already exists
                 let alreadyExists = false;
                 if (await this.fileExists(folderPath)) {
                     alreadyExists = true;
                     // Remove the graphic if it already exists:
-                    await this.actuallyDeleteGraphic(id, version);
+                    await this.actuallyDeleteGraphic(id);
                     alreadyExists = false;
                     // if (await this.isGraphicMarkedForRemoval(id, version)) {
                     //   // If a pre-existing graphic is marked for removal, we can overwrite it.
@@ -206,10 +187,10 @@ class GraphicsStore {
                 if (alreadyExists) {
                     await cleanup();
                     ctx.status = 409; // conflict
-                    ctx.body = (0, lib_1.literal)({
+                    ctx.body = {
                         code: 409,
                         message: "Graphic already exists",
-                    });
+                    };
                     return;
                 }
                 // Copy the files to the right folder:
@@ -235,12 +216,17 @@ class GraphicsStore {
                     // Copy data:
                     await fs_1.default.promises.writeFile(outputFilePath, innerFile.data);
                 }
-                uploadedGraphics.push({ id, version });
+                // Also, copy manifest to special file:
+                await fs_1.default.promises.writeFile(path_1.default.join(folderPath, this.manifestFilePath), manifestDataStr);
+                uploadedGraphics.push({ id });
+            }
+            if (foundManifestCount === 0) {
+                throw new Error("No manifest files found in zip file");
             }
             ctx.status = 200;
-            ctx.body = (0, lib_1.literal)({
+            ctx.body = {
                 graphics: uploadedGraphics,
-            });
+            };
             // const graphicModule = files.find((f) => f.path.endsWith("graphic.mjs"));
             // if (!graphicModule) throw new Error("No graphic.mjs found in zip file");
             // let basePath = "";
@@ -255,7 +241,7 @@ class GraphicsStore {
             // const version = `${manifestData.version}`;
             // const folderPath = path.join(
             //   this.FILE_PATH,
-            //   this.toFileName(id, `${version}`)
+            //   this.toFileName(id, version)
             // );
             // // Check if the Graphic already exists
             // let alreadyExists = false;
@@ -318,17 +304,17 @@ class GraphicsStore {
             return false;
         }
     }
-    toFileName(id, version) {
-        return `${id}-${version}`;
+    toFileName(id) {
+        return `graphic-${id}`;
     }
     fromFileName(filename) {
-        const m = filename.match(/(.+)-([^-]+)/);
+        const m = filename.match(/graphic-(.+)/);
         if (!m)
             throw new Error(`Invalid filename ${filename}`);
-        return { id: m[1], version: m[2] };
+        return { id: m[1] };
     }
     isImmutable(version) {
-        // If the version is 0, the graphic is considered mutable
+        // If the version is "0", the graphic is considered mutable
         // ie, it is a non-production version, in development
         // Otherwise it is considered immutable.
         return `${version}` !== "0";
@@ -350,51 +336,52 @@ class GraphicsStore {
             lastModified: stat.mtime,
         };
     }
-    async serveFile(ctx, fullPath, immutable) {
+    async serveFile(fullPath) {
         const info = await this.getFileInfo(fullPath);
-        if (!info.found) {
-            ctx.status = 404;
-            ctx.body = (0, lib_1.literal)({
-                code: 404,
-                message: "File not found",
-            });
-            return;
-        }
-        ctx.type = info.mimeType;
-        ctx.length = info.length;
-        ctx.lastModified = info.lastModified;
-        if (immutable) {
-            ctx.header["Cache-Control"] = "public, max-age=31536000, immutable";
-        }
-        else {
-            // Never cache:
-            ctx.header["Cache-Control"] = "no-store";
-        }
+        if (!info.found)
+            return undefined;
+        // ctx.type = info.mimeType;
+        // ctx.length = info.length;
+        // ctx.lastModified = info.lastModified;
+        // if (immutable) {
+        //   ctx.header["Cache-Control"] = "public, max-age=31536000, immutable";
+        // } else {
+        //   // Never cache:
+        //   ctx.header["Cache-Control"] = "no-store";
+        // }
         const readStream = fs_1.default.createReadStream(fullPath);
-        ctx.body = readStream;
+        // ctx.body = readStream as any;
+        return {
+            mimeType: info.mimeType,
+            length: info.length,
+            lastModified: info.lastModified,
+            readStream: readStream,
+        };
     }
-    async actuallyDeleteGraphic(id, version) {
-        const folderPath = path_1.default.join(this.FILE_PATH, this.toFileName(id, version));
-        if (await this.fileExists(folderPath)) {
-            await fs_1.default.promises.rm(folderPath, { recursive: true });
-        }
+    async actuallyDeleteGraphic(id) {
+        const folderPath = path_1.default.join(this.FILE_PATH, this.toFileName(id));
+        if (!(await this.fileExists(folderPath)))
+            return false;
+        await fs_1.default.promises.rm(folderPath, { recursive: true });
+        return true;
     }
-    async markGraphicForRemoval(id, version) {
+    async markGraphicForRemoval(id) {
         // Mark the Graphic for removal, but keep it for a while.
         // The reason for this is to not delete a Graphic that is currently on-air
         // (which might break due to missing resources)
-        const folderPath = path_1.default.join(this.FILE_PATH, this.toFileName(id, version));
+        const folderPath = path_1.default.join(this.FILE_PATH, this.toFileName(id));
         const removalFilePath = path_1.default.join(folderPath, "__markedForRemoval");
-        if (await this.fileExists(folderPath)) {
-            fs_1.default.promises.writeFile(removalFilePath, `${Date.now() + this.REMOVAL_WAIT_TIME}`, "utf-8");
-        }
+        if (!(await this.fileExists(folderPath)))
+            return false;
+        await fs_1.default.promises.writeFile(removalFilePath, `${Date.now() + this.REMOVAL_WAIT_TIME}`, "utf-8");
+        return true;
     }
     /** Find any graphics that are due to be removed */
     async removeExpiredGraphics() {
         const folderList = await fs_1.default.promises.readdir(this.FILE_PATH);
         for (const folder of folderList) {
-            const { id, version } = this.fromFileName(folder);
-            if (!(await this.isGraphicMarkedForRemoval(id, version)))
+            const { id } = this.fromFileName(folder);
+            if (!(await this.isGraphicMarkedForRemoval(id)))
                 continue;
             const removalFilePath = path_1.default.join(this.FILE_PATH, folder, "__markedForRemoval");
             const removalTimeStr = await fs_1.default.promises.readFile(removalFilePath, "utf-8");
@@ -404,14 +391,61 @@ class GraphicsStore {
             }
             if (Date.now() > removalTime) {
                 // Time to remove the Graphic
-                await this.actuallyDeleteGraphic(id, version);
+                await this.actuallyDeleteGraphic(id);
             }
         }
     }
     /** Returns true if a graphic exists (and is not marked for removal) */
-    async isGraphicMarkedForRemoval(id, version) {
-        const removalFilePath = path_1.default.join(this.FILE_PATH, this.toFileName(id, version), "__markedForRemoval");
+    async isGraphicMarkedForRemoval(id) {
+        const removalFilePath = path_1.default.join(this.FILE_PATH, this.toFileName(id), "__markedForRemoval");
         return await this.fileExists(removalFilePath);
+    }
+    async isManifestFile(filePath, fileContents) {
+        if (filePath.endsWith(".ograf"))
+            return false;
+        // Use content to determine which files are manifest files:
+        //{
+        //  "$schema": "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json"
+        //}
+        // console.log("---", filePath);
+        let contentStr = undefined;
+        if (fileContents instanceof Buffer) {
+            try {
+                contentStr = fileContents.toString("utf8");
+            }
+            catch (_err) {
+                console.log(`isManifestFile "${filePath}" check failed`, _err);
+                return false;
+            }
+        }
+        else if (typeof fileContents === "string") {
+            contentStr = fileContents;
+        }
+        // const contentStr = await fs.promises.readFile(filePath, "utf-8");
+        const expectSchemaContent = `https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json`;
+        if (!(typeof contentStr === "string" &&
+            contentStr.includes(`"$schema"`) &&
+            contentStr.includes(`"${expectSchemaContent}"`))) {
+            console.log(`isManifestFile "${filePath}" check failed`, "initial content");
+            return false;
+        }
+        // Check that it's valid JSON:
+        try {
+            const content = JSON.parse(contentStr);
+            if (content.$schema !== expectSchemaContent) {
+                console.log(`isManifestFile "${filePath}" check failed`, "bad $schema", content.$schema, expectSchemaContent);
+                return false;
+            }
+            return true;
+        }
+        catch (err) {
+            console.error(`isManifestFile "${filePath}" check failed`, "Invalid JSON in manifest file", filePath, err);
+            return false;
+        }
+    }
+    get manifestFilePath() {
+        // internal manifest file name
+        return "manifest.json";
     }
 }
 exports.GraphicsStore = GraphicsStore;
