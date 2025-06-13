@@ -536,7 +536,7 @@ export class GraphicsStore {
     filePath: string,
     fileContents: Buffer | string
   ): Promise<boolean> {
-    if (!filePath.endsWith(".json")) return false;
+    if (filePath.endsWith(".ograf")) return false;
 
     // Use content to determine which files are manifest files:
     //{
@@ -597,6 +597,7 @@ export class GraphicsStore {
     }
   }
   private get manifestFilePath(): string {
+    // internal manifest file name
     return "manifest.json";
   }
 }
