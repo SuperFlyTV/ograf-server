@@ -31,6 +31,7 @@
         const graphicCache = new GraphicCache(serverApiUrl);
         const layersManager = new LayersManager(graphicCache);
         const rendererApi = new RendererApiHandler(layersManager);
+
         // Connect to Server:
         await rendererApi.connect(rendererApiUrl + "/rendererApi/v1");
       }
@@ -78,6 +79,8 @@
           this.id = 0;
           this.waitingForReply = new Map();
           this.ws = null;
+          this.renderCharacteristics = {}; // this. components["schemas"]["RenderCharacteristics"]
+
           this.actions = {
             "shake-it": (params) => {
               console.log("params", params);
@@ -109,6 +112,11 @@
           /** Unix timestamp, last reconnect attempt*/
           this.lastReconnect = 0;
 
+
+          fetch('https://ograf.ebu.io').then().catch(() => {
+            this.renderCharacteristics.isConnected
+          })
+
           // Reconnection logic:
           setInterval(() => {
             if (!this.rendererApiUrl) return;
@@ -120,6 +128,37 @@
             this.lastReconnect = Date.now();
             this.connect();
           }, 1000);
+          window.onresize = () => {
+            this._updateResolution();
+          };
+          this._updateResolution();
+
+          // Determine FPS:
+          let lastTime = Date.now();
+          let fpsMeasurements = [];
+          const updateFPS = () => {
+            const duration = Date.now() - lastTime;
+            lastTime = Date.now();
+
+            fpsMeasurements.push(1000 / duration);
+            // if (fpsMeasurements.length > 5)
+            // fpsMeasurements.sort((a, b) => a - b);
+            if (fpsMeasurements.length > 5) {
+              fpsMeasurements.shift();
+              this.renderCharacteristics.frameRate = Math.round(
+                fpsMeasurements.reduce((a, b) => a + b, 0) /
+                  fpsMeasurements.length
+              );
+              // console.log(
+              //   "FPS",
+              //   this.renderCharacteristics.frameRate,
+              //   fpsMeasurements[0],
+              //   fpsMeasurements[fpsMeasurements.length - 1]
+              // );
+            }
+            window.requestAnimationFrame(updateFPS);
+          };
+          window.requestAnimationFrame(updateFPS);
         }
         connect(rendererApiUrl) {
           if (rendererApiUrl) this.rendererApiUrl = rendererApiUrl;
@@ -133,10 +172,21 @@
             this.connected = true;
 
             // The first thing the render MUST do after connecting is send a "register" message
-            this._sendMessage("register", {
-              info: this.getInfo().rendererInfo,
-            })
-              .then((response) => {
+
+            Promise.resolve()
+              .then(async () => {
+                // Wait a bit, to allow for the fps measurement to have stabilized before registering:
+                for (let i = 0; i < 5; i++) {
+                  if (!this.renderCharacteristics.frameRate) {
+                    await sleep(100);
+                  }
+                }
+                console.log("register", this.renderCharacteristics);
+
+                const response = await this._sendMessage("register", {
+                  info: this.getInfo().rendererInfo,
+                });
+
                 console.log("Registered, ready to go!");
                 this.rendererId = response.rendererId;
               })
@@ -323,7 +373,7 @@
                 },
                 default: this.layersManager.getAllLayers()[0].renderTarget,
               },
-              // renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
+              renderCharacteristics: this.renderCharacteristics,
               status: {
                 status: "ok", // OK, WARNING, ERROR
                 // message: ''
@@ -351,6 +401,12 @@
 
           return {
             renderTargetInfo: layer.getInfo(),
+          };
+        }
+        _updateResolution() {
+          this.renderCharacteristics.resolution = {
+            width: window.innerWidth,
+            height: window.innerHeight,
           };
         }
         /** Invokes an action on the Renderer. Actions are defined by the Renderer Manifest */
@@ -769,6 +825,9 @@
 
       function pathJoin(paths) {
         return paths.join("/").replace(/\/+/g, "/");
+      }
+      function sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
       }
     </script>
 
