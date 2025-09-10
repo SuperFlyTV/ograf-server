@@ -17,11 +17,16 @@ export class GraphicsStore {
     // Ensure the directory exists
     fs.mkdirSync(this.FILE_PATH, { recursive: true });
 
+    this.init().catch(console.error);
+  }
+  private async init() {
+    await this.migrateOldFolders();
+
     setInterval(() => {
       this.removeExpiredGraphics().catch(console.error);
     }, 1000 * 3600 * 24); // Check every 24 hours
     // Also do a check now:
-    this.removeExpiredGraphics().catch(console.error);
+    await this.removeExpiredGraphics();
   }
   /** Find a manifest file in a folder */
   private async findManifestFile(graphicsFolder: string): Promise<string> {
@@ -157,33 +162,8 @@ export class GraphicsStore {
     );
   }
 
-  // async getGraphicModule(ctx: CTX): Promise<void> {
-  //   const params =
-  //     ctx.params as ServerAPI.Endpoints["getGraphicModule"]["params"];
-  //   const id: string = params.graphicId;
-  //   const version: string = params.graphicVersion;
-
-  //   // Don't return graphic if the Graphic is marked for removal:
-  //   if (await this.isGraphicMarkedForRemoval(id, version)) {
-  //     ctx.status = 404;
-  //     ctx.body = literal<ServerAPI.ErrorReturnValue>({
-  //       code: 404,
-  //       message: "File not found",
-  //     });
-  //     return;
-  //   }
-
-  //   await this.serveFile(
-  //     ctx,
-  //     path.join(this.FILE_PATH, this.toFileName(id, version), "graphic.mjs"),
-  //     this.isImmutable(version)
-  //   );
-  // }
-
   async uploadGraphic(ctx: CTX): Promise<void> {
     console.log("uploadGraphic");
-    // ctx.status = 501
-    // ctx.body = literal<ServerAPI.ErrorReturnValue>({code: 501, message: 'Not implemented yet'})
 
     // Expect a zipped file that contains the Graphic
     const file = ctx.request.file;
@@ -547,6 +527,45 @@ export class GraphicsStore {
         // Time to remove the Graphic
         await this.actuallyDeleteGraphic(id);
       }
+    }
+  }
+
+  /** Find any folders that are of from the old version, and migrate them */
+  private async migrateOldFolders() {
+    const folderList = await fs.promises.readdir(this.FILE_PATH);
+    for (const folder of folderList) {
+      let fileNameIsOk = false;
+      try {
+        this.fromFileName(folder);
+        fileNameIsOk = true;
+      } catch (e) {
+        if (`${e}`.match(/Invalid filename/)) {
+          fileNameIsOk = false;
+        } else throw e;
+      }
+      if (fileNameIsOk) continue;
+
+      try {
+        // Find manifest in folder:
+        const manifestFilePath = await this.findManifestFile(
+          path.join(this.FILE_PATH, folder)
+        );
+
+        const manifest = JSON.parse(
+          await fs.promises.readFile(manifestFilePath, "utf8")
+        ) as GraphicsManifest;
+
+        // Rename the folder using the manifest id:
+        const newFolderName = this.toFileName(manifest.id);
+        await fs.promises.rename(
+          path.join(this.FILE_PATH, folder),
+          path.join(this.FILE_PATH, newFolderName)
+        );
+      } catch (err) {
+        if (`${err}`.match(/No OGraf manifest found/)) continue;
+        else throw err;
+      }
+      console.error(`Unknown folder "${folder}"`);
     }
   }
 
