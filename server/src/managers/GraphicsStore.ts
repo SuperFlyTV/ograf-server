@@ -23,7 +23,24 @@ export class GraphicsStore {
     // Also do a check now:
     this.removeExpiredGraphics().catch(console.error);
   }
+  /** Find a manifest file in a folder */
+  private async findManifestFile(graphicsFolder: string): Promise<string> {
+    const files = await fs.promises.readdir(graphicsFolder, {
+      withFileTypes: true,
+    });
+    for (const file of files) {
+      if (
+        file.isFile() &&
+        (file.name.endsWith(".ograf.json") || // Current v1 requirement, as of 2025-07-13
+          file.name.endsWith(".ograf") || // File name from 2025-06-13 to 2025-07-13
+          file.name === "manifest.json") // Legacy, initial manifest file name
+      ) {
+        return path.join(graphicsFolder, file.name);
+      }
+    }
 
+    throw new Error(`No OGraf manifest found in folder ${graphicsFolder}`);
+  }
   async listGraphics(): Promise<
     ServerApi.components["schemas"]["GraphicInfo"][]
   > {
@@ -39,6 +56,8 @@ export class GraphicsStore {
         console.error(e);
         continue;
       }
+
+      if (await this.isGraphicMarkedForRemoval(id)) continue;
 
       const graphicInfo = await this.getGraphicInfo(id);
       if (!graphicInfo) continue;
@@ -59,10 +78,8 @@ export class GraphicsStore {
     // Don't list Graphics that are marked for removal:
     if (await this.isGraphicMarkedForRemoval(id)) return undefined;
 
-    const manifestFilePath = path.join(
-      this.FILE_PATH,
-      folder,
-      this.manifestFilePath
+    const manifestFilePath = await this.findManifestFile(
+      path.join(this.FILE_PATH, folder)
     );
 
     const pStat = fs.promises.stat(manifestFilePath);
@@ -97,10 +114,8 @@ export class GraphicsStore {
   async getGraphicManifest(
     id: string
   ): Promise<ServerApi.components["schemas"]["GraphicManifest"] | undefined> {
-    const manifestPath = path.join(
-      this.FILE_PATH,
-      this.toFileName(id),
-      this.manifestFilePath
+    const manifestPath = await this.findManifestFile(
+      path.join(this.FILE_PATH, this.toFileName(id))
     );
     console.log("manifestPath", manifestPath);
     if (!(await this.fileExists(manifestPath))) return undefined;
@@ -210,6 +225,18 @@ export class GraphicsStore {
       const uploadedGraphics: { id: string; version?: string }[] = [];
 
       // const manifests = [];
+      // const manifests = files.filter(
+      //   (f) =>
+      //     f.path.endsWith(".ograf.json") || f.path.endsWith("manifest.json")
+      // );
+      // if (!manifests.length)
+      //   throw new Error("No OGraf manifests found in zip file");
+
+      // Use content to determine which files are manifest files:
+      //{
+      //  "$schema": "https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"
+      //}
+      // const manifests = []
       // for (const f of files) {
       //   if (await this.isManifestFile(f.path, f.data)) {
       //     manifests.push(f);
