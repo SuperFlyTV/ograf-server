@@ -365,10 +365,16 @@
         async loadGraphic(params) {
           // JSON RPC Method
           const layer = this.layersManager.getLayer(params.renderTarget);
-          if (!layer)
+          if (!layer) {
+            console.log(
+              "layers",
+              this.layersManager.getAllLayers(),
+              renderTarget.layerId
+            );
             throw new Error(
               `Layer not found: ${JSON.stringify(params.renderTarget)}`
             );
+          }
 
           console.log("params", params);
           return layer.loadGraphic(params.graphicId, params.params);
@@ -385,7 +391,9 @@
             );
             if (!layer)
               throw new Error(
-                `Layer not found: ${JSON.stringify(params.renderTarget)}`
+                `Layer not found: ${JSON.stringify(
+                  params.filters?.renderTarget
+                )}`
               );
             layers = [layer];
           } else {

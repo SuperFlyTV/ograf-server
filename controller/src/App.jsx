@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Button, Form, Dropdown, ButtonGroup } from "react-bootstrap";
-import { getDefaultDataFromSchema } from "./GDD/gdd/data.js";
-import { GDDGUI } from "./GDD/gdd-gui.jsx";
+
+import { getDefaultDataFromSchema } from "ograf-form";
 
 const SERVER_API_URL = "http://localhost:8080";
 
@@ -75,8 +75,6 @@ export function App() {
             />
           ))}
         </div>
-
-        {/* <GDDExample /> */}
       </div>
     </div>
   );
@@ -313,43 +311,79 @@ function RenderTargets({ serverApiUrl, serverData, renderer }) {
 function RenderTargetPicker({ rendererInfo, onSelectRenderTarget }) {
   const schema = rendererInfo.renderTargetSchema;
 
-  const initialData = schema ? getDefaultDataFromSchema(schema) : {};
+  const formRef = React.useRef();
 
-  const [data, setData] = React.useState(undefined);
+  const [data, setData] = React.useState(null);
 
-  const onDataSave = (d) => {
-    const newData = JSON.parse(JSON.stringify(d));
-    setData(newData);
+  const onDataChange = React.useCallback((newData) => {
+    setData(JSON.parse(JSON.stringify(newData)));
     onSelectRenderTarget(newData);
-  };
+  });
 
   React.useEffect(() => {
-    onDataSave(initialData);
-  }, []);
+    if (data !== null) return;
+    const initialData = schema ? getDefaultDataFromSchema(schema) : {};
+    onDataChange(initialData);
+  }, [data]);
+
+  React.useLayoutEffect(() => {
+    if (formRef.current) {
+      const listener = (e) => onDataChange(e.detail.data);
+      formRef.current.addEventListener("onChange", listener);
+      return () => {
+        formRef.current.removeEventListener("onChange", listener);
+      };
+    }
+  });
 
   return (
     <div>
-      <GDDGUI schema={schema} data={data} setData={onDataSave} />
+      <superflytv-ograf-form
+        ref={formRef}
+        schema={JSON.stringify(schema)}
+        data={JSON.stringify(data)}
+      ></superflytv-ograf-form>
     </div>
   );
 }
 
 function RendererCustomAction({ action, onAction }) {
-  const initialData = action.schema
-    ? getDefaultDataFromSchema(action.schema)
-    : {};
   const schema = action.schema;
 
-  const [data, setData] = React.useState(initialData);
+  const formRef = React.useRef();
 
-  const onDataSave = (d) => {
-    setData(JSON.parse(JSON.stringify(d)));
-  };
+  const [data, setData] = React.useState(null);
+
+  const onDataChange = React.useCallback((newData) => {
+    setData(JSON.parse(JSON.stringify(newData)));
+  });
+
+  React.useEffect(() => {
+    if (data !== null) return;
+    const initialData = schema ? getDefaultDataFromSchema(schema) : {};
+    onDataChange(initialData);
+  }, [data]);
+
+  React.useLayoutEffect(() => {
+    if (formRef.current) {
+      const listener = (e) => onDataChange(e.detail.data);
+      formRef.current.addEventListener("onChange", listener);
+      return () => {
+        formRef.current.removeEventListener("onChange", listener);
+      };
+    }
+  });
 
   return (
     <div>
       <div>
-        {schema && <GDDGUI schema={schema} data={data} setData={onDataSave} />}
+        {schema && (
+          <superflytv-ograf-form
+            ref={formRef}
+            schema={JSON.stringify(schema)}
+            data={JSON.stringify(data)}
+          ></superflytv-ograf-form>
+        )}
       </div>
       <Button
         onClick={() => {
@@ -555,7 +589,7 @@ function QueuedGraphic({
                   "renderTarget",
                   JSON.stringify(renderTarget)
                 );
-                fetch(
+                apiFetch(
                   `${serverApiUrl}/ograf/v1/renderers/${renderer.id}/target/graphic/load?${queryParams}`,
                   {
                     method: "PUT",
@@ -567,11 +601,7 @@ function QueuedGraphic({
                       },
                     }),
                   }
-                )
-                  .then(async (response) => {
-                    await handleBadResponse(response);
-                  })
-                  .catch(console.error);
+                );
               }}
             >
               Load
@@ -652,10 +682,27 @@ function getGraphicInfo(serverApiUrl, graphic) {
 }
 
 function GraphicsDefaultActions({ schema, onAction, onDataSave, data }) {
+  const formRef = React.useRef();
+  React.useLayoutEffect(() => {
+    if (formRef.current) {
+      const listener = (e) => onDataSave(e.detail.data);
+      formRef.current.addEventListener("onChange", listener);
+      return () => {
+        formRef.current.removeEventListener("onChange", listener);
+      };
+    }
+  });
+
   return (
     <div>
       <div>
-        {schema && <GDDGUI schema={schema} data={data} setData={onDataSave} />}
+        {schema && (
+          <superflytv-ograf-form
+            ref={formRef}
+            schema={JSON.stringify(schema)}
+            data={JSON.stringify(data)}
+          ></superflytv-ograf-form>
+        )}
       </div>
       <div>
         <ButtonGroup>
@@ -705,10 +752,27 @@ function GraphicsCustomAction({ action, onAction }) {
     setData(JSON.parse(JSON.stringify(d)));
   };
 
+  const formRef = React.useRef();
+  React.useLayoutEffect(() => {
+    if (formRef.current) {
+      const listener = (e) => onDataSave(e.detail.data);
+      formRef.current.addEventListener("onChange", listener);
+      return () => {
+        formRef.current.removeEventListener("onChange", listener);
+      };
+    }
+  });
+
   return (
     <div>
       <div>
-        {schema && <GDDGUI schema={schema} data={data} setData={onDataSave} />}
+        {schema && (
+          <superflytv-ograf-form
+            ref={formRef}
+            schema={JSON.stringify(schema)}
+            data={JSON.stringify(data)}
+          ></superflytv-ograf-form>
+        )}
       </div>
       <Button
         onClick={() => {
@@ -752,6 +816,14 @@ function isEqual(a, b) {
 }
 function clone(o) {
   return JSON.parse(JSON.stringify(o));
+}
+function apiFetch(url, params) {
+  // console.log(url, params);
+  fetch(url, params)
+    .then(async (response) => {
+      await handleBadResponse(response);
+    })
+    .catch(console.error);
 }
 async function handleBadResponse(response) {
   if (!response.ok) {
