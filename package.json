@@ -11,5 +11,6 @@
     "start": "cd server && npm run start",
     "dev": "cd server && npm run dev",
     "dev:controller": "cd controller && npm run dev"
-  }
+  },
+  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }

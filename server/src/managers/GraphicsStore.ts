@@ -582,7 +582,7 @@ export class GraphicsStore {
     filePath: string,
     fileContents: Buffer | string
   ): Promise<boolean> {
-    if (filePath.endsWith(".ograf")) return false;
+    if (filePath.endsWith(".ograf")) return true;
 
     // Use content to determine which files are manifest files:
     //{
