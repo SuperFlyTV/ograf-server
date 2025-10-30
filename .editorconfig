@@ -1,0 +1,20 @@
+root = true
+
+[*]
+indent_style = tab
+charset = utf-8
+trim_trailing_whitespace = true
+end_of_line = lf
+insert_final_newline = true
+
+[*.{yml,yaml}]
+indent_style = space
+indent_size = 2
+
+[*.{md,diff,patch}]
+# Trailing whitespace is meaningful in these file types
+trim_trailing_whitespace = false
+
+[*.md]
+# Markdown files indent with spaces, but sometimes include code blocks that use tabs
+indent_style = unset

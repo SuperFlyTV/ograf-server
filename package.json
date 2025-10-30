@@ -1,16 +1,16 @@
 {
   "name": "ograf-server",
   "version": "1.0.0",
-  "main": "index.js",
   "repository": "git@github.com:SuperFlyTV/ograf-server.git",
-  "author": "Johan Nyman <johan@nytamin.se>",
+  "author": "Johan Nyman <johan@superfly.tv>",
   "license": "MIT",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "install": "cd controller && npm install && cd ../server && npm install",
-    "build": "cd controller && npm run build && cd ../server && npm run build",
-    "start": "cd server && npm run start",
-    "dev": "cd server && npm run dev",
-    "dev:controller": "cd controller && npm run dev"
+    "build": "yarn workspaces foreach --all -pt run build"
   },
-  "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
+  "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
+  "packageManager": "yarn@4.6.0"
 }
