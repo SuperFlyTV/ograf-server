@@ -1,7 +1,7 @@
 import { action, autorun, makeObservable, observable, ObservableMap } from 'mobx'
 import { OgrafApi } from '../lib/ografApi.js'
 import { serverDataStore } from './serverData.js'
-import * as OGraf from '../lib/ograf/server-api.js'
+import * as OGraf from 'ograf'
 import { getDefaultDataFromSchema } from 'ograf-form'
 import { clone } from '../lib/lib.js'
 
@@ -54,7 +54,7 @@ class AppSettings {
 
 		return renderer?.id
 	}
-	public getSelectedRenderer(): OGraf.components['schemas']['RendererInfo'] | undefined {
+	public getSelectedRenderer(): OGraf.ServerApi.components['schemas']['RendererInfo'] | undefined {
 		const id = this.getSelectedRendererId()
 		if (!id) return undefined
 		return serverDataStore.renderersInfo.get(id)

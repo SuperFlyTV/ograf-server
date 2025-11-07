@@ -126,13 +126,6 @@ export class GraphicsStore {
 		}
 	}
 	async getGraphicResource(id: string, localPath: string): Promise<ServeFile | undefined> {
-		// console.log("getGraphicResource");
-		// const params =
-		//   ctx.params as ServerAPI.Endpoints["getGraphicResource"]["params"];
-		// const id: string = params.graphicId;
-		// const version: string = params.graphicVersion;
-		// const localPath: string = params.localPath;
-
 		return this.serveFile(
 			path.join(
 				this.FILE_PATH,
@@ -148,9 +141,6 @@ export class GraphicsStore {
 
 		// Expect a zipped file that contains the Graphic
 		const file = (ctx.request as any).file
-		// console.log('file', ctx.request.file)
-		// console.log('files', ctx.request.files)
-		// console.log('body', ctx.request.body)
 
 		console.log('Uploaded file', file.originalname, file.size)
 
@@ -191,7 +181,7 @@ export class GraphicsStore {
 
 			// Use content to determine which files are manifest files:
 			//{
-			//  "$schema": "https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"
+			//  "$schema": "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json"
 			//}
 			// const manifests = []
 			// for (const f of files) {

@@ -36,8 +36,7 @@ export class OgrafApi {
 			let baseUrl = this.baseURL
 			if (!baseUrl.endsWith('/')) baseUrl += '/'
 			const url0 = url.toString().replace(this.BASE_URL_TEMPLATE, '')
-			const fullUrl = this.baseURL + url0
-			// console.log("fetch", url0);
+			const fullUrl = baseUrl + url0
 
 			options = options ?? {}
 			options.signal = AbortSignal.timeout(3000)
@@ -319,8 +318,6 @@ export class OgrafApi {
 			this.BASE_URL_TEMPLATE
 		)
 
-		console.log(url0, body)
-
 		const response = await this.fetch<Method>(url0, false, {
 			method: 'POST',
 			body: JSON.stringify(body),
@@ -391,7 +388,6 @@ export class OgrafApi {
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
 
-		console.log(url0, body)
 		const response = await this.fetch<Method>(url0, false, {
 			method: 'put',
 			body: JSON.stringify(body),

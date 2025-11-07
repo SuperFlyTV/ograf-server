@@ -66,7 +66,9 @@ export const OGrafForm: React.FC<{
 			}
 			const el = formRef.current
 			el.addEventListener('change', listener)
-			return () => el.removeEventListener('change', listener)
+			return () => {
+				el.removeEventListener('change', listener)
+			}
 		}
 		return
 	})

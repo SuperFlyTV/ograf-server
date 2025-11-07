@@ -1,5 +1,5 @@
 {
-  "name": "@ograf-server/controller",
+  "name": "@ograf-server/renderer-layer",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
@@ -18,15 +18,10 @@
     "prettier": "^3.6.2",
     "sass": "1.77.6",
     "typescript": "^5.9.3",
-    "vite": "^5.4.1"
+    "vite": "^5.4.1",
+    "vite-plugin-svgr": "^4.5.0"
   },
   "dependencies": {
-    "@emotion/react": "^11.14.0",
-    "@emotion/styled": "^11.14.1",
-    "@fontsource/roboto": "^5.2.8",
-    "@mui/icons-material": "^7.3.4",
-    "@mui/material": "^7.3.4",
-    "jsonschema": "^1.4.1",
     "mobx": "^6.15.0",
     "mobx-react": "^9.2.1",
     "ograf": "1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0",

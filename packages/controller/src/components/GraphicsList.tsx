@@ -167,6 +167,8 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 										graphicId: queuedGraphic.graphicId,
 										graphicInstanceId: r.content.graphicInstanceId,
 									})
+
+									serverDataStore.triggerReloadData(`renderTarget::${JSON.stringify(queuedGraphic.renderTarget)}`)
 								}
 							})
 							.catch(console.error)

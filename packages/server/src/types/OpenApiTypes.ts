@@ -298,7 +298,7 @@ export const CustomActionParams = z.object({
 //     "schema-2": z.object({
 //
 //
-//         $schema: "https://ograf.ebu.io/v1-draft-0/specification/json-schemas/graphics/schema.json"
+//         $schema: "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json"
 //
 //         id: z.string(),
 //

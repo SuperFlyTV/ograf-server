@@ -1,4 +1,4 @@
-import { action, makeObservable, observable } from 'mobx'
+import { action, makeObservable, observable, runInAction } from 'mobx'
 
 class SentCommands {
 	public sentCommands: SentCommand[] = []
@@ -6,6 +6,11 @@ class SentCommands {
 	constructor() {
 		makeObservable(this, {
 			sentCommands: observable,
+		})
+	}
+	clear() {
+		runInAction(() => {
+			this.sentCommands.splice(0, this.sentCommands.length)
 		})
 	}
 	addCommand = action((cmd: Omit<SentCommand, 'key'>) => {

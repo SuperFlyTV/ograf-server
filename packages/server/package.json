@@ -4,9 +4,9 @@
   "main": "src/main.ts",
   "license": "MIT",
   "scripts": {
-    "dev": "nodemon --watch src --verbose src/main.ts",
     "build": "tsc",
-    "start": "ts-node src/main.ts",
+    "dev": "run build && run start",
+    "start": "node dist/main.js",
     "lint:raw": "eslint",
     "lint": "run lint:raw .",
     "lint-fix": "run lint --fix"

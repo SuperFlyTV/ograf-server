@@ -1,6 +1,6 @@
 import { action, autorun, computed, makeObservable, observable, ObservableMap, reaction, runInAction } from 'mobx'
 import { OgrafApi } from '../lib/ografApi.js'
-import * as OGraf from '../lib/ograf/server-api.js'
+import * as OGraf from 'ograf'
 import { appSettingsStore } from './appSettings.js'
 import { isEqual } from '../lib/lib.js'
 
@@ -11,17 +11,17 @@ class ServerData {
 	public connectedStatus: string = 'Initializing'
 	public isConnected: boolean = false
 	public lastError: string | null = null
-	public graphicsList: OGraf.components['schemas']['GraphicInfo'][] = []
-	public renderersList: OGraf.paths['/renderers']['get']['responses'][200]['content']['application/json']['renderers'] =
+	public graphicsList: OGraf.ServerApi.components['schemas']['GraphicInfo'][] = []
+	public renderersList: OGraf.ServerApi.paths['/renderers']['get']['responses'][200]['content']['application/json']['renderers'] =
 		[]
-	public serverInfo: OGraf.paths['/']['get']['responses'][200]['content']['application/json'] | undefined
+	public serverInfo: OGraf.ServerApi.paths['/']['get']['responses'][200]['content']['application/json'] | undefined
 
-	public renderersInfo = new ObservableMap<string, OGraf.components['schemas']['RendererInfo']>()
+	public renderersInfo = new ObservableMap<string, OGraf.ServerApi.components['schemas']['RendererInfo']>()
 	public graphicsInfo = new ObservableMap<
 		string,
 		{
-			graphic: OGraf.components['schemas']['GraphicInfo']
-			manifest: OGraf.components['schemas']['GraphicManifest']
+			graphic: OGraf.ServerApi.components['schemas']['GraphicInfo']
+			manifest: OGraf.ServerApi.components['schemas']['GraphicManifest']
 		}
 	>()
 	public graphicsInstanceMap = new ObservableMap<string, GraphicsInstanceMapEntry>()
@@ -46,17 +46,26 @@ class ServerData {
 			// fetch: flow
 		})
 
+		// Trigger initial load:
 		this.triggerReloadData(true)
 
 		// Trigger reload if any of these change:
 		reaction(
-			() => [
-				appSettingsStore.serverApiUrl,
-				appSettingsStore.selectedRendererId,
-				appSettingsStore.queuedGraphics.entries(),
-			],
+			() => appSettingsStore.serverApiUrl,
 			() => {
 				this.triggerReloadData(true)
+			}
+		)
+		reaction(
+			() => appSettingsStore.selectedRendererId,
+			() => {
+				this.triggerReloadData('renderer')
+			}
+		)
+		reaction(
+			() => appSettingsStore.queuedGraphics.entries(),
+			() => {
+				this.triggerReloadData('graphic')
 			}
 		)
 
@@ -76,9 +85,9 @@ class ServerData {
 		// });
 	}
 
-	public triggerReloadData(now?: boolean) {
+	public triggerReloadData(asap: boolean | string) {
 		if (this._reloadDataTimeout !== undefined) {
-			if (now) clearTimeout(this._reloadDataTimeout)
+			if (asap) clearTimeout(this._reloadDataTimeout)
 			else return
 		}
 		this._reloadDataTimeout = setTimeout(
@@ -89,7 +98,7 @@ class ServerData {
 						// wait for previous execution to finish:
 						if (this._reloadDataPromise !== undefined) await this._reloadDataPromise
 
-						this._reloadDataPromise = this._reloadData()
+						this._reloadDataPromise = this._reloadData(asap)
 						return this._reloadDataPromise
 					})
 					.catch((e) => {
@@ -104,10 +113,11 @@ class ServerData {
 					})
 					.finally(() => {
 						this._reloadDataPromise = undefined
+						// schedule another trigger for later:
 						this.triggerReloadData(false)
 					})
 			},
-			now ? 1 : 2000
+			asap ? 1 : 2000
 		)
 	}
 
@@ -118,17 +128,17 @@ class ServerData {
 	private _reloadDataPromise: Promise<void> | undefined
 	private _reloadDataTimeout: number | undefined
 
-	private async _reloadData() {
-		await this._loadServerInfo()
-		await this._loadGraphicsList()
-		await this._loadRendererList()
-		await this._loadRenderer()
+	private async _reloadData(asap: boolean | string) {
+		await this._loadServerInfo(typeof asap === 'string' ? asap.includes(`serverInfo`) : asap)
+		await this._loadGraphicsList(typeof asap === 'string' ? asap.includes(`graphicsList`) : asap)
+		await this._loadRendererList(typeof asap === 'string' ? asap.includes(`rendererList`) : asap)
+		await this._loadRenderer(typeof asap === 'string' ? asap.includes(`renderer`) : asap)
 		{
 			const renderTargetMap = new Map<string, { rendererId: string; renderTarget: unknown }>()
 
 			for (const q of appSettingsStore.queuedGraphics.values()) {
 				if (!this.graphicsInfo.has(q.graphicId)) {
-					await this._loadGraphic(q.graphicId)
+					await this._loadGraphic(q.graphicId, typeof asap === 'string' ? asap.includes(`graphic`) : asap)
 				}
 
 				if (q.renderTarget) {
@@ -140,7 +150,11 @@ class ServerData {
 			}
 
 			for (const rt of renderTargetMap.values()) {
-				await this._loadGraphicsInstances(rt.rendererId, rt.renderTarget)
+				await this._loadGraphicsInstances(
+					rt.rendererId,
+					rt.renderTarget,
+					typeof asap === 'string' ? asap.includes(`renderTarget::${JSON.stringify(rt.renderTarget)}`) : asap
+				)
 			}
 		}
 
@@ -174,7 +188,7 @@ class ServerData {
 		}
 		return undefined
 	}
-	private async _loadServerInfo(asap = false) {
+	private async _loadServerInfo(asap: boolean) {
 		await this.doIfEnoughTimeHasPassed('_loadServerInfo', asap ? 0 : 60 * 1000, async () => {
 			this.setCurrentOperation('Retrieving server info...')
 			const r = await this.ografApi.getServerInfo()
@@ -184,7 +198,7 @@ class ServerData {
 				})
 		})
 	}
-	private async _loadGraphicsList(asap = false) {
+	private async _loadGraphicsList(asap: boolean) {
 		await this.doIfEnoughTimeHasPassed('_loadGraphicsList', asap ? 0 : 10000, async () => {
 			this.setCurrentOperation('Retrieving list of graphics...')
 			const r = await this.ografApi.listGraphics()
@@ -194,7 +208,7 @@ class ServerData {
 				})
 		})
 	}
-	private async _loadRendererList(asap = false) {
+	private async _loadRendererList(asap: boolean) {
 		await this.doIfEnoughTimeHasPassed(
 			'_loadRendererList',
 			asap ? 0 : this.renderersList.length === 0 ? 1000 : 3000,
@@ -208,7 +222,7 @@ class ServerData {
 			}
 		)
 	}
-	private async _loadRenderer(asap = false) {
+	private async _loadRenderer(asap: boolean) {
 		const rendererId = appSettingsStore.getSelectedRendererId()
 		if (rendererId) {
 			await this.doIfEnoughTimeHasPassed('_loadRenderer', asap ? 0 : 10000, async () => {
@@ -220,7 +234,7 @@ class ServerData {
 			})
 		}
 	}
-	private async _loadGraphic(graphicId: string, asap = false) {
+	private async _loadGraphic(graphicId: string, asap: boolean) {
 		await this.doIfEnoughTimeHasPassed(`_loadGraphic::${graphicId}`, asap ? 0 : 10000, async () => {
 			this.setCurrentOperation(`Retrieving graphic info for "${graphicId}"...`)
 			const r = await this.ografApi.getGraphic({
@@ -229,7 +243,7 @@ class ServerData {
 			if (r.status === 200) runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
 		})
 	}
-	private async _loadGraphicsInstances(rendererId: string, renderTarget: unknown, asap = false) {
+	private async _loadGraphicsInstances(rendererId: string, renderTarget: unknown, asap: boolean) {
 		await this.doIfEnoughTimeHasPassed(
 			`_loadGraphicsInstances::${rendererId}::${JSON.stringify(renderTarget)}`,
 			asap ? 0 : 1000,
@@ -288,7 +302,7 @@ interface GraphicsInstanceMapEntry {
 	rendererId: string
 	renderTarget: unknown
 	graphicId: string
-	graphicInstanceId: string
+	graphicInstanceId: string | undefined
 }
 
 function mapSetIfNotEqual<K, T>(map: Map<K, T>, key: K, value: T) {

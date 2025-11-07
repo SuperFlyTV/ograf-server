@@ -9,7 +9,9 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "yarn workspaces foreach --all -pt run build"
+    "dev": "yarn workspaces foreach --all -pi -j unlimited run dev",
+    "build": "yarn workspaces foreach --all -pt run build",
+    "start": "yarn workspace @ograf-server/server start"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
   "packageManager": "yarn@4.6.0"

@@ -12,9 +12,10 @@ import FormControlLabel from '@mui/material/FormControlLabel'
 import Grid from '@mui/material/Grid'
 import { useStoredState } from '../lib/lib.js'
 import CardContent from '@mui/material/CardContent'
+import { Button } from '@mui/material'
 
 export const CommandsLog: React.FC = observer(() => {
-	const [displayAll, setDisplayAll] = useStoredState<boolean>('commands-log-filter-all', true)
+	const [displayAll, setDisplayAll] = useStoredState<boolean>('commands-log-filter-all', false)
 	const cardRef = React.useRef<HTMLDivElement>(null)
 	const displayCount = React.useRef<number>(0)
 	let sentCommands = sentCommandsStore.sentCommands
@@ -83,6 +84,14 @@ export const CommandsLog: React.FC = observer(() => {
 				{sentCommands.map((c) => (
 					<CommandEntry key={c.key} command={c} />
 				))}
+
+				<Button
+					onClick={() => {
+						sentCommandsStore.clear()
+					}}
+				>
+					Clear
+				</Button>
 			</CardContent>
 		</Card>
 	)

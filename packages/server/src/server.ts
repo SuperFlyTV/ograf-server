@@ -40,12 +40,10 @@ export async function initializeServer(): Promise<void> {
 	httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
 		await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
 	})
-	httpRouter.get(/\/renderer\/using-layers\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		await serveFromPath(
-			ctx,
-			path.resolve('../..renderer/using-layers'),
-			ctx.path.trim().replace(/^\/renderer\/using-layers\//, '')
-		)
+	httpRouter.get(/\/renderer\/renderer-layer\/.*/, async (ctx: Koa.ParameterizedContext) => {
+		const basePath = path.resolve('../renderer-layer/dist')
+		console.log('Serving renderer-layer file:', basePath)
+		await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
 	})
 	// httpRouter.get("/controller", async (ctx) => {
 	//   await serveFile(ctx, path.resolve("../controller/dist/index.html"));

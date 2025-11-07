@@ -3,7 +3,7 @@ import { observer } from 'mobx-react'
 import Box from '@mui/material/Box'
 import { appSettingsStore } from '../stores/appSettings.js'
 import Typography from '@mui/material/Typography'
-import * as OGraf from '../lib/ograf/server-api.js'
+import * as OGraf from 'ograf'
 import Button from '@mui/material/Button'
 import { OGrafForm } from './OGrafForm.js'
 import { useStoredState } from '../lib/lib.js'
@@ -34,16 +34,16 @@ export const RendererCustomActions: React.FC = observer(() => {
 
 export const RendererCustomAction = observer(
 	(props: {
-		renderer: OGraf.components['schemas']['RendererInfo']
+		renderer: OGraf.ServerApi.components['schemas']['RendererInfo']
 
-		action: OGraf.components['schemas']['action']
+		action: OGraf.ServerApi.components['schemas']['action']
 	}) => {
-		const [data, setData] = useStoredState<string>(
-			`renderer-${props.renderer.id}-custom-action-${props.action.id}-data`
-		)
+		let [data, setData] = useStoredState<string>(`renderer-${props.renderer.id}-custom-action-${props.action.id}-data`)
+		if (typeof data !== 'string') data = JSON.stringify(data)
 
 		const invokeAction = () => {
 			const ografApi = OgrafApi.getSingleton()
+
 			ografApi
 				.rendererInvokeCustomAction(
 					{
@@ -51,7 +51,7 @@ export const RendererCustomAction = observer(
 						customActionId: props.action.id,
 					},
 					{
-						payload: data,
+						payload: JSON.parse(data),
 						// skipAnimation:
 					}
 				)
@@ -64,7 +64,7 @@ export const RendererCustomAction = observer(
 				<CardContent>
 					<OGrafForm
 						schema={props.action.schema}
-						initialValue={data === undefined ? undefined : JSON.parse(data)}
+						value={data === undefined ? undefined : JSON.parse(data)}
 						onDataChangeCallback={(newData: unknown) => {
 							setData(JSON.stringify(newData))
 						}}
