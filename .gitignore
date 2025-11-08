@@ -1,43 +1,14 @@
-# Build outputs
-dist/
-build/
-out/
-target/
-*.tsbuildinfo
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
-# Dependencies
-node_modules/
-npm-debug.log*
+# Swap the comments on the following lines if you wish to use zero-installs
+# In that case, don't forget to run `yarn config set enableGlobalCache false`!
+# Documentation here: https://yarnpkg.com/features/caching#zero-installs
 
-# IDE and Editor files
-.vscode/
-.idea/
-
-# Logs
-*.log
-logs/
-
-# Runtime data
-pids/
-*.pid
-*.seed
-*.pid.lock
-
-# Optional npm cache directory
-.npm
-
-# dotenv environment variables file
-.env
-.env.test
-.env.local
-.env.production
-
-# Editor directories and files
-
-# OS generated files
-.DS_Store
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+#!.yarn/cache
+.pnp.*
+node_modules

@@ -14,24 +14,30 @@ This is a web server that provides:
 ## How to use
 
 - Clone or [download this repository](https://github.com/SuperFlyTV/ograf-server/archive/refs/heads/main.zip)
-- Install [Node.js](https://nodejs.org/en/download)
+- Install [Node.js](https://nodejs.org/en/download) 20 or later
 - Open a console and run:
 
-  ```bash
+```bash
+  # Prerequisite: yarn
+  corepack enable
+
   # Install dependencies
-  npm i
+  yarn install
 
   # Build libraries
-  npm run build
+  yarn build
 
   # Run in dev mode
-  npm run dev
+  yarn dev
+    # Then access the main app on http://localhost:8080
+    # and the controller on http://localhost:8082
 
   # Run in production mode
-  npm run start
-  ```
+  yarn start
+    # Then access the app on http://localhost:8080
+
+```
 
 ## Disclaimer
 
-The control API exposed by this server is NOT intended to be stable.
-The API is intended to eventually be replaced the upcoming (stable) **OGraf Server API**.
+The control API exposed by this server is NOT stable yet, it is based on early drafts of the **OGraf Server API**.

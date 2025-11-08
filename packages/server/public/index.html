@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>OGraf Server</title>
+    <meta charset="utf-8" />
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="public/bootstrap-4.0.0/css/bootstrap.css"
+    />
+    <link rel="stylesheet" type="text/css" href="public/styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <div class="card">
+        <div class="card-body">
+          <h1>
+            <img src=/public/assets/ograf_logo_colour_draft.svg alt="OGraf"
+            height="50" />
+            <br />
+            Simple Rendering System
+          </h1>
+
+          <p>
+            This is an Open Source project developed with ❤️ by
+            <a href="https://SuperFly.tv">
+              <img
+                src="/public/assets/SuperFly.tv_Logo_2020_v02.png"
+                alt="SuperFly.tv"
+                height="50"
+              /> </a
+            >
+            <br />
+            Feel free to contribute features, bug fixes or report issues at
+            <a href="https://github.com/SuperFlyTV/ograf-server"
+              >github.com/SuperFlyTV/ograf-server</a
+            >.
+          </p>
+          <p>
+            <h2>
+              What is this?
+            </h2>
+            This is a web server that provides:
+            <ul>
+              <li>
+                An <b>OGraf Renderer</b> (a web page) to be loaded in a HTML renderer (such as CasparCG, OBS, Vmix, etc),
+              </li>
+              <li>
+                An API where <b>OGraf Graphics</b> can be uploaded and managed.
+              </li>
+              <li>
+                An API that can be used by a <b>Controller</b> to control the OGraf graphics.
+              </li>
+              <li>
+                A simple <b>Controller web page</b> to control OGraf graphics.
+              </li>
+            </ul>
+
+          </p>
+          <p>
+            <h2>How to use</h2>
+
+            <ol>
+              <li>
+                <b>Upload OGraf Graphics</b> by zipping the OGraf graphic folders.<br />
+                <i>You can find example OGraf Graphics
+                  <a href="https://github.com/ebu/ograf/tree/main/v1/examples">
+                    here
+                  </a>(<a
+                  href="https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2Febu%2Fograf%2Ftree%2Fmain%2Fv1%2Fexamples"
+                  target="_blank"
+                >download zip file</a>)
+
+              </i>
+              </li>
+              <li>
+                <b>Open an OGraf Renderer</b> in your HTML renderer (such as CasparCG, OBS, Vmix, etc).<br />
+                <i>Use the URL: <a href="http://localhost:8080/renderer/renderer-layer/index.html?name=Renderer-window&id=1&background=1" target="_blank">
+                  http://localhost:8080/renderer/renderer-layer/index.html
+                </a>
+                </i>
+                <ul>
+                  <li>
+                    CasparCG command: <pre>PLAY 1-10 [html] http://localhost:8080/renderer/renderer-layer/index.html</pre>
+                  </li>
+                </ul>
+              </li>
+              <li>
+                Connect your controller (or use the included <b>
+                  <a href="/controller/index.html">
+                    Simple Controller
+                  </a></b>)
+              </li>
+              <li>
+                Explore the API using the <b>
+                  <a href="/public/open-api/docs/index.html">
+                    API Explorer
+                  </a></b>
+              </li>
+            </ol>
+          </p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-body">
+          <h2>Explore the API</h2>
+          <ul>
+            <li>
+              <a href="/ograf/v1/graphics">List Graphics</a><br />
+              <i>Lists the Graphics that are currently uploaded to the system</i>
+            </li>
+            <li>
+              <a href="/ograf/v1/renderers">List Renderers</a><br />
+              <i>Lists the currently connected Renderer web pages</i>
+            </li>
+            <li>
+              Upload OGraf Graphic (zip file):
+              <form
+              action="/serverApi/internal/graphics/graphic"
+              method="post"
+              enctype="multipart/form-data"
+            >
+
+              <input type="file" id="graphic" name="graphic" accept=".zip" />
+              <input type="submit" />
+            </form>
+            </li>
+          </ul>
+          <div>
+
+          </div>
+        </div>
+      </div>
+
+      <div></div>
+    </div>
+  </body>
+</html>

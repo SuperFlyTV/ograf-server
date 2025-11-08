@@ -1,0 +1,35 @@
+{
+  "name": "@ograf-server/renderer-layer",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "tsc": "tsc",
+    "build": "vite build --logLevel warn",
+    "lint:raw": "eslint",
+    "lint": "run lint:raw .",
+    "lint-fix": "run lint --fix"
+  },
+  "devDependencies": {
+    "@sofie-automation/code-standard-preset": "^3.2.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^4.3.4",
+    "eslint": "^9.38.0",
+    "prettier": "^3.6.2",
+    "sass": "1.77.6",
+    "typescript": "~5.7.0",
+    "vite": "^5.4.1",
+    "vite-plugin-checker": "^0.11.0",
+    "vite-plugin-svgr": "^4.5.0"
+  },
+  "dependencies": {
+    "@ograf-server/shared": "*",
+    "mobx": "^6.15.0",
+    "mobx-react": "^9.2.1",
+    "ograf": "1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "url": "^0.11.4"
+  }
+}
