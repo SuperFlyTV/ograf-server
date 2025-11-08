@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "tsc": "tsc",
+    "build": "vite build --logLevel warn",
     "lint:raw": "eslint",
     "lint": "run lint:raw .",
     "lint-fix": "run lint --fix"
@@ -17,15 +18,16 @@
     "eslint": "^9.38.0",
     "prettier": "^3.6.2",
     "sass": "1.77.6",
-    "typescript": "^5.9.3",
+    "typescript": "~5.7.0",
     "vite": "^5.4.1",
+    "vite-plugin-checker": "^0.11.0",
     "vite-plugin-svgr": "^4.5.0"
   },
   "dependencies": {
+    "@ograf-server/shared": "*",
     "mobx": "^6.15.0",
     "mobx-react": "^9.2.1",
-    "ograf": "1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0",
-    "ograf-form": "^0.1.1",
+    "ograf": "1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "url": "^0.11.4"

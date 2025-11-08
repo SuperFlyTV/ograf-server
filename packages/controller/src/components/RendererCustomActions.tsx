@@ -38,8 +38,10 @@ export const RendererCustomAction = observer(
 
 		action: OGraf.ServerApi.components['schemas']['action']
 	}) => {
-		let [data, setData] = useStoredState<string>(`renderer-${props.renderer.id}-custom-action-${props.action.id}-data`)
-		if (typeof data !== 'string') data = JSON.stringify(data)
+		const [data0, setData] = useStoredState<string>(
+			`renderer-${props.renderer.id}-custom-action-${props.action.id}-data`
+		)
+		const dataStr = typeof data0 !== 'string' ? JSON.stringify(data0) : data0
 
 		const invokeAction = () => {
 			const ografApi = OgrafApi.getSingleton()
@@ -51,7 +53,7 @@ export const RendererCustomAction = observer(
 						customActionId: props.action.id,
 					},
 					{
-						payload: JSON.parse(data),
+						payload: JSON.parse(dataStr),
 						// skipAnimation:
 					}
 				)
@@ -64,7 +66,7 @@ export const RendererCustomAction = observer(
 				<CardContent>
 					<OGrafForm
 						schema={props.action.schema}
-						value={data === undefined ? undefined : JSON.parse(data)}
+						value={dataStr === undefined ? undefined : JSON.parse(dataStr)}
 						onDataChangeCallback={(newData: unknown) => {
 							setData(JSON.stringify(newData))
 						}}

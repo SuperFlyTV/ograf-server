@@ -7,6 +7,8 @@ import Input from '@mui/material/Input'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
 import { serverDataStore } from '../stores/serverData.js'
+import { CardContent, CardHeader, IconButton } from '@mui/material'
+import { Close } from '@mui/icons-material'
 
 export const UploadGraphic: React.FC = observer(() => {
 	const [displayUpload, setDisplayUpload] = React.useState<boolean>(false)
@@ -44,61 +46,68 @@ export const UploadGraphic: React.FC = observer(() => {
 
 	return (
 		<Card sx={{ m: 1, p: 1 }}>
-			<Typography>To upload an OGraf graphic to the server, first zip the folder, then upload it below:</Typography>
+			<CardHeader
+				title="Upload OGraf Graphic"
+				action={
+					<IconButton
+						aria-label="close"
+						onClick={() => {
+							setDisplayUpload(false)
+						}}
+					>
+						<Close />
+					</IconButton>
+				}
+			/>
 
-			<Input ref={inputRef} type="file" id="graphic-upload" />
-			<Button
-				variant="contained"
-				onClick={() => {
-					const el = document.getElementById('graphic-upload') as HTMLInputElement | null
-					if (!el) throw new Error('element not found')
-					if (!el.files) throw new Error('element.files not set')
-					const file = el.files[0]
+			<CardContent>
+				<Typography>To upload an OGraf graphic to the server, first zip the folder, then upload it below:</Typography>
 
-					const formData = new FormData()
-					formData.append('graphic', file)
+				<Input ref={inputRef} type="file" id="graphic-upload" />
+				<Button
+					variant="contained"
+					onClick={() => {
+						const el = document.getElementById('graphic-upload') as HTMLInputElement | null
+						if (!el) throw new Error('element not found')
+						if (!el.files) throw new Error('element.files not set')
+						const file = el.files[0]
 
-					let baseUrl = ografApi.baseURL.replace('/ograf/v1', '')
-					if (!baseUrl.endsWith('/')) baseUrl += '/'
+						const formData = new FormData()
+						formData.append('graphic', file)
 
-					fetch(`${baseUrl}serverApi/internal/graphics/graphic`, {
-						method: 'POST',
-						body: formData,
-					})
-						.then(async (response) => {
-							if (response.ok) {
-								const json = await response.json()
+						let baseUrl = ografApi.baseURL.replace('/ograf/v1', '')
+						if (!baseUrl.endsWith('/')) baseUrl += '/'
 
-								const uploadedIds: string[] = []
-								if (Array.isArray(json.graphics)) {
-									for (const gfx of json.graphics) {
-										uploadedIds.push(gfx.id)
-									}
-								}
-
-								setUploadStatus('Successfully uploaded ' + uploadedIds.join(', '))
-							} else {
-								const text = await response.text()
-
-								setUploadStatus('Upload failed! ' + text)
-							}
+						fetch(`${baseUrl}serverApi/internal/graphics/graphic`, {
+							method: 'POST',
+							body: formData,
 						})
-						.catch(console.error)
-				}}
-			>
-				Upload
-			</Button>
+							.then(async (response) => {
+								if (response.ok) {
+									const json = await response.json()
 
-			<Typography>{uploadStatus}</Typography>
+									const uploadedIds: string[] = []
+									if (Array.isArray(json.graphics)) {
+										for (const gfx of json.graphics) {
+											uploadedIds.push(gfx.id)
+										}
+									}
 
-			<Button
-				variant="outlined"
-				onClick={() => {
-					setDisplayUpload(false)
-				}}
-			>
-				Close upload
-			</Button>
+									setUploadStatus('Successfully uploaded ' + uploadedIds.join(', '))
+								} else {
+									const text = await response.text()
+
+									setUploadStatus('Upload failed! ' + text)
+								}
+							})
+							.catch(console.error)
+					}}
+				>
+					Upload
+				</Button>
+
+				<Typography>{uploadStatus}</Typography>
+			</CardContent>
 		</Card>
 
 		// <Box

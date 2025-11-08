@@ -24,11 +24,11 @@ export class LayersManager {
 		this.checkAccessToPublicInternet()
 	}
 
-	getLayer(renderTarget: RenderTarget) {
+	getLayer(renderTarget: RenderTarget): LayerHandler | undefined {
 		return this.layers[renderTarget.layerId]
 	}
-	getAllLayers() {
-		return Object.values(this.layers)
+	getAllLayers(): LayerHandler[] {
+		return Object.values<LayerHandler>(this.layers)
 	}
 
 	public getRenderCharacteristics(): OGraf.RenderCharacteristics {

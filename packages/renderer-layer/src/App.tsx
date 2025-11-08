@@ -1,4 +1,5 @@
 import * as React from 'react'
+// @ts-expect-error svg import
 import OGrafLogo from './resources/ograf_logo_colour_draft.svg?react'
 import { GraphicCache } from './lib/GraphicsCache.js'
 import { RendererApiHandler } from './lib/RendererApiHandler.js'

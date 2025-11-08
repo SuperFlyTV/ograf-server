@@ -7,7 +7,10 @@ export class GraphicCache {
 		ServerApi.paths['/graphics/{graphicId}']['get']['responses']['200']['content']['application/json']
 	> = {}
 	constructor(private serverApiUrl: string) {}
-	async loadGraphic(graphicId: string) {
+	async loadGraphic(graphicId: string): Promise<{
+		elementName: string
+		graphicInfo: GraphicInfo
+	}> {
 		// Check if the Graphic is already registered:
 		const cachedGraphic = customElements.get(graphicId)
 		const cachedGraphicInfo = this.cachedGraphicInfo[graphicId]
@@ -49,7 +52,10 @@ export class GraphicCache {
 			)
 		}
 	}
-	async fetchModule(id: string, manifest: ServerApi.components['schemas']['schema-2']) {
+	async fetchModule(
+		id: string,
+		manifest: ServerApi.components['schemas']['schema-2']
+	): Promise<CustomElementConstructor> {
 		const modulePath = `${this.serverApiUrl}/serverApi/internal/graphics/${id}/${manifest.main ?? 'graphic.mjs'}`
 
 		// Load the Graphic module:

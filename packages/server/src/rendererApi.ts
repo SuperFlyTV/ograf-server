@@ -39,9 +39,8 @@ function setupClientConnection(ws: WebSocket, rendererManager: RendererManager) 
 	jsonRpcConnection.addMethod('debug', rendererInstance.debug)
 
 	// Handle incoming messages
-	ws.on('message', (message) => {
+	ws.on('message', (message: Buffer) => {
 		const messageString = message.toString()
-		// console.log('got message', messageString)
 
 		Promise.resolve()
 			.then(async () => {

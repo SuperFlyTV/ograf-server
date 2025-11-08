@@ -15,6 +15,7 @@
     "@koa/cors": "^5.0.0",
     "@koa/multer": "^3.0.2",
     "@koa/router": "^13.1.0",
+    "@ograf-server/shared": "*",
     "@zimtsui/koa-ws-filter": "^0.0.5",
     "decompress": "^4.2.1",
     "json-rpc-2.0": "^1.7.0",
@@ -22,7 +23,7 @@
     "koa-bodyparser": "^4.4.1",
     "mime-types": "^2.1.35",
     "multer": "^1.4",
-    "ograf": "1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0",
+    "ograf": "1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0",
     "ts-node": "^10.9.2",
     "ws": "^8.18.0",
     "zod": "^3.25.32"
@@ -36,9 +37,10 @@
     "@types/koa__multer": "^2.0.7",
     "@types/koa__router": "^12.0.4",
     "@types/mime-types": "^2.1.4",
+    "@types/node": "^24.10.0",
     "eslint": "^9.38.0",
     "nodemon": "^3.1.7",
     "prettier": "^3.6.2",
-    "typescript": "^5.9.3"
+    "typescript": "~5.7.0"
   }
 }

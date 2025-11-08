@@ -16,9 +16,6 @@
     "paths": {
       "*": [
         "./node_modules/*"
-      ],
-      "@ograf-server/controller": [
-        "./src/index.ts"
       ]
     },
     "jsx": "react",
@@ -27,5 +24,6 @@
       "DOM",
       "ES2024"
     ],
+    "skipLibCheck": true
   }
 }

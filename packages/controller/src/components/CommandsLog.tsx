@@ -89,8 +89,9 @@ export const CommandsLog: React.FC = observer(() => {
 					onClick={() => {
 						sentCommandsStore.clear()
 					}}
+					disabled={sentCommands.length === 0}
 				>
-					Clear
+					Clear log
 				</Button>
 			</CardContent>
 		</Card>

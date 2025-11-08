@@ -3,7 +3,7 @@ import { observer } from 'mobx-react'
 import Box from '@mui/material/Box'
 import { appSettingsStore, QueuedGraphic } from '../stores/appSettings.js'
 import Typography from '@mui/material/Typography'
-import * as OGraf from '../lib/ograf/server-api.js'
+import * as OGraf from 'ograf'
 import Button from '@mui/material/Button'
 import { OGrafForm } from './OGrafForm.js'
 import { clone, isEqual } from '../lib/lib.js'
@@ -188,14 +188,13 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 									disabled={gi.disabled || !queuedGraphic.renderTarget}
 									onClick={() => {
 										if (!renderer) return
+
 										ografApi
 											.renderTargetGraphicPlay(
 												{ rendererId: renderer.id },
 												{
 													renderTarget: queuedGraphic.renderTarget,
-													graphicTarget: {
-														graphicInstanceId: gi.graphicInstanceId,
-													},
+													graphicTarget: gi.graphicInstanceId,
 												},
 												{
 													params: {
@@ -220,9 +219,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{ rendererId: renderer.id },
 												{
 													renderTarget: queuedGraphic.renderTarget,
-													graphicTarget: {
-														graphicInstanceId: gi.graphicInstanceId,
-													},
+													graphicTarget: gi.graphicInstanceId,
 												},
 												{
 													params: {
@@ -246,9 +243,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{ rendererId: renderer.id },
 												{
 													renderTarget: queuedGraphic.renderTarget,
-													graphicTarget: {
-														graphicInstanceId: gi.graphicInstanceId,
-													},
+													graphicTarget: gi.graphicInstanceId,
 												},
 												{
 													params: {
@@ -323,10 +318,10 @@ const GraphicCustomAction = (props: {
 	rendererId: string
 	renderTarget: unknown
 	graphicInstanceId: string
-	graphic: OGraf.components['schemas']['GraphicInfo']
+	graphic: OGraf.ServerApi.components['schemas']['GraphicInfo']
 	graphicKey: string
 	queuedGraphic: QueuedGraphic
-	action: OGraf.components['schemas']['action']
+	action: OGraf.ServerApi.components['schemas']['action']
 	disabled: boolean
 }) => {
 	const { rendererId, renderTarget, graphicInstanceId, action, queuedGraphic, disabled } = props
@@ -363,9 +358,7 @@ const GraphicCustomAction = (props: {
 							{ rendererId: rendererId },
 							{
 								renderTarget: renderTarget,
-								graphicTarget: {
-									graphicInstanceId: graphicInstanceId,
-								},
+								graphicTarget: graphicInstanceId,
 							},
 							{
 								actionName: action.name,

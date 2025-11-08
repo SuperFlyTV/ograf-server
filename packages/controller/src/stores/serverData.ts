@@ -302,7 +302,7 @@ interface GraphicsInstanceMapEntry {
 	rendererId: string
 	renderTarget: unknown
 	graphicId: string
-	graphicInstanceId: string | undefined
+	graphicInstanceId: string
 }
 
 function mapSetIfNotEqual<K, T>(map: Map<K, T>, key: K, value: T) {

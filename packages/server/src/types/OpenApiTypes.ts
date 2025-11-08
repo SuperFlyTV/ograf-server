@@ -44,10 +44,6 @@ export const GraphicFilter = z.object({
 	graphicId: z.optional(GraphicId),
 	graphicInstanceId: z.optional(z.string()),
 })
-export const GraphicTarget = z.object({
-	graphicId: z.optional(GraphicId),
-	graphicInstanceId: z.optional(GraphicInstanceId),
-})
 export const GraphicInfo = z.object({
 	id: GraphicId,
 	version: z.optional(z.string()),

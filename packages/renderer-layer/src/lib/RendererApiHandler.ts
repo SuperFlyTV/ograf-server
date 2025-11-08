@@ -1,14 +1,15 @@
 import * as OGraf from 'ograf'
 import { LayersManager, RenderTarget } from './LayersManager.js'
+import { MethodsOnRenderer, RendererInfo, RenderTargetInfo, GraphicInstanceOnTarget } from '@ograf-server/shared'
 
-export class RendererApiHandler {
+export class RendererApiHandler implements MethodsOnRenderer {
 	// this.layersManager = layersManager
 	// constructor(layersManager) {
 	private messageId = 0
 
 	private waitingForReply = new Map<number, { resolve: (result: unknown) => void; reject: (e: unknown) => void }>()
 	private ws: WebSocket | null = null
-	public actions: Record<string, (params: unknown) => void> = {}
+	public actions: Record<string, (params: unknown) => Promise<void>> = {}
 
 	private rendererId = 'N/A'
 
@@ -26,8 +27,8 @@ export class RendererApiHandler {
 			rendererName: string
 		}
 	) {
-		this.actions['shake-it'] = (params: any) => {
-			const el = document.querySelector('#main-container') as HTMLDivElement | null
+		this.actions['shake-it'] = async (params: any) => {
+			const el: HTMLDivElement | null = document.querySelector('#main-container')
 
 			if (!el) return
 
@@ -59,7 +60,7 @@ export class RendererApiHandler {
 			this.connect()
 		}, 1000)
 	}
-	connect(rendererApiUrl?: string) {
+	connect(rendererApiUrl?: string): void {
 		if (rendererApiUrl) this.rendererApiUrl = rendererApiUrl
 
 		if (!this.rendererApiUrl) throw new Error('Not rendererApiUrl set!')
@@ -74,11 +75,11 @@ export class RendererApiHandler {
 
 			// The first thing the render MUST do after connecting is send a "register" message
 			this._sendMessage('register', {
-				info: this.getInfo().rendererInfo,
+				info: this._getInfo().rendererInfo,
 			})
 				.then((response: any) => {
-					console.log('Registered, ready to go!')
 					this.rendererId = response.rendererId
+					console.log(`Registered as id "${this.rendererId}", ready to go!`)
 				})
 				.catch((error) => {
 					console.error('Failed to register with Renderer API:', error)
@@ -132,7 +133,7 @@ export class RendererApiHandler {
 			console.error('Error in connection to Renderer API:', error)
 		}
 	}
-	_sendMessage(method: string, params: unknown) {
+	async _sendMessage(method: string, params: unknown): Promise<unknown> {
 		console.log('Send message', method, params)
 		/*
                         register: (params: { info: Partial<RendererInfo> } & VendorExtend) => PromiseLike<EmptyPayload>
@@ -141,7 +142,7 @@ export class RendererApiHandler {
                         debug: (params: { message: string } & VendorExtend) => PromiseLike<EmptyPayload>
                     */
 
-		return new Promise((resolve, reject) => {
+		return new Promise<unknown>((resolve, reject) => {
 			if (!this.ws) throw new Error('Not connected to Renderer API!')
 
 			const id = this.messageId++
@@ -156,7 +157,7 @@ export class RendererApiHandler {
 			this.waitingForReply.set(id, { resolve, reject })
 		})
 	}
-	_replyMessage(id: number, error: unknown, result: unknown) {
+	_replyMessage(id: number, error: unknown, result: unknown): void {
 		if (!this.ws) throw new Error('Not connected to Renderer API!')
 
 		console.log('send Reply', error, result)
@@ -179,30 +180,30 @@ export class RendererApiHandler {
 		}
 	}
 
-	getManifest() {
-		// JSON RPC Method
-		return {
-			rendererManifest: {
-				id: this.rendererId,
-				name: this.info.rendererName,
-				description: 'A basic browser-based, layered Renderer',
-				actions: {},
+	// async getManifest(): Promise<{ rendererManifest: RendererInfo & RendererManifest }> {
+	// 	// JSON RPC Method
+	// 	return {
+	// 		rendererManifest: {
+	// 			id: this.rendererId,
+	// 			name: this.info.rendererName,
+	// 			description: 'A basic browser-based, layered Renderer',
+	// 			actions: {},
 
-				renderTargets: this.layersManager.getAllLayers().map((layer) => {
-					return {
-						id: layer.renderTarget,
-						name: layer.name,
-						// description: `Layer ${layer.id}`
-					}
-				}),
-			},
-		}
-	}
-	// listGraphicInstances (_params) {
-	//     // JSON RPC Method
-	//     return { graphicInstances: layersManager.listGraphicInstances() }
+	// 			status: {
+	// 				status: 'OK',
+	// 				// message?: string;
+
+	// 				renderTargets: this.layersManager.getAllLayers().map((layer) => {
+	// 					return layer.getInfo()
+	// 				}),
+	// 			},
+	// 		} satisfies RendererInfo,
+	// 	}
 	// }
-	getInfo() {
+	async getInfo(): Promise<{ rendererInfo: RendererInfo }> {
+		return this._getInfo()
+	}
+	_getInfo(): { rendererInfo: RendererInfo } {
 		// JSON RPC Method
 		return {
 			rendererInfo: {
@@ -218,6 +219,7 @@ export class RendererApiHandler {
 					{
 						id: 'shake-it',
 						name: 'Shake it up!',
+						description: 'This is just an example renderer-action that shakes the entire renderer.',
 						schema: {
 							type: 'object',
 							properties: {
@@ -227,7 +229,7 @@ export class RendererApiHandler {
 									default: 2000,
 								},
 							},
-						},
+						} as any,
 					},
 				],
 				renderTargetSchema: {
@@ -254,26 +256,27 @@ export class RendererApiHandler {
 				},
 				// renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
 				status: {
-					status: 'ok', // OK, WARNING, ERROR
+					status: 'OK', // OK, WARNING, ERROR
 					// message: ''
-					renderTargets: this.layersManager
-						.getAllLayers()
-						.map((layer) => {
+					renderTargets: omitFalsy(
+						this.layersManager.getAllLayers().map((layer) => {
 							if (!layer.graphicInstance) return null
 
 							return layer.getInfo()
 						})
-						.filter(Boolean),
+					),
 				},
 			},
 		}
 	}
-	getTargetStatus(params: { renderTarget: RenderTarget }) {
+	async getTargetStatus(params: { renderTarget: unknown }): Promise<{ renderTargetInfo: RenderTargetInfo }> {
 		// JSON RPC Method
 		// console.log("getTargetStatus", getTargetStatus);
 
-		const layer = this.layersManager.getLayer(params.renderTarget)
-		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(params.renderTarget)}`)
+		const renderTarget = params.renderTarget as RenderTarget
+
+		const layer = this.layersManager.getLayer(renderTarget)
+		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 
 		return {
 			renderTargetInfo: layer.getInfo(),
@@ -285,8 +288,7 @@ export class RendererApiHandler {
 			id: string
 			payload: unknown
 		}
-	}) {
-		console.log('incoke', params)
+	}): Promise<{ value: unknown }> {
 		// JSON RPC Method
 		const fcn = this.actions[params.action.id]
 		if (!fcn) throw new Error(`Unknown action: ${params.action.id}`)
@@ -295,43 +297,49 @@ export class RendererApiHandler {
 
 	/** Instantiate a Graphic on a RenderTarget. Returns when the load has finished. */
 	async loadGraphic(params: {
-		renderTarget: RenderTarget
+		renderTarget: unknown
 		graphicId: string
 		params: {
 			data: unknown
 		}
-	}) {
+	}): Promise<{
+		graphicInstanceId: string
+		result: OGraf.ReturnPayload | undefined
+	}> {
 		// JSON RPC Method
-		const layer = this.layersManager.getLayer(params.renderTarget)
+		const renderTarget = params.renderTarget as RenderTarget
+
+		const layer = this.layersManager.getLayer(renderTarget)
 		if (!layer) {
 			// console.log('layers', this.layersManager.getAllLayers(), renderTarget.layerId)
-			throw new Error(`Layer not found: ${JSON.stringify(params.renderTarget)}`)
+			throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 		}
 
-		console.log('params', params)
 		return layer.loadGraphic(params.graphicId, params.params)
 	}
 	/** Clear/unloads a GraphicInstance on a RenderTarget */
-	clearGraphic(params: {
+	async clearGraphic(params: {
 		filters?: {
-			renderTarget?: RenderTarget
+			renderTarget?: unknown
 			graphicId?: string
 			graphicInstanceId?: string
 		}
-	}) {
+	}): Promise<{ graphicInstance: GraphicInstanceOnTarget[] }> {
 		// JSON RPC Method
 		// console.log('params', params)
 
+		const renderTarget = params.filters?.renderTarget as RenderTarget | undefined
+
 		let layers = []
-		if (params.filters?.renderTarget) {
-			const layer = this.layersManager.getLayer(params.filters?.renderTarget)
-			if (!layer) throw new Error(`Layer not found: ${JSON.stringify(params.filters?.renderTarget)}`)
+		if (renderTarget) {
+			const layer = this.layersManager.getLayer(renderTarget)
+			if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 			layers = [layer]
 		} else {
 			layers = this.layersManager.getAllLayers()
 		}
 
-		const clearedGraphicInstancesOnLayer = []
+		const clearedGraphicInstancesOnLayer: GraphicInstanceOnTarget[] = []
 		for (const layer of layers) {
 			const graphicInstance = layer.getGraphicInstance()
 
@@ -342,7 +350,7 @@ export class RendererApiHandler {
 				if (params.filters?.graphicInstanceId && graphicInstance.id !== params.filters?.graphicInstanceId) clear = false
 
 				if (clear) {
-					layer.clearGraphic()
+					await layer.clearGraphic()
 
 					clearedGraphicInstancesOnLayer.push({
 						renderTarget: layer.renderTarget,
@@ -359,58 +367,62 @@ export class RendererApiHandler {
 	}
 	/** Invokes an action on a graphicInstance. Actions are defined by the Graphic's manifest */
 	async invokeGraphicUpdateAction(params: {
-		renderTarget: RenderTarget
-		target: {
-			graphicId?: string
-			graphicInstanceId?: string
-		}
+		renderTarget: unknown
+		graphicInstanceId: string
 		params: Parameters<OGraf.GraphicsAPI.Graphic['updateAction']>[0]
-	}) {
+	}): Promise<{
+		graphicInstanceId: string
+		result: Awaited<ReturnType<OGraf.GraphicsAPI.Graphic['updateAction']>>
+	}> {
 		// JSON RPC Method
-		const layer = this.layersManager.getLayer(params.renderTarget)
-		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(params.renderTarget)}`)
+		const renderTarget = params.renderTarget as RenderTarget
+		const layer = this.layersManager.getLayer(renderTarget)
+		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 
 		return layer.invokeUpdateAction(params)
 	}
 	async invokeGraphicPlayAction(params: {
-		renderTarget: RenderTarget
-		target: {
-			graphicId?: string
-			graphicInstanceId?: string
-		}
+		renderTarget: unknown
+		graphicInstanceId: string
 		params: Parameters<OGraf.GraphicsAPI.Graphic['playAction']>[0]
-	}) {
+	}): Promise<{
+		graphicInstanceId: string
+		result: Awaited<ReturnType<OGraf.GraphicsAPI.Graphic['playAction']>>
+	}> {
 		// JSON RPC Method
-		const layer = this.layersManager.getLayer(params.renderTarget)
-		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(params.renderTarget)}`)
+		const renderTarget = params.renderTarget as RenderTarget
+		const layer = this.layersManager.getLayer(renderTarget)
+		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 
 		return layer.invokePlayAction(params)
 	}
 	async invokeGraphicStopAction(params: {
-		renderTarget: RenderTarget
-		target: {
-			graphicId?: string
-			graphicInstanceId?: string
-		}
+		renderTarget: unknown
+		graphicInstanceId: string
 		params: Parameters<OGraf.GraphicsAPI.Graphic['stopAction']>[0]
-	}) {
+	}): Promise<{
+		graphicInstanceId: string
+		result: Awaited<ReturnType<OGraf.GraphicsAPI.Graphic['stopAction']>>
+	}> {
 		// JSON RPC Method
-		const layer = this.layersManager.getLayer(params.renderTarget)
-		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(params.renderTarget)}`)
+		const renderTarget = params.renderTarget as RenderTarget
+		const layer = this.layersManager.getLayer(renderTarget)
+		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 
 		return layer.invokeStopAction(params)
 	}
 	async invokeGraphicCustomAction(params: {
-		renderTarget: RenderTarget
-		target: {
-			graphicId?: string
-			graphicInstanceId?: string
-		}
+		renderTarget: unknown
+		graphicInstanceId: string
 		params: Parameters<OGraf.GraphicsAPI.Graphic['customAction']>[0]
-	}) {
+	}): Promise<{
+		graphicInstanceId: string
+		result: Awaited<ReturnType<OGraf.GraphicsAPI.Graphic['customAction']>>
+	}> {
 		// JSON RPC Method
-		const layer = this.layersManager.getLayer(params.renderTarget)
-		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(params.renderTarget)}`)
+		const renderTarget = params.renderTarget as RenderTarget
+		const layer = this.layersManager.getLayer(renderTarget)
+		if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
 
 		return layer.invokeCustomAction(params)
 	}
@@ -430,3 +442,7 @@ type WsMessage =
 			id: number
 			result: unknown
 	  }
+
+function omitFalsy<T>(objs: (T | null | undefined)[]): T[] {
+	return objs.filter(Boolean) as T[]
+}

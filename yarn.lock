@@ -1000,6 +1000,7 @@ __metadata:
     "@fontsource/roboto": "npm:^5.2.8"
     "@mui/icons-material": "npm:^7.3.4"
     "@mui/material": "npm:^7.3.4"
+    "@ograf-server/shared": "npm:*"
     "@sofie-automation/code-standard-preset": "npm:^3.2.0"
     "@types/react": "npm:^19.2.2"
     "@types/react-dom": "npm:^19.2.2"
@@ -1008,15 +1009,16 @@ __metadata:
     jsonschema: "npm:^1.4.1"
     mobx: "npm:^6.15.0"
     mobx-react: "npm:^9.2.1"
-    ograf: "npm:1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0"
-    ograf-form: "npm:^0.1.1"
+    ograf: "npm:1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0"
+    ograf-form: "npm:^0.1.2"
     prettier: "npm:^3.6.2"
     react: "npm:^19.2.0"
     react-dom: "npm:^19.2.0"
     sass: "npm:1.77.6"
-    typescript: "npm:^5.9.3"
+    typescript: "npm:~5.7.0"
     url: "npm:^0.11.4"
     vite: "npm:^5.4.1"
+    vite-plugin-checker: "npm:^0.11.0"
   languageName: unknown
   linkType: soft
 
@@ -1024,6 +1026,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@ograf-server/renderer-layer@workspace:packages/renderer-layer"
   dependencies:
+    "@ograf-server/shared": "npm:*"
     "@sofie-automation/code-standard-preset": "npm:^3.2.0"
     "@types/react": "npm:^19.2.2"
     "@types/react-dom": "npm:^19.2.2"
@@ -1031,15 +1034,15 @@ __metadata:
     eslint: "npm:^9.38.0"
     mobx: "npm:^6.15.0"
     mobx-react: "npm:^9.2.1"
-    ograf: "npm:1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0"
-    ograf-form: "npm:^0.1.1"
+    ograf: "npm:1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0"
     prettier: "npm:^3.6.2"
     react: "npm:^19.2.0"
     react-dom: "npm:^19.2.0"
     sass: "npm:1.77.6"
-    typescript: "npm:^5.9.3"
+    typescript: "npm:~5.7.0"
     url: "npm:^0.11.4"
     vite: "npm:^5.4.1"
+    vite-plugin-checker: "npm:^0.11.0"
     vite-plugin-svgr: "npm:^4.5.0"
   languageName: unknown
   linkType: soft
@@ -1051,6 +1054,7 @@ __metadata:
     "@koa/cors": "npm:^5.0.0"
     "@koa/multer": "npm:^3.0.2"
     "@koa/router": "npm:^13.1.0"
+    "@ograf-server/shared": "npm:*"
     "@sofie-automation/code-standard-preset": "npm:^3.2.0"
     "@types/decompress": "npm:^4.2.7"
     "@types/koa": "npm:^2.15.0"
@@ -1059,6 +1063,7 @@ __metadata:
     "@types/koa__multer": "npm:^2.0.7"
     "@types/koa__router": "npm:^12.0.4"
     "@types/mime-types": "npm:^2.1.4"
+    "@types/node": "npm:^24.10.0"
     "@zimtsui/koa-ws-filter": "npm:^0.0.5"
     decompress: "npm:^4.2.1"
     eslint: "npm:^9.38.0"
@@ -1068,18 +1073,23 @@ __metadata:
     mime-types: "npm:^2.1.35"
     multer: "npm:^1.4"
     nodemon: "npm:^3.1.7"
-    ograf: "npm:1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0"
+    ograf: "npm:1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0"
     prettier: "npm:^3.6.2"
     ts-node: "npm:^10.9.2"
-    typescript: "npm:^5.9.3"
+    typescript: "npm:~5.7.0"
     ws: "npm:^8.18.0"
     zod: "npm:^3.25.32"
   languageName: unknown
   linkType: soft
 
-"@ograf-server/shared@workspace:packages/shared":
+"@ograf-server/shared@npm:*, @ograf-server/shared@workspace:packages/shared":
   version: 0.0.0-use.local
   resolution: "@ograf-server/shared@workspace:packages/shared"
+  dependencies:
+    "@sofie-automation/code-standard-preset": "npm:^3.2.0"
+    eslint: "npm:^9.38.0"
+    prettier: "npm:^3.6.2"
+    typescript: "npm:~5.7.0"
   languageName: unknown
   linkType: soft
 
@@ -1734,6 +1744,15 @@ __metadata:
   version: 16.18.126
   resolution: "@types/node@npm:16.18.126"
   checksum: 10c0/5c137eb141d33de32b16ff26047ff6d449432b58d0d25f7cced2040c97727d81fe1099a7581eb336d14a6840f5b09e363bdd43d7a6995e8e81eb47aa51e413fc
+  languageName: node
+  linkType: hard
+
+"@types/node@npm:^24.10.0":
+  version: 24.10.0
+  resolution: "@types/node@npm:24.10.0"
+  dependencies:
+    undici-types: "npm:~7.16.0"
+  checksum: 10c0/f82ed7194e16f5590ef7afdc20c6d09068c76d50278b485ede8f0c5749683536e3064ffa8def8db76915196afb3724b854aa5723c64d6571b890b14492943b46
   languageName: node
   linkType: hard
 
@@ -2481,6 +2500,15 @@ __metadata:
     fsevents:
       optional: true
   checksum: 10c0/8361dcd013f2ddbe260eacb1f3cb2f2c6f2b0ad118708a343a5ed8158941a39cb8fb1d272e0f389712e74ee90ce8ba864eece9e0e62b9705cb468a2f6d917462
+  languageName: node
+  linkType: hard
+
+"chokidar@npm:^4.0.3":
+  version: 4.0.3
+  resolution: "chokidar@npm:4.0.3"
+  dependencies:
+    readdirp: "npm:^4.0.1"
+  checksum: 10c0/a58b9df05bb452f7d105d9e7229ac82fa873741c0c40ddcc7bb82f8a909fbe3f7814c9ebe9bc9a2bef9b737c0ec6e2d699d179048ef06ad3ec46315df0ebe6ad
   languageName: node
   linkType: hard
 
@@ -4785,6 +4813,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"npm-run-path@npm:^6.0.0":
+  version: 6.0.0
+  resolution: "npm-run-path@npm:6.0.0"
+  dependencies:
+    path-key: "npm:^4.0.0"
+    unicorn-magic: "npm:^0.3.0"
+  checksum: 10c0/b223c8a0dcd608abf95363ea5c3c0ccc3cd877daf0102eaf1b0f2390d6858d8337fbb7c443af2403b067a7d2c116d10691ecd22ab3c5273c44da1ff8d07753bd
+  languageName: node
+  linkType: hard
+
 "object-assign@npm:^4.0.1, object-assign@npm:^4.1.1":
   version: 4.1.1
   resolution: "object-assign@npm:4.1.1"
@@ -4799,10 +4837,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ograf-form@npm:^0.1.1":
-  version: 0.1.1
-  resolution: "ograf-form@npm:0.1.1"
-  checksum: 10c0/61344bf312a09da799c0fc5be3003afa95118a22e4da8def0d4c1aa8c138da24134ea56e7a9c5c73b44884266ec0418368457fababaab4f96015668c14ccc32f
+"ograf-form@npm:^0.1.2":
+  version: 0.1.2
+  resolution: "ograf-form@npm:0.1.2"
+  checksum: 10c0/16f1bf3fba23de2a750c841cc1a680b397614e3b4942ca070cc5b9ec032edefed85477a6e1cebabbd1970d071f9f7405d159f69fdd00e52767c55d0314f363e5
   languageName: node
   linkType: hard
 
@@ -4812,10 +4850,10 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"ograf@npm:1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0":
-  version: 1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0
-  resolution: "ograf@npm:1.0.1-nightly-feat-server-api-20251030-205505-6f8ee0b.0"
-  checksum: 10c0/121bd7014ea7e99d608275883fa0a00355dc0c62f19128b2a54d0ae59bd43bfb40115e468ac68eee355de7894f85752e9836e9a592d9cf0c6669ae6d93bfbe3d
+"ograf@npm:1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0":
+  version: 1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0
+  resolution: "ograf@npm:1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0"
+  checksum: 10c0/a6afdf1a3f21c6494794373103b4a7e5a00013659089a7f2a48af7e186e92a7cc28e034e3843ed1a8e3ad105d31b53003323b074741b2b09df9e37de5c5a43b4
   languageName: node
   linkType: hard
 
@@ -4971,6 +5009,13 @@ __metadata:
   version: 3.1.1
   resolution: "path-key@npm:3.1.1"
   checksum: 10c0/748c43efd5a569c039d7a00a03b58eecd1d75f3999f5a28303d75f521288df4823bc057d8784eb72358b2895a05f29a070bc9f1f17d28226cc4e62494cc58c4c
+  languageName: node
+  linkType: hard
+
+"path-key@npm:^4.0.0":
+  version: 4.0.0
+  resolution: "path-key@npm:4.0.0"
+  checksum: 10c0/794efeef32863a65ac312f3c0b0a99f921f3e827ff63afa5cb09a377e202c262b671f7b3832a4e64731003fa94af0263713962d317b9887bd1e0c48a342efba3
   languageName: node
   linkType: hard
 
@@ -5334,6 +5379,13 @@ __metadata:
     graceful-fs: "npm:^4.1.2"
     once: "npm:^1.3.0"
   checksum: 10c0/21a53741c488775cbf78b0b51f1b897e9c523b1bcf54567fc2c8ed09b12d9027741f45fcb720f388c0c3088021b54dc3f616c07af1531417678cc7962fc15e5c
+  languageName: node
+  linkType: hard
+
+"readdirp@npm:^4.0.1":
+  version: 4.1.2
+  resolution: "readdirp@npm:4.1.2"
+  checksum: 10c0/60a14f7619dec48c9c850255cd523e2717001b0e179dc7037cfa0895da7b9e9ab07532d324bfb118d73a710887d1e35f79c495fa91582784493e085d18c72c62
   languageName: node
   linkType: hard
 
@@ -5996,7 +6048,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinyglobby@npm:^0.2.12":
+"tiny-invariant@npm:^1.3.3":
+  version: 1.3.3
+  resolution: "tiny-invariant@npm:1.3.3"
+  checksum: 10c0/65af4a07324b591a059b35269cd696aba21bef2107f29b9f5894d83cc143159a204b299553435b03874ebb5b94d019afa8b8eff241c8a4cfee95872c2e1c1c4a
+  languageName: node
+  linkType: hard
+
+"tinyglobby@npm:^0.2.12, tinyglobby@npm:^0.2.14":
   version: 0.2.15
   resolution: "tinyglobby@npm:0.2.15"
   dependencies:
@@ -6180,23 +6239,23 @@ __metadata:
   languageName: node
   linkType: hard
 
-"typescript@npm:^5.9.3":
-  version: 5.9.3
-  resolution: "typescript@npm:5.9.3"
+"typescript@npm:~5.7.0":
+  version: 5.7.3
+  resolution: "typescript@npm:5.7.3"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/6bd7552ce39f97e711db5aa048f6f9995b53f1c52f7d8667c1abdc1700c68a76a308f579cd309ce6b53646deb4e9a1be7c813a93baaf0a28ccd536a30270e1c5
+  checksum: 10c0/b7580d716cf1824736cc6e628ab4cd8b51877408ba2be0869d2866da35ef8366dd6ae9eb9d0851470a39be17cbd61df1126f9e211d8799d764ea7431d5435afa
   languageName: node
   linkType: hard
 
-"typescript@patch:typescript@npm%3A^5.9.3#optional!builtin<compat/typescript>":
-  version: 5.9.3
-  resolution: "typescript@patch:typescript@npm%3A5.9.3#optional!builtin<compat/typescript>::version=5.9.3&hash=5786d5"
+"typescript@patch:typescript@npm%3A~5.7.0#optional!builtin<compat/typescript>":
+  version: 5.7.3
+  resolution: "typescript@patch:typescript@npm%3A5.7.3#optional!builtin<compat/typescript>::version=5.7.3&hash=5786d5"
   bin:
     tsc: bin/tsc
     tsserver: bin/tsserver
-  checksum: 10c0/ad09fdf7a756814dce65bc60c1657b40d44451346858eea230e10f2e95a289d9183b6e32e5c11e95acc0ccc214b4f36289dcad4bf1886b0adb84d711d336a430
+  checksum: 10c0/6fd7e0ed3bf23a81246878c613423730c40e8bdbfec4c6e4d7bf1b847cbb39076e56ad5f50aa9d7ebd89877999abaee216002d3f2818885e41c907caaa192cc4
   languageName: node
   linkType: hard
 
@@ -6228,6 +6287,13 @@ __metadata:
   version: 0.1.0
   resolution: "unicorn-magic@npm:0.1.0"
   checksum: 10c0/e4ed0de05b0a05e735c7d8a2930881e5efcfc3ec897204d5d33e7e6247f4c31eac92e383a15d9a6bccb7319b4271ee4bea946e211bf14951fec6ff2cbbb66a92
+  languageName: node
+  linkType: hard
+
+"unicorn-magic@npm:^0.3.0":
+  version: 0.3.0
+  resolution: "unicorn-magic@npm:0.3.0"
+  checksum: 10c0/0a32a997d6c15f1c2a077a15b1c4ca6f268d574cf5b8975e778bb98e6f8db4ef4e86dfcae4e158cd4c7e38fb4dd383b93b13eefddc7f178dea13d3ac8a603271
   languageName: node
   linkType: hard
 
@@ -6336,6 +6402,55 @@ __metadata:
   languageName: node
   linkType: hard
 
+"vite-plugin-checker@npm:^0.11.0":
+  version: 0.11.0
+  resolution: "vite-plugin-checker@npm:0.11.0"
+  dependencies:
+    "@babel/code-frame": "npm:^7.27.1"
+    chokidar: "npm:^4.0.3"
+    npm-run-path: "npm:^6.0.0"
+    picocolors: "npm:^1.1.1"
+    picomatch: "npm:^4.0.3"
+    tiny-invariant: "npm:^1.3.3"
+    tinyglobby: "npm:^0.2.14"
+    vscode-uri: "npm:^3.1.0"
+  peerDependencies:
+    "@biomejs/biome": ">=1.7"
+    eslint: ">=7"
+    meow: ^13.2.0
+    optionator: ^0.9.4
+    oxlint: ">=1"
+    stylelint: ">=16"
+    typescript: "*"
+    vite: ">=5.4.20"
+    vls: "*"
+    vti: "*"
+    vue-tsc: ~2.2.10 || ^3.0.0
+  peerDependenciesMeta:
+    "@biomejs/biome":
+      optional: true
+    eslint:
+      optional: true
+    meow:
+      optional: true
+    optionator:
+      optional: true
+    oxlint:
+      optional: true
+    stylelint:
+      optional: true
+    typescript:
+      optional: true
+    vls:
+      optional: true
+    vti:
+      optional: true
+    vue-tsc:
+      optional: true
+  checksum: 10c0/48feed9dc8896e288b95ad6e631b091bfca0f619c041fa6189264df53b0e6955ec0c067b0129f6baf732f734af02495bdbb292bf8eae372c2df1428ecdd256b7
+  languageName: node
+  linkType: hard
+
 "vite-plugin-svgr@npm:^4.5.0":
   version: 4.5.0
   resolution: "vite-plugin-svgr@npm:4.5.0"
@@ -6389,6 +6504,13 @@ __metadata:
   bin:
     vite: bin/vite.js
   checksum: 10c0/468336a1409f728b464160cbf02672e72271fb688d0e605e776b74a89d27e1029509eef3a3a6c755928d8011e474dbf234824d054d07960be5f23cd176bc72de
+  languageName: node
+  linkType: hard
+
+"vscode-uri@npm:^3.1.0":
+  version: 3.1.0
+  resolution: "vscode-uri@npm:3.1.0"
+  checksum: 10c0/5f6c9c10fd9b1664d71fab4e9fbbae6be93c7f75bb3a1d9d74399a88ab8649e99691223fd7cef4644376cac6e94fa2c086d802521b9a8e31c5af3e60f0f35624
   languageName: node
   linkType: hard
 

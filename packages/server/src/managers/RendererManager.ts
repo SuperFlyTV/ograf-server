@@ -1,7 +1,7 @@
 import { EmptyPayload, VendorExtend, ServerApi } from 'ograf'
 import { JSONRPCServerAndClient } from 'json-rpc-2.0'
-import * as RendererAPI from '../types/rendererAPI.js'
-import { RendererInfo } from '../types/renderer.js'
+import * as RendererAPI from '@ograf-server/shared'
+import { RendererInfo } from '@ograf-server/shared'
 
 export class RendererManager {
 	private rendererInstances: Set<RendererInstance> = new Set()
@@ -50,18 +50,18 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 
 	/** Methods that can be called on the Renderer */
 	public api: RendererAPI.MethodsOnRenderer = {
-		getManifest: (payload) => this.jsonRpcConnection.request('getManifest', payload),
-		// listGraphicInstances: (payload) => this.jsonRpcConnection.request('listGraphicInstances', payload),
-		getInfo: (payload) => this.jsonRpcConnection.request('getInfo', payload),
-		getTargetStatus: (payload) => this.jsonRpcConnection.request('getTargetStatus', payload),
-		invokeRendererAction: (payload) => this.jsonRpcConnection.request('invokeRendererAction', payload),
-		loadGraphic: (payload) => this.jsonRpcConnection.request('loadGraphic', payload),
-		clearGraphic: (payload) => this.jsonRpcConnection.request('clearGraphic', payload),
+		// getManifest: async (payload) => this.jsonRpcConnection.request('getManifest', payload),
+		// listGraphicInstances: async (payload) => this.jsonRpcConnection.request('listGraphicInstances', payload),
+		getInfo: async (payload) => this.jsonRpcConnection.request('getInfo', payload),
+		getTargetStatus: async (payload) => this.jsonRpcConnection.request('getTargetStatus', payload),
+		invokeRendererAction: async (payload) => this.jsonRpcConnection.request('invokeRendererAction', payload),
+		loadGraphic: async (payload) => this.jsonRpcConnection.request('loadGraphic', payload),
+		clearGraphic: async (payload) => this.jsonRpcConnection.request('clearGraphic', payload),
 
-		invokeGraphicUpdateAction: (payload) => this.jsonRpcConnection.request('invokeGraphicUpdateAction', payload),
-		invokeGraphicPlayAction: (payload) => this.jsonRpcConnection.request('invokeGraphicPlayAction', payload),
-		invokeGraphicStopAction: (payload) => this.jsonRpcConnection.request('invokeGraphicStopAction', payload),
-		invokeGraphicCustomAction: (payload) => this.jsonRpcConnection.request('invokeGraphicCustomAction', payload),
+		invokeGraphicUpdateAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicUpdateAction', payload),
+		invokeGraphicPlayAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicPlayAction', payload),
+		invokeGraphicStopAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicStopAction', payload),
+		invokeGraphicCustomAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicCustomAction', payload),
 	}
 
 	constructor(

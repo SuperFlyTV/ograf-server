@@ -1,20 +1,20 @@
 import Router from '@koa/router'
-import { GraphicsStore } from './managers/GraphicsStore'
-import { CTX } from './lib/lib'
-import { ServerApi } from 'ograf'
 import multer from '@koa/multer'
-import { RendererManager } from './managers/RendererManager'
+import { ServerApi } from 'ograf'
+import { CTX } from './lib/lib.js'
+import { GraphicsStore } from './managers/GraphicsStore.js'
+import { RendererManager } from './managers/RendererManager.js'
 import {
 	CustomActionParams,
 	GraphicFilter,
 	GraphicId,
-	GraphicTarget,
+	GraphicInstanceId,
 	PlayActionParams,
 	RendererId,
 	RenderTargetIdentifier,
 	StopActionParams,
 	UpdateActionParams,
-} from './types/OpenApiTypes'
+} from './types/OpenApiTypes.js'
 import { z, ZodError } from 'zod/v4'
 const upload = multer({
 	storage: multer.diskStorage({
@@ -24,7 +24,7 @@ const upload = multer({
 
 const startupTime = Date.now()
 
-export function setupServerApi(router: Router, graphicsStore: GraphicsStore, rendererManager: RendererManager) {
+export function setupServerApi(router: Router, graphicsStore: GraphicsStore, rendererManager: RendererManager): void {
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
 
 	router.get(getKoaUrl('/'), (ctx: CTX) => {
@@ -373,7 +373,6 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 							graphicInstanceId: graphicInstance.graphicInstanceId,
 							graphic: {
 								id: graphicInstance.graphicId,
-								version: graphicInstance.graphicVersion,
 							},
 						})),
 					},
@@ -454,7 +453,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicTarget,
+						graphicTarget: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -484,7 +483,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicUpdateAction({
 				renderTarget: request.parameters.query.renderTarget,
-				target: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicTarget,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -493,7 +492,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				content: {
 					'application/json': {
 						...result.result, // To pipe through any vendor specific data
-						graphicInstanceId: result.graphicsInstanceId,
+						graphicInstanceId: result.graphicInstanceId,
 						statusCode: result.result?.statusCode ?? 200,
 						statusMessage: result.result?.statusMessage ?? 'N/A',
 					},
@@ -513,7 +512,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicTarget,
+						graphicTarget: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -543,7 +542,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicPlayAction({
 				renderTarget: request.parameters.query.renderTarget,
-				target: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicTarget,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -552,7 +551,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				content: {
 					'application/json': {
 						...result.result, // To pipe through any vendor specific data
-						graphicInstanceId: result.graphicsInstanceId,
+						graphicInstanceId: result.graphicInstanceId,
 						statusCode: result.result?.statusCode ?? 200,
 						statusMessage: result.result?.statusMessage ?? 'N/A',
 					},
@@ -572,7 +571,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicTarget,
+						graphicTarget: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -602,7 +601,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicStopAction({
 				renderTarget: request.parameters.query.renderTarget,
-				target: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicTarget,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -611,7 +610,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				content: {
 					'application/json': {
 						...result.result, // To pipe through any vendor specific data
-						graphicInstanceId: result.graphicsInstanceId,
+						graphicInstanceId: result.graphicInstanceId,
 						statusCode: result.result?.statusCode ?? 200,
 						statusMessage: result.result?.statusMessage ?? 'N/A',
 					},
@@ -631,7 +630,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicTarget,
+						graphicTarget: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -661,7 +660,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicCustomAction({
 				renderTarget: request.parameters.query.renderTarget,
-				target: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicTarget,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -670,7 +669,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				content: {
 					'application/json': {
 						...result.result, // To pipe through any vendor specific data
-						graphicInstanceId: result.graphicsInstanceId,
+						graphicInstanceId: result.graphicInstanceId,
 						statusCode: result.result?.statusCode ?? 200,
 						statusMessage: result.result?.statusMessage ?? 'N/A',
 					},
@@ -835,7 +834,7 @@ function handleReturn<Method extends AnyMethod>(
 	// Body:
 	// Serve the correct content type based on the request:
 	const contentType = ctx.request.headers['content-type'] || 'application/json'
-	for (const [key, value] of Object.entries(r.content)) {
+	for (const [key, value] of Object.entries<any>(r.content)) {
 		if (key === contentType) {
 			ctx.body = value
 			break
@@ -843,7 +842,7 @@ function handleReturn<Method extends AnyMethod>(
 	}
 	// If no contentType is matching, fall back to whatever is provided:
 	if (!ctx.body) {
-		for (const value of Object.values(r.content)) {
+		for (const value of Object.values<any>(r.content)) {
 			if (value !== undefined) {
 				ctx.body = value
 				break
