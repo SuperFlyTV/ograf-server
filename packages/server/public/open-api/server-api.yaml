@@ -42,10 +42,6 @@ paths:
                     type: string
                     description: Version of the Server
                     example: '1.0'
-                  uptime:
-                    type: number
-                    description: Server uptime (in milliseconds)
-                    example: 3600000
                 required:
                   - name
         500:
@@ -108,7 +104,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GraphicNotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error
           content:
@@ -142,7 +138,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/GraphicNotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error
           content:
@@ -210,7 +206,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error
           content:
@@ -239,18 +235,13 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  renderTarget:
-                    $ref: "#/components/schemas/RenderTargetInfo"
-                required:
-                  - renderTarget
+                $ref: "#/components/schemas/RenderTargetInfo"
         404:
           description: No RenderTarget found
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error
           content:
@@ -304,7 +295,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error
           content:
@@ -345,7 +336,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error
           content:
@@ -399,7 +390,7 @@ paths:
                 type: object
                 properties:
                   graphicInstanceId:
-                    description: "Unique ID of the instance of the graphic that was just loaded"
+                    description: "Unique ID of the instance of the graphic that was just loaded. Use this id to target the graphic instance for further actions."
                     $ref: "#/components/schemas/GraphicInstanceId"
                   statusCode:
                     description: "Returned by the load() method"
@@ -417,7 +408,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or load() threw an error
           content:
@@ -441,8 +432,8 @@ paths:
             $ref: "#/components/schemas/RenderTargetIdentifier"
           required: true
         - in: query
-          name: graphicTarget
-          description: "The Graphic to target with the command (graphicInstanceId)"
+          name: graphicInstanceId
+          description: "Id of the Graphic instance to target with the command"
           schema:
             $ref: "#/components/schemas/GraphicInstanceId"
           required: true
@@ -483,7 +474,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or updateAction() threw an error
           content:
@@ -507,8 +498,8 @@ paths:
             $ref: "#/components/schemas/RenderTargetIdentifier"
           required: true
         - in: query
-          name: graphicTarget
-          description: "The Graphic to target with the command (graphicInstanceId)"
+          name: graphicInstanceId
+          description: "Id of the Graphic instance to target with the command"
           schema:
             $ref: "#/components/schemas/GraphicInstanceId"
           required: true
@@ -556,7 +547,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or playAction() threw an error
           content:
@@ -580,8 +571,8 @@ paths:
             $ref: "#/components/schemas/RenderTargetIdentifier"
           required: true
         - in: query
-          name: graphicTarget
-          description: "The Graphic to target with the command (graphicInstanceId)"
+          name: graphicInstanceId
+          description: "Id of the Graphic instance to target with the command"
           schema:
             $ref: "#/components/schemas/GraphicInstanceId"
           required: true
@@ -623,7 +614,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or stopAction() threw an error
           content:
@@ -647,8 +638,8 @@ paths:
             $ref: "#/components/schemas/RenderTargetIdentifier"
           required: true
         - in: query
-          name: graphicTarget
-          description: "The Graphic to target with the command (graphicInstanceId)"
+          name: graphicInstanceId
+          description: "Id of the Graphic instance to target with the command"
           schema:
             $ref: "#/components/schemas/GraphicInstanceId"
           required: true
@@ -690,7 +681,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or customAction() threw an error
           content:
@@ -714,8 +705,8 @@ paths:
             $ref: "#/components/schemas/RenderTargetIdentifier"
           required: true
         - in: query
-          name: graphicTarget
-          description: "The Graphic to target with the command (graphicInstanceId)"
+          name: graphicInstanceId
+          description: "Id of the Graphic instance to target with the command"
           schema:
             $ref: "#/components/schemas/GraphicInstanceId"
           required: true
@@ -731,7 +722,7 @@ paths:
                   type: object
                   properties:
                     timestamp:
-                      description: "The timestamp to go to"
+                      description: "The timestamp to go to (in milliseconds)"
                       type: number
                       example: "1234"
                   required:
@@ -765,7 +756,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or goToTime() threw an error
           content:
@@ -789,8 +780,8 @@ paths:
             $ref: "#/components/schemas/RenderTargetIdentifier"
           required: true
         - in: query
-          name: graphicTarget
-          description: "The Graphic to target with the command (graphicInstanceId)"
+          name: graphicInstanceId
+          description: "Id of the Graphic instance to target with the command"
           schema:
             $ref: "#/components/schemas/GraphicInstanceId"
           required: true
@@ -813,7 +804,7 @@ paths:
                         type: object
                         properties:
                           timestamp:
-                            description: "The timestamp to go to"
+                            description: "The timestamp to apply action (in milliseconds)"
                             type: number
                             example: "1234"
                           action:
@@ -892,7 +883,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/NotFoundResponse"
+                $ref: "#/components/schemas/ErrorResponse"
         500:
           description: Internal Server Error or setActionsSchedule() threw an error
           content:
@@ -905,31 +896,28 @@ components:
     # Responses
     ErrorResponse:
       type: object
+      description: A response object containing problem details, see https://www.rfc-editor.org/rfc/rfc7807.html#section-3.1 for details.
       properties:
-        error:
+        type:
+          type: string
+          example: "https://example.com/probs/out-of-credit"
+          description: A URI reference that identifies the problem type. See https://www.rfc-editor.org/rfc/rfc7807.html#section-3.1 for details.
+        title:
           type: string
           example: "Internal Server Error"
-        stack:
+          description: A short, human-readable summary of the problem type. See https://www.rfc-editor.org/rfc/rfc7807.html#section-3.1 for details.
+        status:
+          type: integer
+          example: 500
+          description: The HTTP status code generated by the origin server for this occurrence of the problem. See https://www.rfc-editor.org/rfc/rfc7807.html#section-3.1 for details.
+        detail:
           type: string
-          example: "Error at /path/to/file.js:123:45"
-      required:
-        - error
-    NotFoundResponse:
-      type: object
-      properties:
-        error:
+          example: "Internal Server Error"
+          description: A human-readable explanation specific to this occurrence of the problem. See https://www.rfc-editor.org/rfc/rfc7807.html#section-3.1 for details.
+        instance:
           type: string
-          example: "Not found"
-      required:
-        - error
-    GraphicNotFoundResponse:
-      type: object
-      properties:
-        error:
-          type: string
-          example: "Graphic not found"
-      required:
-        - error
+          example: '/renderers/renderer-0/target/graphic/'
+          description: A URI reference that identifies the specific occurrence of the problem. See https://www.rfc-editor.org/rfc/rfc7807.html#section-3.1 for details.
     ClearGraphicsResponse:
       type: object
       properties:
@@ -945,15 +933,6 @@ components:
               graphicInstanceId:
                 description: "Unique ID of the instance of the graphic that was just cleared"
                 $ref: "#/components/schemas/GraphicInstanceId"
-              graphic:
-                description: "The graphic that was cleared"
-                type: object
-                properties:
-                  id:
-                    description: "ID of the graphic that was cleared"
-                    $ref: "#/components/schemas/GraphicId"
-                required:
-                  - id
             required:
               - renderTarget
               - graphicInstanceId
@@ -1008,17 +987,20 @@ components:
           description: "Description of the graphic"
           type: string
           example: "A simple lower third for the Main news show"
-        author:
-          description: "Information about the author of the graphic"
+        createdAt:
+          description: "DateTime of when the Graphic was created ( ISO8601 string )"
+          type: string
+          example: "2025-11-12T15:48:34Z"
+        createdBy:
+          description: "Information about who created the graphic"
           $ref: "#/components/schemas/Author"
-        created:
-          description: "Unix timestamp of when the Graphic was created"
-          type: number
-          example: 1735689600000
-        modified:
-          description: "Unix timestamp of when the Graphic was last modified"
-          type: number
-          example: 1735689600000
+        updatedAt:
+          description: "DateTime of when the Graphic was last updated ( ISO8601 string )"
+          type: string
+          example: "2025-11-12T15:48:34Z"
+        updatedBy:
+          description: "Information about who last updated the graphic"
+          $ref: "#/components/schemas/Author"
       required:
         - id
         - name
@@ -1064,18 +1046,18 @@ components:
             message:
               type: string
               example: "Renderer is running"
-            renderTargets:
-              description: "List of active RenderTargets and their contents"
-              type: array
-              items:
-                $ref: "#/components/schemas/RenderTargetInfo"
           required:
             - status
-            - renderTargets
+        renderTargets:
+          description: "List of active RenderTargets and their contents"
+          type: array
+          items:
+            $ref: "#/components/schemas/RenderTargetInfo"
       required:
         - id
         - name
         - status
+        - renderTargets
     RenderTargetInfo:
       type: object
       properties:
@@ -1089,16 +1071,6 @@ components:
         description:
           description: "Longer description of the RenderTarget"
           type: string
-        status:
-          type: string
-          enum:
-            - OK
-            - WARNING
-            - ERROR
-          example: "OK"
-        statusMessage:
-          type: string
-          example: "RenderTarget is running"
         graphicInstances:
           type: array
           items:
@@ -1108,10 +1080,12 @@ components:
                 $ref: "#/components/schemas/GraphicInstanceId"
               graphic:
                 $ref: "#/components/schemas/GraphicInfo"
+            required:
+              - graphicInstanceId
+              - graphic
       required:
         - renderTarget
         - name
-        - status
         - graphicInstances
     ShallowGDDObjectSchema:
       allOf:

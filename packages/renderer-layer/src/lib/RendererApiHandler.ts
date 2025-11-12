@@ -258,14 +258,14 @@ export class RendererApiHandler implements MethodsOnRenderer {
 				status: {
 					status: 'OK', // OK, WARNING, ERROR
 					// message: ''
-					renderTargets: omitFalsy(
-						this.layersManager.getAllLayers().map((layer) => {
-							if (!layer.graphicInstance) return null
-
-							return layer.getInfo()
-						})
-					),
 				},
+				renderTargets: omitFalsy(
+					this.layersManager.getAllLayers().map((layer) => {
+						if (!layer.graphicInstance) return null
+
+						return layer.getInfo()
+					})
+				),
 			},
 		}
 	}

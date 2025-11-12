@@ -259,11 +259,11 @@ class ServerData {
 				)
 				if (r.status === 200)
 					runInAction(() => {
-						if (r.content.renderTarget.graphicInstances) {
+						if (r.content.graphicInstances) {
 							// Replace any existing on the renderTarget with new ones:
 
 							const newKeySet = new Set<string>()
-							for (const gi of r.content.renderTarget.graphicInstances) {
+							for (const gi of r.content.graphicInstances) {
 								const entry: GraphicsInstanceMapEntry = {
 									rendererId: rendererId,
 									renderTarget: renderTarget,

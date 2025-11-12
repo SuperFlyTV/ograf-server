@@ -27,7 +27,7 @@
     "@ograf-server/shared": "*",
     "mobx": "^6.15.0",
     "mobx-react": "^9.2.1",
-    "ograf": "1.0.1-nightly-feat-server-api-20251108-182535-e191ed1.0",
+    "ograf": "1.0.1-nightly-feat-server-api-wip-20251112-165910-35360d9.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "url": "^0.11.4"

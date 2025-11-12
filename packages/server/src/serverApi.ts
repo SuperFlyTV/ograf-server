@@ -22,8 +22,6 @@ const upload = multer({
 	}),
 })
 
-const startupTime = Date.now()
-
 export function setupServerApi(router: Router, graphicsStore: GraphicsStore, rendererManager: RendererManager): void {
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
 
@@ -36,8 +34,6 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				content: {
 					'application/json': {
 						name: 'Simple OGraf Server',
-						// description: "A simple OGraf Server",
-						uptime: Date.now() - startupTime,
 						author: {
 							name: 'SuperFly.tv',
 							url: 'https://github.com/SuperFlyTV/ograf-server',
@@ -453,7 +449,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicInstanceId,
+						graphicInstanceId: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -483,7 +479,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicUpdateAction({
 				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -512,7 +508,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicInstanceId,
+						graphicInstanceId: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -542,7 +538,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicPlayAction({
 				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -571,7 +567,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicInstanceId,
+						graphicInstanceId: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -601,7 +597,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicStopAction({
 				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -630,7 +626,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					}),
 					query: z.object({
 						renderTarget: RenderTargetIdentifier,
-						graphicTarget: GraphicInstanceId,
+						graphicInstanceId: GraphicInstanceId,
 					}),
 				}),
 				requestBody: z.object({
@@ -660,7 +656,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 
 			const result = await rendererInstance.api.invokeGraphicCustomAction({
 				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicTarget,
+				graphicInstanceId: request.parameters.query.graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -871,20 +867,26 @@ function handleErrorReturn<_Method extends AnyMethodErrorResponse>(ctx: CTX, err
 			headers: {},
 			content: {
 				'application/json': {
-					error: 'Bad Request: ' + err.message,
+					status: 400,
+					title: 'Bad Request',
+					detail: err.message,
 					stack: err instanceof Error ? err.stack : undefined,
-				},
+				} satisfies ServerApi.components['schemas']['ErrorResponse'],
 			},
 		})
 	}
 
-	return handleReturn<AnyMethodErrorResponse>(ctx, err.statusCode || 500, {
+	const statusCode = err.statusCode || 500
+	return handleReturn<AnyMethodErrorResponse>(ctx, statusCode, {
 		headers: {},
 		content: {
 			'application/json': {
-				error: err instanceof Error ? err.message : `${err}`,
+				status: statusCode,
+				title: 'Internal Error',
+				detail: err instanceof Error ? err.message : `${err}`,
+
 				stack: err instanceof Error ? err.stack : undefined,
-			},
+			} satisfies ServerApi.components['schemas']['ErrorResponse'],
 		},
 	})
 }

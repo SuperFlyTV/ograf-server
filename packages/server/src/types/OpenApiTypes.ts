@@ -22,12 +22,6 @@ export const action = z.object({
 	schema: z.optional(z.union([z.object(), z.null()])),
 })
 
-export const NotFoundResponse = z.object({
-	error: z.string(),
-})
-export const GraphicNotFoundResponse = z.object({
-	error: z.string(),
-})
 export const ClearGraphicsResponse = z.object({
 	graphicInstances: z.array(
 		z.object({
@@ -49,9 +43,10 @@ export const GraphicInfo = z.object({
 	version: z.optional(z.string()),
 	name: z.string(),
 	description: z.string(),
-	author: z.optional(Author),
-	created: z.optional(z.number()),
-	modified: z.optional(z.number()),
+	createdBy: z.optional(Author),
+	createdAt: z.optional(z.string()),
+	updatedBy: z.optional(Author),
+	updatedAt: z.optional(z.number()),
 })
 
 // export const GraphicManifest = components["schemas"]["schema-2"]

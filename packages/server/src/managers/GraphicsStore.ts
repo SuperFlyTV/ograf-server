@@ -102,9 +102,10 @@ export class GraphicsStore {
 				version: manifest.version,
 				name: manifest.name,
 				description: manifest.description,
-				author: manifest.author,
-				modified: Math.floor(stat.mtimeMs),
-			},
+				createdBy: manifest.author,
+				createdAt: new Date(stat.ctimeMs).toISOString(),
+				updatedAt: new Date(stat.mtimeMs).toISOString(),
+			} satisfies ServerApi.components['schemas']['GraphicInfo'],
 			manifest: manifest as any, // the types don't exactly match, due to differences in generation
 		}
 	}

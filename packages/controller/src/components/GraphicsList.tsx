@@ -80,7 +80,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 	const descriptions: string[] = []
 
 	if (graphic.graphic.description) descriptions.push(graphic.graphic.description)
-	if (graphic.graphic.author) descriptions.push(`by ${graphic.graphic.author.name}`)
+	if (graphic.graphic.createdBy) descriptions.push(`by ${graphic.graphic.createdBy.name}`)
 
 	return (
 		<Card elevation={1} sx={{ m: 1, p: 1 }}>
@@ -194,7 +194,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{ rendererId: renderer.id },
 												{
 													renderTarget: queuedGraphic.renderTarget,
-													graphicTarget: gi.graphicInstanceId,
+													graphicInstanceId: gi.graphicInstanceId,
 												},
 												{
 													params: {
@@ -219,7 +219,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{ rendererId: renderer.id },
 												{
 													renderTarget: queuedGraphic.renderTarget,
-													graphicTarget: gi.graphicInstanceId,
+													graphicInstanceId: gi.graphicInstanceId,
 												},
 												{
 													params: {
@@ -243,7 +243,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{ rendererId: renderer.id },
 												{
 													renderTarget: queuedGraphic.renderTarget,
-													graphicTarget: gi.graphicInstanceId,
+													graphicInstanceId: gi.graphicInstanceId,
 												},
 												{
 													params: {
@@ -277,7 +277,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 														serverDataStore.removeFromGraphicsInstanceMap({
 															rendererId: renderer.id,
 															renderTarget: queuedGraphic.renderTarget,
-															graphicId: gi.graphic.id,
+															graphicId: queuedGraphic.graphicId,
 															graphicInstanceId: gi.graphicInstanceId,
 														})
 													}
@@ -358,7 +358,7 @@ const GraphicCustomAction = (props: {
 							{ rendererId: rendererId },
 							{
 								renderTarget: renderTarget,
-								graphicTarget: graphicInstanceId,
+								graphicInstanceId: graphicInstanceId,
 							},
 							{
 								actionName: action.name,

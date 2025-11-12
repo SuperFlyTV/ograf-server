@@ -424,7 +424,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicTarget', query.graphicTarget)
+		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -462,7 +462,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicTarget', query.graphicTarget)
+		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -500,7 +500,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicTarget', query.graphicTarget)
+		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -538,7 +538,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicTarget', query.graphicTarget)
+		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -576,7 +576,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicTarget', query.graphicTarget)
+		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -614,7 +614,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicTarget', query.graphicTarget)
+		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
