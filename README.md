@@ -1,6 +1,6 @@
 # OGraf Simple Rendering System
 
-<img src="./server/public/assets/ograf_logo_colour_draft.svg" width="300"/>
+<img src="./packages/server/public/assets/ograf_logo_colour_draft.svg" width="300"/>
 
 ## What is this?
 
