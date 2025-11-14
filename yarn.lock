@@ -1010,7 +1010,7 @@ __metadata:
     mobx: "npm:^6.15.0"
     mobx-react: "npm:^9.2.1"
     ograf: "npm:1.0.1-nightly-feat-server-api-wip-20251112-165910-35360d9.0"
-    ograf-form: "npm:^0.1.2"
+    ograf-form: "npm:^0.1.3"
     prettier: "npm:^3.6.2"
     react: "npm:^19.2.0"
     react-dom: "npm:^19.2.0"
@@ -4837,10 +4837,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ograf-form@npm:^0.1.2":
-  version: 0.1.2
-  resolution: "ograf-form@npm:0.1.2"
-  checksum: 10c0/16f1bf3fba23de2a750c841cc1a680b397614e3b4942ca070cc5b9ec032edefed85477a6e1cebabbd1970d071f9f7405d159f69fdd00e52767c55d0314f363e5
+"ograf-form@npm:^0.1.3":
+  version: 0.1.3
+  resolution: "ograf-form@npm:0.1.3"
+  checksum: 10c0/0132547ebb79240bdc8841b969c3efa9bb47498882d4845c901527180fa70dc073f573134448425295a35f0154ecc4d28c7b6450fb10511889f4b426626b221d
   languageName: node
   linkType: hard
 
