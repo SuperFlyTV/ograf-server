@@ -12,28 +12,34 @@ jobs:
   lint:
     name: Build & Lint
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: false
     timeout-minutes: 15
 
     steps:
       - uses: actions/checkout@v5
+        # checkout first without cache,
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+        # so that we can run corepack enable and get yarn 2+ set up
+      - run: corepack enable
+        env:
+          CI: true
+        # checkout again, now with cache enabled
       - uses: actions/setup-node@v6
         with:
           node-version: 24
           cache: 'yarn'
-      - name: Prepare Environment
-        run: |
-          corepack enable
-          yarn install --immutable
-          yarn build
+      - run: yarn install --immutable
         env:
           CI: true
-      - name: Build
-        run: yarn build
+      - run: yarn build
         env:
           CI: true
-      - name: Lint
-        run: |
+      - run: yarn build
+        env:
+          CI: true
+      - run: |
           yarn lint
         env:
           CI: true
