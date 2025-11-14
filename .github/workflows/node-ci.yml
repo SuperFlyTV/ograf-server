@@ -1,0 +1,39 @@
+name: Lint & Build
+
+on:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+*'
+  pull_request:
+
+jobs:
+  lint:
+    name: Build & Lint
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: 'yarn'
+      - name: Prepare Environment
+        run: |
+          corepack enable
+          yarn install --immutable
+          yarn build
+        env:
+          CI: true
+      - name: Build
+        run: yarn build
+        env:
+          CI: true
+      - name: Lint
+        run: |
+          yarn lint
+        env:
+          CI: true
