@@ -25,7 +25,7 @@ export class GraphicCache {
 
 		// Load the Graphic:
 		console.log(`Loading Graphic...`, graphicInfo)
-		const webComponent = await this.fetchModule(graphicId, graphicInfo.manifest)
+		const webComponent = await this.fetchModule(graphicId, graphicInfo.graphic)
 
 		// register the web component
 		customElements.define(graphicId, webComponent)
@@ -36,20 +36,18 @@ export class GraphicCache {
 		}
 	}
 	private async fetchGraphicInfo(graphicId: string): Promise<GraphicInfo> {
-		const manifestUrl = `${this.serverApiUrl}/ograf/v1/graphics/${graphicId}`
+		const url = `${this.serverApiUrl}/ograf/v1/graphics/${graphicId}`
 
-		const response = await fetch(manifestUrl)
+		const response = await fetch(url)
 		if (response.status === 200) {
 			const responseData = await response.json()
 
 			if (!responseData.graphic) throw new Error('No "graphic" property found in response')
-			if (!responseData.manifest) throw new Error('No "manifest" property found in response')
+			if (!responseData.metadata) throw new Error('No "metadata" property found in response')
 
 			return responseData
 		} else {
-			throw new Error(
-				`Failed to load manifest from ${manifestUrl}: [${response.status}] ${JSON.stringify(response.body)}`
-			)
+			throw new Error(`Failed to load manifest from ${url}: [${response.status}] ${JSON.stringify(response.body)}`)
 		}
 	}
 	async fetchModule(

@@ -98,8 +98,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				headers: {},
 				content: {
 					'application/json': {
-						graphic: graphicInfo.info,
-						manifest: graphicInfo.manifest,
+						graphic: graphicInfo.graphic,
+						metadata: graphicInfo.metadata,
 					},
 				},
 			})
@@ -334,7 +334,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				requestBody: z.object({
 					content: z.object({
 						'application/json': z.object({
-							filters: GraphicFilter,
+							filters: z.array(GraphicFilter),
 						}),
 					}),
 				}),
@@ -356,7 +356,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				})
 			}
 
-			const result = await rendererInstance.api.clearGraphic({
+			const result = await rendererInstance.api.clearGraphics({
 				filters: request.requestBody.content['application/json'].filters,
 			})
 
@@ -364,12 +364,9 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				headers: {},
 				content: {
 					'application/json': {
-						graphicInstances: result.graphicInstance.map((graphicInstance) => ({
+						graphicInstances: result.graphicInstances.map((graphicInstance) => ({
 							renderTarget: graphicInstance.renderTarget,
 							graphicInstanceId: graphicInstance.graphicInstanceId,
-							graphic: {
-								id: graphicInstance.graphicId,
-							},
 						})),
 					},
 				},
@@ -386,13 +383,11 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					path: z.object({
 						rendererId: RendererId,
 					}),
-					query: z.object({
-						renderTarget: RenderTargetIdentifier,
-					}),
 				}),
 				requestBody: z.object({
 					content: z.object({
 						'application/json': z.object({
+							renderTarget: RenderTargetIdentifier,
 							graphicId: GraphicId,
 							params: z.object({
 								data: z.unknown(),
@@ -419,7 +414,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			}
 
 			const result = await rendererInstance.api.loadGraphic({
-				renderTarget: request.parameters.query.renderTarget,
+				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicId: request.requestBody.content['application/json'].graphicId,
 				params: request.requestBody.content['application/json'].params,
 			})
@@ -447,14 +442,12 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					path: z.object({
 						rendererId: RendererId,
 					}),
-					query: z.object({
-						renderTarget: RenderTargetIdentifier,
-						graphicInstanceId: GraphicInstanceId,
-					}),
 				}),
 				requestBody: z.object({
 					content: z.object({
 						'application/json': z.object({
+							renderTarget: RenderTargetIdentifier,
+							graphicInstanceId: GraphicInstanceId,
 							params: UpdateActionParams,
 						}),
 					}),
@@ -478,8 +471,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			}
 
 			const result = await rendererInstance.api.invokeGraphicUpdateAction({
-				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicInstanceId,
+				renderTarget: request.requestBody.content['application/json'].renderTarget,
+				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -506,14 +499,12 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					path: z.object({
 						rendererId: RendererId,
 					}),
-					query: z.object({
-						renderTarget: RenderTargetIdentifier,
-						graphicInstanceId: GraphicInstanceId,
-					}),
 				}),
 				requestBody: z.object({
 					content: z.object({
 						'application/json': z.object({
+							renderTarget: RenderTargetIdentifier,
+							graphicInstanceId: GraphicInstanceId,
 							params: PlayActionParams,
 						}),
 					}),
@@ -537,8 +528,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			}
 
 			const result = await rendererInstance.api.invokeGraphicPlayAction({
-				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicInstanceId,
+				renderTarget: request.requestBody.content['application/json'].renderTarget,
+				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -565,14 +556,12 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					path: z.object({
 						rendererId: RendererId,
 					}),
-					query: z.object({
-						renderTarget: RenderTargetIdentifier,
-						graphicInstanceId: GraphicInstanceId,
-					}),
 				}),
 				requestBody: z.object({
 					content: z.object({
 						'application/json': z.object({
+							renderTarget: RenderTargetIdentifier,
+							graphicInstanceId: GraphicInstanceId,
 							params: StopActionParams,
 						}),
 					}),
@@ -596,8 +585,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			}
 
 			const result = await rendererInstance.api.invokeGraphicStopAction({
-				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicInstanceId,
+				renderTarget: request.requestBody.content['application/json'].renderTarget,
+				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 
@@ -624,14 +613,12 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 					path: z.object({
 						rendererId: RendererId,
 					}),
-					query: z.object({
-						renderTarget: RenderTargetIdentifier,
-						graphicInstanceId: GraphicInstanceId,
-					}),
 				}),
 				requestBody: z.object({
 					content: z.object({
 						'application/json': z.object({
+							renderTarget: RenderTargetIdentifier,
+							graphicInstanceId: GraphicInstanceId,
 							params: CustomActionParams,
 						}),
 					}),
@@ -655,8 +642,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			}
 
 			const result = await rendererInstance.api.invokeGraphicCustomAction({
-				renderTarget: request.parameters.query.renderTarget,
-				graphicInstanceId: request.parameters.query.graphicInstanceId,
+				renderTarget: request.requestBody.content['application/json'].renderTarget,
+				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
 			})
 

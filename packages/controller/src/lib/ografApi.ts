@@ -366,7 +366,6 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicLoad(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['parameters']['query'],
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -386,7 +385,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url]['put']
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
 
 		const response = await this.fetch<Method>(url0, false, {
 			method: 'put',
@@ -402,7 +400,6 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicUpdate(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['parameters']['query'],
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -423,8 +420,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url][typeof method]
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -440,7 +435,6 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicPlay(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['parameters']['query'],
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -461,8 +455,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url][typeof method]
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -478,7 +470,7 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicStop(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['parameters']['query'],
+
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -499,8 +491,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url][typeof method]
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -516,7 +506,6 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicInvokeCustomAction(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['parameters']['query'],
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -537,8 +526,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url][typeof method]
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -554,7 +541,6 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicGoToTime(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['parameters']['query'],
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -575,8 +561,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url][typeof method]
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
@@ -592,7 +576,6 @@ export class OgrafApi {
 	}
 	async renderTargetGraphicSetActionsSchedule(
 		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['parameters']['path'],
-		query: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['parameters']['query'],
 		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['requestBody']['content']['application/json']
 	): Promise<
 		| {
@@ -613,8 +596,6 @@ export class OgrafApi {
 		type Method = ServerApi.paths[typeof url][typeof method]
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-		url0.searchParams.set('renderTarget', JSON.stringify(query.renderTarget))
-		url0.searchParams.set('graphicInstanceId', query.graphicInstanceId)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,

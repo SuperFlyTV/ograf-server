@@ -47,10 +47,10 @@ export class GraphicsStore {
 
 		throw new Error(`No OGraf manifest found in folder ${graphicsFolder}`)
 	}
-	async listGraphics(): Promise<ServerApi.components['schemas']['GraphicInfo'][]> {
+	async listGraphics(): Promise<ServerApi.components['schemas']['GraphicListInfo'][]> {
 		const folderList = await fs.promises.readdir(this.FILE_PATH)
 
-		const graphics: ServerApi.components['schemas']['GraphicInfo'][] = []
+		const graphics: ServerApi.components['schemas']['GraphicListInfo'][] = []
 		for (const folder of folderList) {
 			let id: string
 			try {
@@ -66,14 +66,18 @@ export class GraphicsStore {
 			const graphicInfo = await this.getGraphicInfo(id)
 			if (!graphicInfo) continue
 
-			graphics.push(graphicInfo.info)
+			graphics.push({
+				id: graphicInfo.graphic.id,
+				name: graphicInfo.graphic.name,
+				description: graphicInfo.graphic.description,
+			})
 		}
 		return graphics
 	}
 	async getGraphicInfo(id: string): Promise<
 		| {
-				info: ServerApi.components['schemas']['GraphicInfo']
-				manifest: ServerApi.components['schemas']['GraphicManifest']
+				graphic: ServerApi.components['schemas']['GraphicManifest']
+				metadata: ServerApi.components['schemas']['GraphicMetadata']
 		  }
 		| undefined
 	> {
@@ -97,16 +101,13 @@ export class GraphicsStore {
 		const stat = await pStat
 
 		return {
-			info: {
-				id: manifest.id,
-				version: manifest.version,
-				name: manifest.name,
-				description: manifest.description,
+			graphic: manifest as any, // the types don't exactly match, due to differences in generation
+			metadata: {
 				createdBy: manifest.author,
 				createdAt: new Date(stat.ctimeMs).toISOString(),
 				updatedAt: new Date(stat.mtimeMs).toISOString(),
-			} satisfies ServerApi.components['schemas']['GraphicInfo'],
-			manifest: manifest as any, // the types don't exactly match, due to differences in generation
+				// updatedBy: N/A
+			} satisfies ServerApi.components['schemas']['GraphicMetadata'],
 		}
 	}
 

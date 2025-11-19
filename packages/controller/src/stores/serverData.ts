@@ -11,7 +11,7 @@ class ServerData {
 	public connectedStatus: string = 'Initializing'
 	public isConnected: boolean = false
 	public lastError: string | null = null
-	public graphicsList: OGraf.ServerApi.components['schemas']['GraphicInfo'][] = []
+	public graphicsList: OGraf.ServerApi.components['schemas']['GraphicListInfo'][] = []
 	public renderersList: OGraf.ServerApi.paths['/renderers']['get']['responses'][200]['content']['application/json']['renderers'] =
 		[]
 	public serverInfo: OGraf.ServerApi.paths['/']['get']['responses'][200]['content']['application/json'] | undefined
@@ -20,8 +20,8 @@ class ServerData {
 	public graphicsInfo = new ObservableMap<
 		string,
 		{
-			graphic: OGraf.ServerApi.components['schemas']['GraphicInfo']
-			manifest: OGraf.ServerApi.components['schemas']['GraphicManifest']
+			graphic: OGraf.ServerApi.components['schemas']['GraphicManifest']
+			metadata: OGraf.ServerApi.components['schemas']['GraphicMetadata']
 		}
 	>()
 	public graphicsInstanceMap = new ObservableMap<string, GraphicsInstanceMapEntry>()

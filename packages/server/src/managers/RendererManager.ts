@@ -56,7 +56,7 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 		getTargetStatus: async (payload) => this.jsonRpcConnection.request('getTargetStatus', payload),
 		invokeRendererAction: async (payload) => this.jsonRpcConnection.request('invokeRendererAction', payload),
 		loadGraphic: async (payload) => this.jsonRpcConnection.request('loadGraphic', payload),
-		clearGraphic: async (payload) => this.jsonRpcConnection.request('clearGraphic', payload),
+		clearGraphics: async (payload) => this.jsonRpcConnection.request('clearGraphics', payload),
 
 		invokeGraphicUpdateAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicUpdateAction', payload),
 		invokeGraphicPlayAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicPlayAction', payload),

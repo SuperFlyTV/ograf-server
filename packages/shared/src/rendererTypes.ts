@@ -25,7 +25,7 @@ export interface RendererManifest {
 }
 export interface GraphicInstance {
 	id: string
-	graphic: ServerApi.components['schemas']['GraphicInfo']
+	graphic: ServerApi.components['schemas']['GraphicListInfo']
 
 	// status: any // TBD?
 	[vendorSpecific: VendorSpecific]: unknown
@@ -43,7 +43,7 @@ export interface RendererClearGraphicPayload {
 	 *
 	 * If multiple filters are defined, only instances that match all filters will be cleared.
 	 */
-	filters?: ServerApi.components['schemas']['GraphicFilter']
+	filters?: ServerApi.components['schemas']['GraphicFilter'][]
 
 	[vendorSpecific: VendorSpecific]: unknown
 }

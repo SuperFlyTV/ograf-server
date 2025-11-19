@@ -47,9 +47,9 @@ export interface MethodsOnRenderer {
 		} & VendorExtend
 	>
 	/** Clear/unloads a GraphicInstance on a RenderTarget */
-	clearGraphic: (
+	clearGraphics: (
 		params: RendererClearGraphicPayload
-	) => Promise<{ graphicInstance: GraphicInstanceOnTarget[] } & VendorExtend>
+	) => Promise<{ graphicInstances: GraphicInstanceOnTarget[] } & VendorExtend>
 	/** Invokes an updateAction on a graphicInstance. Actions are defined by the Graphic's manifest */
 	invokeGraphicUpdateAction: (
 		params: {

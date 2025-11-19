@@ -318,53 +318,69 @@ export class RendererApiHandler implements MethodsOnRenderer {
 		return layer.loadGraphic(params.graphicId, params.params)
 	}
 	/** Clear/unloads a GraphicInstance on a RenderTarget */
-	async clearGraphic(params: {
+	async clearGraphics(params: {
 		filters?: {
 			renderTarget?: unknown
 			graphicId?: string
 			graphicInstanceId?: string
-		}
-	}): Promise<{ graphicInstance: GraphicInstanceOnTarget[] }> {
+		}[]
+	}): Promise<{ graphicInstances: GraphicInstanceOnTarget[] }> {
 		// JSON RPC Method
 		// console.log('params', params)
 
-		const renderTarget = params.filters?.renderTarget as RenderTarget | undefined
+		const clearedGraphicInstanceIds = new Set<string>()
+		const clearedGraphicInstances: GraphicInstanceOnTarget[] = []
 
-		let layers = []
-		if (renderTarget) {
-			const layer = this.layersManager.getLayer(renderTarget)
-			if (!layer) throw new Error(`Layer not found: ${JSON.stringify(renderTarget)}`)
-			layers = [layer]
-		} else {
-			layers = this.layersManager.getAllLayers()
+		const ps: Promise<unknown>[] = []
+		if (params.filters == undefined || params.filters.length === 0) {
+			// From definition: "If no filters are defined, All graphics are cleared."
+
+			params.filters = [{}]
 		}
+		for (const filter of params.filters) {
+			let layers = []
+			if (filter.renderTarget) {
+				const layer = this.layersManager.getLayer(filter.renderTarget as RenderTarget)
+				if (!layer) throw new Error(`Layer not found: ${JSON.stringify(filter.renderTarget)}`)
+				layers = [layer]
+			} else {
+				layers = this.layersManager.getAllLayers()
+			}
 
-		const clearedGraphicInstancesOnLayer: GraphicInstanceOnTarget[] = []
-		for (const layer of layers) {
-			const graphicInstance = layer.getGraphicInstance()
+			for (const layer of layers) {
+				const graphicInstance = layer.getGraphicInstance()
 
-			if (graphicInstance) {
-				// Should it be cleared?
-				let clear = true
-				if (params.filters?.graphicId && graphicInstance.graphicId !== params.filters?.graphicId) clear = false
-				if (params.filters?.graphicInstanceId && graphicInstance.id !== params.filters?.graphicInstanceId) clear = false
+				if (graphicInstance) {
+					// Should it be cleared?
+					let clear = true
+					if (filter.graphicId && graphicInstance.graphicId !== filter.graphicId) clear = false
+					if (filter.graphicInstanceId && graphicInstance.id !== filter.graphicInstanceId) clear = false
 
-				if (clear) {
-					await layer.clearGraphic()
+					if (clear) {
+						if (!clearedGraphicInstanceIds.has(graphicInstance.id)) {
+							// Has not already been cleared
 
-					clearedGraphicInstancesOnLayer.push({
-						renderTarget: layer.renderTarget,
-						graphicInstanceId: graphicInstance.id,
-						graphicId: graphicInstance.graphicId,
-					})
+							clearedGraphicInstanceIds.add(graphicInstance.id)
+
+							clearedGraphicInstances.push({
+								renderTarget: layer.renderTarget,
+								graphicInstanceId: graphicInstance.id,
+								graphicId: graphicInstance.graphicId,
+							})
+
+							ps.push(layer.clearGraphic())
+						}
+					}
 				}
 			}
 		}
+		await Promise.all(ps)
 
 		return {
-			graphicInstance: clearedGraphicInstancesOnLayer,
+			graphicInstances: clearedGraphicInstances,
 		}
 	}
+
 	/** Invokes an action on a graphicInstance. Actions are defined by the Graphic's manifest */
 	async invokeGraphicUpdateAction(params: {
 		renderTarget: unknown

@@ -80,7 +80,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 	const descriptions: string[] = []
 
 	if (graphic.graphic.description) descriptions.push(graphic.graphic.description)
-	if (graphic.graphic.createdBy) descriptions.push(`by ${graphic.graphic.createdBy.name}`)
+	if (graphic.metadata.createdBy) descriptions.push(`by ${graphic.metadata.createdBy.name}`)
 
 	return (
 		<Card elevation={1} sx={{ m: 1, p: 1 }}>
@@ -121,12 +121,12 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 					/>
 				</Box>
 				<Box>{!queuedGraphic.renderTarget && <Typography color="error">No render target specified!</Typography>}</Box>
-				{graphic.manifest.schema && (
+				{graphic.graphic.schema && (
 					<Box>
 						<Typography>Graphics Data</Typography>
 
 						<OGrafForm
-							schema={graphic.manifest.schema}
+							schema={graphic.graphic.schema}
 							value={clone(queuedGraphic.graphicData)}
 							onDataChangeCallback={(newData: unknown) => {
 								const q = appSettingsStore.queuedGraphics.get(props.graphicKey)
@@ -151,8 +151,8 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 						ografApi
 							.renderTargetGraphicLoad(
 								{ rendererId: renderer.id },
-								{ renderTarget: queuedGraphic.renderTarget },
 								{
+									renderTarget: queuedGraphic.renderTarget,
 									graphicId: queuedGraphic.graphicId,
 									params: {
 										data: toJS(queuedGraphic.graphicData),
@@ -195,8 +195,6 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{
 													renderTarget: queuedGraphic.renderTarget,
 													graphicInstanceId: gi.graphicInstanceId,
-												},
-												{
 													params: {
 														// delta
 														// goto
@@ -220,8 +218,6 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{
 													renderTarget: queuedGraphic.renderTarget,
 													graphicInstanceId: gi.graphicInstanceId,
-												},
-												{
 													params: {
 														data: toJS(queuedGraphic.graphicData),
 														// skipAnimation
@@ -244,8 +240,6 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 												{
 													renderTarget: queuedGraphic.renderTarget,
 													graphicInstanceId: gi.graphicInstanceId,
-												},
-												{
 													params: {
 														// skipAnimation
 													},
@@ -265,10 +259,12 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 											.renderTargetGraphicClear(
 												{ rendererId: renderer.id },
 												{
-													filters: {
-														renderTarget: queuedGraphic.renderTarget,
-														graphicInstanceId: gi.graphicInstanceId,
-													},
+													filters: [
+														{
+															renderTarget: queuedGraphic.renderTarget,
+															graphicInstanceId: gi.graphicInstanceId,
+														},
+													],
 												}
 											)
 											.then((r) => {
@@ -289,10 +285,10 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 									Clear
 								</Button>
 							</Box>
-							{graphic.manifest.customActions && (
+							{graphic.graphic.customActions && (
 								<Box>
 									<Typography>Custom Actions</Typography>
-									{graphic.manifest.customActions?.map((action) => (
+									{graphic.graphic.customActions?.map((action) => (
 										<GraphicCustomAction
 											key={action.id}
 											rendererId={renderer.id}
@@ -318,7 +314,7 @@ const GraphicCustomAction = (props: {
 	rendererId: string
 	renderTarget: unknown
 	graphicInstanceId: string
-	graphic: OGraf.ServerApi.components['schemas']['GraphicInfo']
+	graphic: OGraf.ServerApi.components['schemas']['GraphicManifest']
 	graphicKey: string
 	queuedGraphic: QueuedGraphic
 	action: OGraf.ServerApi.components['schemas']['action']
@@ -359,8 +355,6 @@ const GraphicCustomAction = (props: {
 							{
 								renderTarget: renderTarget,
 								graphicInstanceId: graphicInstanceId,
-							},
-							{
 								actionName: action.name,
 								params: {
 									id: action.id,
