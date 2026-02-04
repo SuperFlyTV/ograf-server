@@ -5,6 +5,7 @@ import { CTX } from './lib/lib.js'
 import { GraphicsStore } from './managers/GraphicsStore.js'
 import { RendererManager } from './managers/RendererManager.js'
 import {
+	CustomActionId,
 	CustomActionParams,
 	GraphicFilter,
 	GraphicId,
@@ -16,6 +17,8 @@ import {
 	UpdateActionParams,
 } from './types/OpenApiTypes.js'
 import { z, ZodError } from 'zod/v4'
+import { ErrorReturnValue, GraphicInstanceError } from '@ograf-server/shared'
+import { JSONRPCErrorException } from 'json-rpc-2.0'
 const upload = multer({
 	storage: multer.diskStorage({
 		// destination: './localGraphicsStorage',
@@ -42,7 +45,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 	router.get(getKoaUrl('/graphics'), async (ctx: CTX) => {
@@ -61,7 +64,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 
@@ -104,7 +107,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 	router.delete(getKoaUrl('/graphics/{graphicId}'), async (ctx: CTX) => {
@@ -151,7 +154,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 
@@ -173,7 +176,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 	router.get(getKoaUrl('/renderers/{rendererId}'), async (ctx: CTX) => {
@@ -216,7 +219,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 	router.get(getKoaUrl('/renderers/{rendererId}/target'), async (ctx: CTX) => {
@@ -264,7 +267,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
 	router.post(getKoaUrl('/renderers/{rendererId}/customActions/{customActionId}'), async (ctx: CTX) => {
@@ -319,11 +322,11 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.put(getKoaUrl('/renderers/{rendererId}/target/graphic/clear'), async (ctx: CTX) => {
-		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphic/clear']['put']
+	router.put(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/clear'), async (ctx: CTX) => {
+		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']
 		try {
 			const Req = z.object({
 				parameters: z.object({
@@ -372,11 +375,11 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 				},
 			})
 		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
+			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.put(getKoaUrl('/renderers/{rendererId}/target/graphic/load'), async (ctx: CTX) => {
-		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']
+	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/load'), async (ctx: CTX) => {
+		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']
 		try {
 			const Req = z.object({
 				parameters: z.object({
@@ -434,8 +437,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphic/updateAction'), async (ctx: CTX) => {
-		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']
+	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/updateAction'), async (ctx: CTX) => {
+		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']
 		try {
 			const Req = z.object({
 				parameters: z.object({
@@ -491,8 +494,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphic/playAction'), async (ctx: CTX) => {
-		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']
+	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/playAction'), async (ctx: CTX) => {
+		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']
 		try {
 			const Req = z.object({
 				parameters: z.object({
@@ -548,8 +551,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphic/stopAction'), async (ctx: CTX) => {
-		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']
+	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/stopAction'), async (ctx: CTX) => {
+		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']
 		try {
 			const Req = z.object({
 				parameters: z.object({
@@ -605,63 +608,71 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphic/customAction'), async (ctx: CTX) => {
-		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']
-		try {
-			const Req = z.object({
-				parameters: z.object({
-					path: z.object({
-						rendererId: RendererId,
-					}),
-				}),
-				requestBody: z.object({
-					content: z.object({
-						'application/json': z.object({
-							renderTarget: RenderTargetIdentifier,
-							graphicInstanceId: GraphicInstanceId,
-							params: CustomActionParams,
+	router.post(
+		getKoaUrl('/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}'),
+		async (ctx: CTX) => {
+			type Method =
+				ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']
+			try {
+				const Req = z.object({
+					parameters: z.object({
+						path: z.object({
+							rendererId: RendererId,
+							customActionId: CustomActionId,
 						}),
 					}),
-				}),
-			})
+					requestBody: z.object({
+						content: z.object({
+							'application/json': z.object({
+								renderTarget: RenderTargetIdentifier,
+								graphicInstanceId: GraphicInstanceId,
+								params: CustomActionParams,
+							}),
+						}),
+					}),
+				})
 
-			const request: Request<Method> = Req.parse(getRequestObject(ctx)) satisfies Request<Method> satisfies z.infer<
-				typeof Req
-			>
+				const request: Request<Method> = Req.parse(getRequestObject(ctx)) satisfies Request<Method> satisfies z.infer<
+					typeof Req
+				>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
-			if (!rendererInstance) {
-				return handleReturn<Method>(ctx, 404, {
+				const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+				if (!rendererInstance) {
+					return handleReturn<Method>(ctx, 404, {
+						headers: {},
+						content: {
+							'application/json': {
+								error: 'Renderer not found',
+							},
+						},
+					})
+				}
+
+				const result = await rendererInstance.api.invokeGraphicCustomAction({
+					renderTarget: request.requestBody.content['application/json'].renderTarget,
+					graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
+					params: {
+						...request.requestBody.content['application/json'].params,
+						id: request.parameters.path.customActionId,
+					},
+				})
+
+				return handleReturn<Method>(ctx, 200, {
 					headers: {},
 					content: {
 						'application/json': {
-							error: 'Renderer not found',
+							...result.result, // To pipe through any vendor specific data
+							graphicInstanceId: result.graphicInstanceId,
+							statusCode: result.result?.statusCode ?? 200,
+							statusMessage: result.result?.statusMessage ?? 'N/A',
 						},
 					},
 				})
+			} catch (err) {
+				return handleErrorReturn<Method>(ctx, err)
 			}
-
-			const result = await rendererInstance.api.invokeGraphicCustomAction({
-				renderTarget: request.requestBody.content['application/json'].renderTarget,
-				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
-				params: request.requestBody.content['application/json'].params,
-			})
-
-			return handleReturn<Method>(ctx, 200, {
-				headers: {},
-				content: {
-					'application/json': {
-						...result.result, // To pipe through any vendor specific data
-						graphicInstanceId: result.graphicInstanceId,
-						statusCode: result.result?.statusCode ?? 200,
-						statusMessage: result.result?.statusMessage ?? 'N/A',
-					},
-				},
-			})
-		} catch (err) {
-			return handleErrorReturn<Method>(ctx, err)
 		}
-	})
+	)
 
 	// =====================================================================================
 	// =======================     Non-spec endpoints:     =================================
@@ -844,6 +855,14 @@ type AnyMethodErrorResponse = {
 				'application/json': ServerApi.components['schemas']['ErrorResponse']
 			}
 		}
+		550: {
+			headers: {
+				[name: string]: unknown
+			}
+			content: {
+				'application/json': ServerApi.components['schemas']['ErrorResponse']
+			}
+		}
 	}
 }
 function handleErrorReturn<_Method extends AnyMethodErrorResponse>(ctx: CTX, err: any): void {
@@ -862,17 +881,58 @@ function handleErrorReturn<_Method extends AnyMethodErrorResponse>(ctx: CTX, err
 			},
 		})
 	}
+	let statusCode = 500
+	if (err instanceof JSONRPCErrorException) {
+		const err0 = err as ErrorReturnValue
 
-	const statusCode = err.statusCode || 500
-	return handleReturn<AnyMethodErrorResponse>(ctx, statusCode, {
+		if (err0.code === 550 && err0.data.errorType === 'GraphicInstanceError') {
+			err = new GraphicInstanceError(err0.message)
+			err.stack = err0.stack
+			err.statusCode = err0.code
+		} else {
+			err = new Error(err0.message)
+			err.stack = err0.stack
+			statusCode = err0.code || 500
+		}
+	}
+	if (err instanceof GraphicInstanceError) {
+		return handleReturn<AnyMethodErrorResponse>(ctx, err.statusCode, {
+			headers: {},
+			content: {
+				'application/json': {
+					status: err.statusCode,
+					title: 'Error thrown in GraphicsInstance',
+					detail: err.message,
+
+					stack: err.stack,
+				} satisfies ServerApi.components['schemas']['ErrorResponse'],
+			},
+		})
+	}
+	if (err instanceof Error) {
+		return handleReturn<AnyMethodErrorResponse>(ctx, statusCode as any, {
+			headers: {},
+			content: {
+				'application/json': {
+					status: statusCode,
+					title: 'Internal Error',
+					detail: err.message,
+
+					stack: err.stack,
+				} satisfies ServerApi.components['schemas']['ErrorResponse'],
+			},
+		})
+	}
+
+	return handleReturn<AnyMethodErrorResponse>(ctx, statusCode as any, {
 		headers: {},
 		content: {
 			'application/json': {
 				status: statusCode,
 				title: 'Internal Error',
-				detail: err instanceof Error ? err.message : `${err}`,
+				detail: `${err}`,
 
-				stack: err instanceof Error ? err.stack : undefined,
+				stack: 'No stack available',
 			} satisfies ServerApi.components['schemas']['ErrorResponse'],
 		},
 	})

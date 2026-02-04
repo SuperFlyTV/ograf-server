@@ -1,6 +1,13 @@
 import * as OGraf from 'ograf'
 import { LayersManager, RenderTarget } from './LayersManager.js'
-import { MethodsOnRenderer, RendererInfo, RenderTargetInfo, GraphicInstanceOnTarget } from '@ograf-server/shared'
+import {
+	MethodsOnRenderer,
+	RendererInfo,
+	RenderTargetInfo,
+	GraphicInstanceOnTarget,
+	GraphicInstanceError,
+	ErrorReturnValue,
+} from '@ograf-server/shared'
 
 export class RendererApiHandler implements MethodsOnRenderer {
 	// this.layersManager = layersManager
@@ -102,14 +109,62 @@ export class RendererApiHandler implements MethodsOnRenderer {
 							})
 							.catch((err) => {
 								console.error(err)
-								this._replyMessage(message.id, { code: 400, message: err.message }, null)
+								if (err instanceof GraphicInstanceError) {
+									this._replyMessage(
+										message.id,
+										{
+											code: err.statusCode,
+											message: err.message,
+											stack: err.stack,
+											data: {
+												errorType: 'GraphicInstanceError',
+											},
+										},
+										null
+									)
+								} else if (err instanceof Error) {
+									this._replyMessage(
+										message.id,
+										{
+											code: 500,
+											message: err.message,
+											stack: err.stack,
+											data: {
+												errorType: 'Error',
+											},
+										},
+										null
+									)
+								} else {
+									this._replyMessage(
+										message.id,
+										{
+											code: 500,
+											message: `${err}`,
+											data: {
+												errorType: 'unknown',
+											},
+										},
+										null
+									)
+								}
 							})
 					} else {
 						throw new Error(`Unknown method: "${message.method}"`)
 					}
 				} catch (err) {
 					console.error('Error handling message:', err)
-					this._replyMessage(message.id, { code: 400, message: err instanceof Error ? err.message : `${err}` }, null)
+					this._replyMessage(
+						message.id,
+						{
+							code: 400,
+							message: err instanceof Error ? err.message : `${err}`,
+							data: {
+								errorType: 'Error',
+							},
+						},
+						null
+					)
 				}
 			} else {
 				// is a reply
@@ -157,7 +212,7 @@ export class RendererApiHandler implements MethodsOnRenderer {
 			this.waitingForReply.set(id, { resolve, reject })
 		})
 	}
-	_replyMessage(id: number, error: unknown, result: unknown): void {
+	_replyMessage(id: number, error: ErrorReturnValue | null, result: unknown): void {
 		if (!this.ws) throw new Error('Not connected to Renderer API!')
 
 		console.log('send Reply', error, result)

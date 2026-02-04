@@ -151,6 +151,7 @@ export class GraphicsStore {
 			ctx.body = {
 				code: 400,
 				message: 'Expected a zip file',
+				data: { errorType: 'Error' },
 			}
 			return
 		}
@@ -235,6 +236,7 @@ export class GraphicsStore {
 					ctx.body = {
 						code: 409,
 						message: 'Graphic already exists',
+						data: { errorType: 'Error' },
 					}
 					return
 				}

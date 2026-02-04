@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "main": "src/main.ts",
   "license": "MIT",
+  "type": "module",
   "scripts": {
     "build": "tsc",
     "dev": "run build && run start",

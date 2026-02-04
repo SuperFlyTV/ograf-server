@@ -2,7 +2,7 @@ import * as OGraf from 'ograf'
 import { GraphicInstance } from './GraphicInstance.js'
 import { GraphicCache } from './GraphicsCache.js'
 import { LayersManager, RenderTarget } from './LayersManager.js'
-import { RenderTargetInfo } from '@ograf-server/shared'
+import { GraphicInstanceError, RenderTargetInfo } from '@ograf-server/shared'
 
 export class LayerHandler {
 	public graphicInstance: GraphicInstance | null = null
@@ -66,18 +66,22 @@ export class LayerHandler {
 
 		this.graphicInstance = new GraphicInstance(graphicId, element, graphicInfo)
 
-		// Load the element:
-		let result = await element.load({
-			renderType: 'realtime',
-			renderCharacteristics: this.manager.getRenderCharacteristics(),
-			data: params.data,
-		})
+		try {
+			// Load the element:
+			let result = await element.load({
+				renderType: 'realtime',
+				renderCharacteristics: this.manager.getRenderCharacteristics(),
+				data: params.data,
+			})
 
-		if (!result) result = { statusCode: 200 }
+			if (!result) result = { statusCode: 200 }
 
-		return {
-			graphicInstanceId: this.graphicInstance.id,
-			result,
+			return {
+				graphicInstanceId: this.graphicInstance.id,
+				result,
+			}
+		} catch (err) {
+			throw new GraphicInstanceError(err)
 		}
 	}
 	async clearGraphic(): Promise<void> {
@@ -118,11 +122,15 @@ export class LayerHandler {
 		result: OGraf.ReturnPayload | undefined
 	}> {
 		const graphicsInstance = this._findGraphicsInstance(params)
-		let result = await graphicsInstance.element.updateAction(params.params)
-		if (!result) result = { statusCode: 200 }
-		return {
-			graphicInstanceId: graphicsInstance.id,
-			result,
+		try {
+			let result = await graphicsInstance.element.updateAction(params.params)
+			if (!result) result = { statusCode: 200 }
+			return {
+				graphicInstanceId: graphicsInstance.id,
+				result,
+			}
+		} catch (err) {
+			throw new GraphicInstanceError(err)
 		}
 	}
 	async invokePlayAction(params: {
@@ -135,13 +143,17 @@ export class LayerHandler {
 	}> {
 		const graphicsInstance = this._findGraphicsInstance(params)
 
-		let result = await graphicsInstance.element.playAction(params.params)
-		if (!result) result = { statusCode: 200, currentStep: 1 } // Not valid in spec, but it's easy to handle
-		if (!result.statusCode) result.statusCode = 200
+		try {
+			let result = await graphicsInstance.element.playAction(params.params)
+			if (!result) result = { statusCode: 200, currentStep: 1 } // Not valid in spec, but it's easy to handle
+			if (!result.statusCode) result.statusCode = 200
 
-		return {
-			graphicInstanceId: graphicsInstance.id,
-			result,
+			return {
+				graphicInstanceId: graphicsInstance.id,
+				result,
+			}
+		} catch (err) {
+			throw new GraphicInstanceError(err)
 		}
 	}
 	async invokeStopAction(params: {
@@ -154,11 +166,15 @@ export class LayerHandler {
 	}> {
 		const graphicsInstance = this._findGraphicsInstance(params)
 
-		let result = await graphicsInstance.element.stopAction(params.params)
-		if (!result) result = { statusCode: 200 }
-		return {
-			graphicInstanceId: graphicsInstance.id,
-			result,
+		try {
+			let result = await graphicsInstance.element.stopAction(params.params)
+			if (!result) result = { statusCode: 200 }
+			return {
+				graphicInstanceId: graphicsInstance.id,
+				result,
+			}
+		} catch (err) {
+			throw new GraphicInstanceError(err)
 		}
 	}
 	async invokeCustomAction(params: {
@@ -171,11 +187,15 @@ export class LayerHandler {
 	}> {
 		const graphicsInstance = this._findGraphicsInstance(params)
 
-		let result = await graphicsInstance.element.customAction(params.params)
-		if (!result) result = { statusCode: 200 }
-		return {
-			graphicInstanceId: graphicsInstance.id,
-			result,
+		try {
+			let result = await graphicsInstance.element.customAction(params.params)
+			if (!result) result = { statusCode: 200 }
+			return {
+				graphicInstanceId: graphicsInstance.id,
+				result,
+			}
+		} catch (err) {
+			throw new GraphicInstanceError(err)
 		}
 	}
 	// Not supported in a realtime renderer, so not implemented here:

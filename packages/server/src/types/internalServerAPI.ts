@@ -1,3 +1,4 @@
+import { ErrorReturnValue } from '@ograf-server/shared'
 import * as fs from 'fs'
 /*
  * ================================================================================================
@@ -47,13 +48,3 @@ export interface Endpoints {
 
 export type AnyBody = Endpoints[keyof Endpoints]['body']
 export type AnyReturnValue = Endpoints[keyof Endpoints]['returnValue']
-
-/**
- * If there was an error when invoking a method, the body will be a JSON containing this structure.
- * @see https://www.jsonrpc.org/specification#error_object
- */
-export interface ErrorReturnValue {
-	code: number
-	message: string
-	data?: any
-}

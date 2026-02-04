@@ -351,13 +351,12 @@ const GraphicCustomAction = (props: {
 					const ografApi = OgrafApi.getSingleton()
 					ografApi
 						.renderTargetGraphicInvokeCustomAction(
-							{ rendererId: rendererId },
+							{ rendererId: rendererId, customActionId: action.id },
 							{
 								renderTarget: renderTarget,
 								graphicInstanceId: graphicInstanceId,
 								actionName: action.name,
 								params: {
-									id: action.id,
 									payload: toJS(queuedGraphic.customActionData[action.id] || {}),
 									// skipAnimation
 									// Custom action params can be added here
