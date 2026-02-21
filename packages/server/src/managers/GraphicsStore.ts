@@ -5,22 +5,24 @@ import decompress from 'decompress'
 import { GraphicsManifest, ServerApi } from 'ograf'
 import { CTX } from '../lib/lib.js'
 
-export class GraphicsStore {
+export class GraphicsStoreNS {
 	/** File path where to store Graphics */
-	private FILE_PATH = path.resolve('./localGraphicsStorage')
+
 	/** How long to wait before removing Graphics, in ms */
 	private REMOVAL_WAIT_TIME = 1000 * 3600 * 24 // 24 hours
 
-	constructor() {
-		// Ensure the directory exists
-		fs.mkdirSync(this.FILE_PATH, { recursive: true })
+	private checkInterVal: NodeJS.Timeout | undefined = undefined
+	private destroyed = false
 
-		this.init().catch(console.error)
+	constructor(private folderPath: string) {
+		// Ensure the directory exists
 	}
-	private async init() {
+	public async init(): Promise<void> {
+		await fs.promises.mkdir(this.folderPath, { recursive: true })
+
 		await this.migrateOldFolders()
 
-		setInterval(
+		this.checkInterVal = setInterval(
 			() => {
 				this.removeExpiredGraphics().catch(console.error)
 			},
@@ -28,6 +30,10 @@ export class GraphicsStore {
 		) // Check every 24 hours
 		// Also do a check now:
 		await this.removeExpiredGraphics()
+	}
+	destroy(): void {
+		this.destroyed = true
+		if (this.checkInterVal !== undefined) clearInterval(this.checkInterVal)
 	}
 	/** Find a manifest file in a folder */
 	private async findManifestFile(graphicsFolder: string): Promise<string> {
@@ -48,7 +54,7 @@ export class GraphicsStore {
 		throw new Error(`No OGraf manifest found in folder ${graphicsFolder}`)
 	}
 	async listGraphics(): Promise<ServerApi.components['schemas']['GraphicListInfo'][]> {
-		const folderList = await fs.promises.readdir(this.FILE_PATH)
+		const folderList = await fs.promises.readdir(this.folderPath)
 
 		const graphics: ServerApi.components['schemas']['GraphicListInfo'][] = []
 		for (const folder of folderList) {
@@ -86,7 +92,7 @@ export class GraphicsStore {
 		// Don't list Graphics that are marked for removal:
 		if (await this.isGraphicMarkedForRemoval(id)) return undefined
 
-		const manifestFilePath = await this.findManifestFile(path.join(this.FILE_PATH, folder))
+		const manifestFilePath = await this.findManifestFile(path.join(this.folderPath, folder))
 
 		const pStat = fs.promises.stat(manifestFilePath)
 
@@ -112,7 +118,7 @@ export class GraphicsStore {
 	}
 
 	async getGraphicManifest(id: string): Promise<ServerApi.components['schemas']['GraphicManifest'] | undefined> {
-		const manifestPath = await this.findManifestFile(path.join(this.FILE_PATH, this.toFileName(id)))
+		const manifestPath = await this.findManifestFile(path.join(this.folderPath, this.toFileName(id)))
 		console.log('manifestPath', manifestPath)
 		if (!(await this.fileExists(manifestPath))) return undefined
 
@@ -130,7 +136,7 @@ export class GraphicsStore {
 	async getGraphicResource(id: string, localPath: string): Promise<ServeFile | undefined> {
 		return this.serveFile(
 			path.join(
-				this.FILE_PATH,
+				this.folderPath,
 				this.toFileName(id),
 
 				localPath
@@ -208,7 +214,7 @@ export class GraphicsStore {
 
 				const id = manifestData.id
 
-				const folderPath = path.join(this.FILE_PATH, this.toFileName(id))
+				const folderPath = path.join(this.folderPath, this.toFileName(id))
 
 				// Check if the Graphic already exists
 				let alreadyExists = false
@@ -446,7 +452,7 @@ export class GraphicsStore {
 	}
 
 	private async actuallyDeleteGraphic(id: string): Promise<boolean> {
-		const folderPath = path.join(this.FILE_PATH, this.toFileName(id))
+		const folderPath = path.join(this.folderPath, this.toFileName(id))
 
 		if (!(await this.fileExists(folderPath))) return false
 		await fs.promises.rm(folderPath, { recursive: true })
@@ -458,7 +464,7 @@ export class GraphicsStore {
 		// The reason for this is to not delete a Graphic that is currently on-air
 		// (which might break due to missing resources)
 
-		const folderPath = path.join(this.FILE_PATH, this.toFileName(id))
+		const folderPath = path.join(this.folderPath, this.toFileName(id))
 
 		const removalFilePath = path.join(folderPath, '__markedForRemoval')
 
@@ -468,13 +474,15 @@ export class GraphicsStore {
 	}
 	/** Find any graphics that are due to be removed */
 	private async removeExpiredGraphics() {
-		const folderList = await fs.promises.readdir(this.FILE_PATH)
+		if (this.destroyed) return
+
+		const folderList = await fs.promises.readdir(this.folderPath)
 		for (const folder of folderList) {
 			const { id } = this.fromFileName(folder)
 
 			if (!(await this.isGraphicMarkedForRemoval(id))) continue
 
-			const removalFilePath = path.join(this.FILE_PATH, folder, '__markedForRemoval')
+			const removalFilePath = path.join(this.folderPath, folder, '__markedForRemoval')
 
 			const removalTimeStr = await fs.promises.readFile(removalFilePath, 'utf-8')
 			const removalTime = parseInt(removalTimeStr)
@@ -491,7 +499,7 @@ export class GraphicsStore {
 
 	/** Find any folders that are of from the old version, and migrate them */
 	private async migrateOldFolders() {
-		const folderList = await fs.promises.readdir(this.FILE_PATH)
+		const folderList = await fs.promises.readdir(this.folderPath)
 		for (const folder of folderList) {
 			let fileNameIsOk = false
 			try {
@@ -506,13 +514,13 @@ export class GraphicsStore {
 
 			try {
 				// Find manifest in folder:
-				const manifestFilePath = await this.findManifestFile(path.join(this.FILE_PATH, folder))
+				const manifestFilePath = await this.findManifestFile(path.join(this.folderPath, folder))
 
 				const manifest = JSON.parse(await fs.promises.readFile(manifestFilePath, 'utf8')) as GraphicsManifest
 
 				// Rename the folder using the manifest id:
 				const newFolderName = this.toFileName(manifest.id)
-				await fs.promises.rename(path.join(this.FILE_PATH, folder), path.join(this.FILE_PATH, newFolderName))
+				await fs.promises.rename(path.join(this.folderPath, folder), path.join(this.folderPath, newFolderName))
 			} catch (err) {
 				if (`${err}`.match(/No OGraf manifest found/)) continue
 				else throw err
@@ -523,7 +531,7 @@ export class GraphicsStore {
 
 	/** Returns true if a graphic exists (and is not marked for removal) */
 	private async isGraphicMarkedForRemoval(id: string): Promise<boolean> {
-		const removalFilePath = path.join(this.FILE_PATH, this.toFileName(id), '__markedForRemoval')
+		const removalFilePath = path.join(this.folderPath, this.toFileName(id), '__markedForRemoval')
 		return await this.fileExists(removalFilePath)
 	}
 	private async isManifestFile(filePath: string, fileContents: Buffer | string): Promise<boolean> {

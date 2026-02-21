@@ -9,6 +9,7 @@ import { GraphicsStore } from './managers/GraphicsStore.js'
 import { RendererManager } from './managers/RendererManager.js'
 import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
+import { AccountStore } from './managers/AccountStore.js'
 
 export async function initializeServer(): Promise<void> {
 	const app = new Koa()
@@ -26,11 +27,12 @@ export async function initializeServer(): Promise<void> {
 	const filter = new KoaWsFilter()
 
 	// Initialize internal business logic
-	const graphicsStore = new GraphicsStore()
+	const accountStore = new AccountStore()
+	const graphicsStore = new GraphicsStore(accountStore)
 	const rendererManager = new RendererManager()
 
 	// Setup APIs:
-	setupServerApi(httpRouter, graphicsStore, rendererManager) // HTTP API (ServerAPI)
+	setupServerApi(httpRouter, graphicsStore, accountStore, rendererManager) // HTTP API (ServerAPI)
 	setupRendererApi(wsRouter, rendererManager) // WebSocket API (RendererAPI)
 
 	// Set up static file serving:

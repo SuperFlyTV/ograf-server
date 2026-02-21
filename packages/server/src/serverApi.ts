@@ -19,16 +19,23 @@ import {
 import { z, ZodError } from 'zod/v4'
 import { ErrorReturnValue, GraphicInstanceError } from '@ograf-server/shared'
 import { JSONRPCErrorException } from 'json-rpc-2.0'
+import { NAMESPACE_SETTINGS } from './namespace.js'
+import { AccountStore } from './managers/AccountStore.js'
 const upload = multer({
 	storage: multer.diskStorage({
 		// destination: './localGraphicsStorage',
 	}),
 })
 
-export function setupServerApi(router: Router, graphicsStore: GraphicsStore, rendererManager: RendererManager): void {
+export function setupServerApi(
+	router: Router,
+	graphicsStore: GraphicsStore,
+	accountStore: AccountStore,
+	rendererManager: RendererManager
+): void {
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
 
-	router.get(getKoaUrl('/'), (ctx: CTX) => {
+	router.get(getOgrafApiUrl('/'), (ctx: CTX) => {
 		type Method = ServerApi.paths['/']['get']
 		try {
 			// const request: Request<Method> = getRequestObject(ctx);
@@ -48,12 +55,14 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.get(getKoaUrl('/graphics'), async (ctx: CTX) => {
+
+	router.get(getOgrafApiUrl('/graphics'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/graphics']['get']
 		try {
 			// const request: Request<Method> = getRequestObject(ctx);
 
-			const list = await graphicsStore.listGraphics()
+			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+			const list = await graphicsNs.listGraphics()
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -68,7 +77,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 		}
 	})
 
-	router.get(getKoaUrl('/graphics/{graphicId}'), async (ctx: CTX) => {
+	router.get(getOgrafApiUrl('/graphics/{graphicId}'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/graphics/{graphicId}']['get']
 		try {
 			const Req = z.object({
@@ -83,8 +92,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			const request: Request<Method> = Req.parse(getRequestObject(ctx)) satisfies Request<Method> satisfies z.infer<
 				typeof Req
 			>
-
-			const graphicInfo = await graphicsStore.getGraphicInfo(request.parameters.path.graphicId)
+			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+			const graphicInfo = await graphicsNs.getGraphicInfo(request.parameters.path.graphicId)
 
 			if (!graphicInfo) {
 				return handleReturn<Method>(ctx, 404, {
@@ -110,7 +119,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.delete(getKoaUrl('/graphics/{graphicId}'), async (ctx: CTX) => {
+	router.delete(getOgrafApiUrl('/graphics/{graphicId}'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/graphics/{graphicId}']['delete']
 		try {
 			const Req = z.object({
@@ -130,11 +139,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			const request: Request<Method> = Req.parse(getRequestObject(ctx)) satisfies Request<Method> satisfies z.infer<
 				typeof Req
 			>
-
-			const found = await graphicsStore.deleteGraphic(
-				request.parameters.path.graphicId,
-				request.parameters.query?.force
-			)
+			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+			const found = await graphicsNs.deleteGraphic(request.parameters.path.graphicId, request.parameters.query?.force)
 
 			if (!found) {
 				return handleReturn<Method>(ctx, 404, {
@@ -158,7 +164,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 		}
 	})
 
-	router.get(getKoaUrl('/renderers'), async (ctx: CTX) => {
+	router.get(getOgrafApiUrl('/renderers'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers']['get']
 		try {
 			const renderers = await rendererManager.listRenderers()
@@ -179,7 +185,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.get(getKoaUrl('/renderers/{rendererId}'), async (ctx: CTX) => {
+	router.get(getOgrafApiUrl('/renderers/{rendererId}'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}']['get']
 		try {
 			const Req = z.object({
@@ -222,7 +228,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.get(getKoaUrl('/renderers/{rendererId}/target'), async (ctx: CTX) => {
+	router.get(getOgrafApiUrl('/renderers/{rendererId}/target'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target']['get']
 		try {
 			const Req = z.object({
@@ -270,7 +276,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/customActions/{customActionId}'), async (ctx: CTX) => {
+	router.post(getOgrafApiUrl('/renderers/{rendererId}/customActions/{customActionId}'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/customActions/{customActionId}']['post']
 		try {
 			const Req = z.object({
@@ -325,7 +331,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.put(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/clear'), async (ctx: CTX) => {
+	router.put(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/clear'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']
 		try {
 			const Req = z.object({
@@ -378,7 +384,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/load'), async (ctx: CTX) => {
+	router.post(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/load'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']
 		try {
 			const Req = z.object({
@@ -437,7 +443,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/updateAction'), async (ctx: CTX) => {
+	router.post(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/updateAction'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']
 		try {
 			const Req = z.object({
@@ -494,7 +500,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/playAction'), async (ctx: CTX) => {
+	router.post(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/playAction'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']
 		try {
 			const Req = z.object({
@@ -551,7 +557,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			return handleErrorReturn<Method>(ctx, err)
 		}
 	})
-	router.post(getKoaUrl('/renderers/{rendererId}/target/graphicInstance/stopAction'), async (ctx: CTX) => {
+	router.post(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/stopAction'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']
 		try {
 			const Req = z.object({
@@ -609,7 +615,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 		}
 	})
 	router.post(
-		getKoaUrl('/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}'),
+		getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}'),
 		async (ctx: CTX) => {
 			type Method =
 				ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']
@@ -678,7 +684,7 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 	// =======================     Non-spec endpoints:     =================================
 	// -------------------------------------------------------------------------------------
 
-	router.get('/serverApi/internal/graphics/:graphicId/:localPath*', async (ctx: CTX) => {
+	router.get(getFullUrl('/serverApi/internal/graphics/:graphicId/:localPath*'), async (ctx: CTX) => {
 		try {
 			// Note: We DO serve resources even if the Graphic is marked for removal!
 
@@ -688,8 +694,8 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 			})
 
 			const params = Req.parse(ctx.params)
-
-			const resource = await graphicsStore.getGraphicResource(params.graphicId, params.localPath)
+			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+			const resource = await graphicsNs.getGraphicResource(params.graphicId, params.localPath)
 
 			if (!resource) {
 				return handleReturn<any>(ctx, 404, {
@@ -712,10 +718,31 @@ export function setupServerApi(router: Router, graphicsStore: GraphicsStore, ren
 		}
 	})
 	router.post(
-		`/serverApi/internal/graphics/graphic`,
+		getFullUrl(`/serverApi/internal/graphics/graphic`),
 		upload.single('graphic'),
-		handleError(async (ctx: CTX) => graphicsStore.uploadGraphic(ctx))
+		handleError(async (ctx: CTX) => {
+			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+			return graphicsNs.uploadGraphic(ctx)
+		})
 	)
+	router.post(
+		getFullUrl(`/serverApi/internal/graphics/graphic`),
+		upload.single('graphic'),
+		handleError(async (ctx: CTX) => {
+			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+			return graphicsNs.uploadGraphic(ctx)
+		})
+	)
+	if (NAMESPACE_SETTINGS) {
+		router.post(
+			`/serverApi/internal/registerNamespace`,
+			upload.single('graphic'),
+			handleError(async (ctx: CTX) => {
+				const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
+				return graphicsNs.uploadGraphic(ctx)
+			})
+		)
+	}
 }
 
 function handleError(fcn: (ctx: CTX) => Promise<void>) {
@@ -808,9 +835,14 @@ function getRequestObject<Method extends AnyMethod>(ctx: CTX): Request<Method> {
 
 	return request as any
 }
-function getKoaUrl(openApiUrl: string): string {
-	const str = '/ograf/v1' + openApiUrl.replace(/\{([^}]+)\}/g, ':$1')
-	return str
+function getFullUrl(url: string): string {
+	if (NAMESPACE_SETTINGS) {
+		return '/api/:namespaceId' + url
+	}
+	return url
+}
+function getOgrafApiUrl(openApiUrl: string): string {
+	return getFullUrl('/ograf/v1' + openApiUrl.replace(/\{([^}]+)\}/g, ':$1'))
 }
 function handleReturn<Method extends AnyMethod>(
 	ctx: CTX,
