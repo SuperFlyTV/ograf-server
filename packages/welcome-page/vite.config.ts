@@ -35,4 +35,5 @@ export default defineConfig({
 	},
 	base: '',
 	plugins: [pluginChecker({ typescript: true })],
+	assetsInclude: ['**/*.svg', '**/*.png'],
 })

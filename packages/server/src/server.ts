@@ -5,11 +5,13 @@ import Router from '@koa/router'
 import cors from '@koa/cors'
 import bodyParser from 'koa-bodyparser'
 import { KoaWsFilter } from '@zimtsui/koa-ws-filter'
-import { GraphicsStore } from './managers/GraphicsStore.js'
-import { RendererManager } from './managers/RendererManager.js'
-import { setupServerApi } from './serverApi.js'
+import { Namespaces } from './managers/NS.js'
+import { getFullUrl, setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
 import { AccountStore } from './managers/AccountStore.js'
+import { WebSocket } from 'ws'
+
+const devMode = process.argv.includes('--devMode')
 
 export async function initializeServer(): Promise<void> {
 	const app = new Koa()
@@ -28,34 +30,37 @@ export async function initializeServer(): Promise<void> {
 
 	// Initialize internal business logic
 	const accountStore = new AccountStore()
-	const graphicsStore = new GraphicsStore(accountStore)
-	const rendererManager = new RendererManager()
+	const namespaces = new Namespaces(accountStore)
 
 	// Setup APIs:
-	setupServerApi(httpRouter, graphicsStore, accountStore, rendererManager) // HTTP API (ServerAPI)
-	setupRendererApi(wsRouter, rendererManager) // WebSocket API (RendererAPI)
+	setupServerApi(httpRouter, accountStore, namespaces) // HTTP API (ServerAPI)
+	setupRendererApi(wsRouter, namespaces) // WebSocket API (RendererAPI)
 
 	// Set up static file serving:
-	httpRouter.get('/', async (ctx: Koa.ParameterizedContext) => {
-		await serveFile(ctx, path.resolve('./public/index.html'))
+
+	// Welcome / docs pages:
+	httpRouter.get(/\/.*/, async (ctx: Koa.ParameterizedContext) => {
+		console.log('welcome page request:', ctx.path)
+		let subUrl = ctx.path.trim().replace(/^\//, '')
+		if (subUrl === '') subUrl = 'index.html'
+
+		await serveFromPath(ctx, path.resolve('../welcome-page/dist'), subUrl)
 	})
-	httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
-	})
-	httpRouter.get(/\/renderer\/renderer-layer\/.*/, async (ctx: Koa.ParameterizedContext) => {
+
+	// httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
+	// 	await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
+	// })
+
+	httpRouter.get(new RegExp(getFullUrl('/renderer/renderer-layer/.*')), async (ctx: Koa.ParameterizedContext) => {
 		const basePath = path.resolve('../renderer-layer/dist')
 		console.log('Serving renderer-layer file:', basePath)
 		await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
 	})
-	// httpRouter.get("/controller", async (ctx) => {
-	//   await serveFile(ctx, path.resolve("../controller/dist/index.html"));
-	// });
-	httpRouter.get(/\/controller\/.*/, async (ctx: Koa.ParameterizedContext) => {
+	httpRouter.get(new RegExp(getFullUrl('/controller/.*')), async (ctx: Koa.ParameterizedContext) => {
 		await serveFromPath(ctx, path.resolve('../controller/dist'), ctx.path.trim().replace(/^\/controller\//, ''))
 	})
 	// httpRouter.get("/renderer/*", async (ctx) => {
-
-	//   // ctx.body = await fs.readFile("./public/index.html", "utf8");
+	//   ctx.body = await fs.readFile("./public/index.html", "utf8");
 	// });
 
 	filter.http(httpRouter.routes())
@@ -73,7 +78,7 @@ async function serveFromPath(ctx: Koa.ParameterizedContext, folderPath: string, 
 	const filePath = path.resolve(folderPath, url)
 
 	// ensure that the resulting path is in public:
-	if (!filePath.startsWith(folderPath)) throw new Error('Invalid path')
+	if (!filePath.startsWith(folderPath)) throw new Error(`Invalid path, url ${url}, ${filePath} is not in ${folderPath}`)
 
 	await serveFile(ctx, filePath)
 }

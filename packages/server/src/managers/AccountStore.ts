@@ -41,7 +41,7 @@ export class AccountStore {
 	public async exists(namespaceId: string): Promise<boolean> {
 		return this.fsExists(this.namespaceFolderPath(namespaceId))
 	}
-	public async register(email: string): Promise<string> {
+	public async registerNewNamespace(email: string): Promise<string> {
 		for (let i = 0; i < 100; i++) {
 			const namespaceId = createLongNameId()
 			// check if namespace exists:

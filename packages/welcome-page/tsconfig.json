@@ -3,6 +3,7 @@
   "include": [
     "src/**/*.ts",
     "src/**/*.tsx",
+    "src/lib",
   ],
   "exclude": [
     "node_modules/**",
@@ -19,7 +20,9 @@
       ]
     },
     "jsx": "react",
-    "types": [],
+    "types": [
+      "vite/client"
+    ],
     "lib": [
       "DOM",
       "ES2024"

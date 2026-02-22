@@ -1,22 +1,36 @@
 import Router from '@koa/router'
 import { WebSocket } from 'ws'
 import { JSONRPCServerAndClient, JSONRPCServer, JSONRPCClient } from 'json-rpc-2.0'
-import { RendererManager } from './managers/RendererManager.js'
+import { RendererManagerNS } from './managers/RendererManager.js'
+import { getFullUrl } from './serverApi.js'
+import { Namespaces } from './managers/NS.js'
 
-export function setupRendererApi(wsRouter: Router, rendererManager: RendererManager): void {
+export function setupRendererApi(wsRouter: Router, namespaces: Namespaces): void {
 	// Set up websocket server, listen to connection requests at /rendererApi/v1
-	wsRouter.all('/rendererApi/v1', async (ctx, next) => {
+	wsRouter.all(getFullUrl('/rendererApi/v1'), async (ctx, next) => {
 		// A client has connected,
 		// accept the websocket upgrade request
+
+		const ns = await namespaces.getNS(ctx.params.namespaceId)
+		if (!ns) {
+			ctx.status = 401
+			ctx.body = 'Namespace not found'
+			// ws.close()
+
+			return
+		}
+
 		const ws: WebSocket = await ctx.upgrade()
 		await next()
 
-		setupClientConnection(ws, rendererManager)
+		setupClientConnection(ws, ns.rendererManager)
 	})
 }
 
-function setupClientConnection(ws: WebSocket, rendererManager: RendererManager) {
-	console.log('New Renderer connected')
+function setupClientConnection(ws: WebSocket, rendererManager: RendererManagerNS) {
+	const label = `Renderer ${rendererManager.namespaceId}`
+
+	console.log(`${label}: New Renderer connected`)
 	const jsonRpcConnection = new JSONRPCServerAndClient(
 		new JSONRPCServer(),
 		new JSONRPCClient(async (request) => {
@@ -38,7 +52,7 @@ function setupClientConnection(ws: WebSocket, rendererManager: RendererManager) 
 	jsonRpcConnection.addMethod('onInfo', rendererInstance.onInfo)
 	jsonRpcConnection.addMethod('debug', rendererInstance.debug)
 
-	// Handle incoming messages
+	// Handle incoming messages:
 	ws.on('message', (message: Buffer) => {
 		const messageString = message.toString()
 
@@ -55,5 +69,10 @@ function setupClientConnection(ws: WebSocket, rendererManager: RendererManager) 
 	ws.on('close', (_code, reason) => {
 		rendererManager.closeRenderer(rendererInstance)
 		jsonRpcConnection.rejectAllPendingRequests(`Connection is closed (${reason}).`)
+
+		console.log(`${label}: Renderer disconnected`)
+	})
+	ws.on('error', (err) => {
+		console.error(`${label}: Error: ${err}`)
 	})
 }

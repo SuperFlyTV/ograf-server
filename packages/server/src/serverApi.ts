@@ -2,8 +2,6 @@ import Router from '@koa/router'
 import multer from '@koa/multer'
 import { ServerApi } from 'ograf'
 import { CTX } from './lib/lib.js'
-import { GraphicsStore } from './managers/GraphicsStore.js'
-import { RendererManager } from './managers/RendererManager.js'
 import {
 	CustomActionId,
 	CustomActionParams,
@@ -17,22 +15,19 @@ import {
 	UpdateActionParams,
 } from './types/OpenApiTypes.js'
 import { z, ZodError } from 'zod/v4'
-import { ErrorReturnValue, GraphicInstanceError } from '@ograf-server/shared'
+import { ErrorReturnValue, GraphicInstanceError, ServerSettings } from '@ograf-server/shared'
 import { JSONRPCErrorException } from 'json-rpc-2.0'
 import { NAMESPACE_SETTINGS } from './namespace.js'
+import { Namespaces } from './managers/NS.js'
 import { AccountStore } from './managers/AccountStore.js'
+
 const upload = multer({
 	storage: multer.diskStorage({
 		// destination: './localGraphicsStorage',
 	}),
 })
 
-export function setupServerApi(
-	router: Router,
-	graphicsStore: GraphicsStore,
-	accountStore: AccountStore,
-	rendererManager: RendererManager
-): void {
+export function setupServerApi(router: Router, accountStore: AccountStore, namespaces: Namespaces): void {
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
 
 	router.get(getOgrafApiUrl('/'), (ctx: CTX) => {
@@ -61,8 +56,10 @@ export function setupServerApi(
 		try {
 			// const request: Request<Method> = getRequestObject(ctx);
 
-			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-			const list = await graphicsNs.listGraphics()
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const list = await ns.graphicStore.listGraphics()
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -92,8 +89,10 @@ export function setupServerApi(
 			const request: Request<Method> = Req.parse(getRequestObject(ctx)) satisfies Request<Method> satisfies z.infer<
 				typeof Req
 			>
-			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-			const graphicInfo = await graphicsNs.getGraphicInfo(request.parameters.path.graphicId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const graphicInfo = await ns.graphicStore.getGraphicInfo(request.parameters.path.graphicId)
 
 			if (!graphicInfo) {
 				return handleReturn<Method>(ctx, 404, {
@@ -139,8 +138,14 @@ export function setupServerApi(
 			const request: Request<Method> = Req.parse(getRequestObject(ctx)) satisfies Request<Method> satisfies z.infer<
 				typeof Req
 			>
-			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-			const found = await graphicsNs.deleteGraphic(request.parameters.path.graphicId, request.parameters.query?.force)
+
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const found = await ns.graphicStore.deleteGraphic(
+				request.parameters.path.graphicId,
+				request.parameters.query?.force
+			)
 
 			if (!found) {
 				return handleReturn<Method>(ctx, 404, {
@@ -167,7 +172,10 @@ export function setupServerApi(
 	router.get(getOgrafApiUrl('/renderers'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers']['get']
 		try {
-			const renderers = await rendererManager.listRenderers()
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const renderers = await ns.rendererManager.listRenderers()
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -201,7 +209,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 
 			if (!rendererInstance?.info) {
 				return handleReturn<Method>(ctx, 404, {
@@ -247,7 +258,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 
 			if (!rendererInstance?.info) {
 				return handleReturn<Method>(ctx, 404, {
@@ -299,7 +313,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
@@ -353,7 +370,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
@@ -410,7 +430,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
@@ -467,7 +490,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
@@ -524,7 +550,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
@@ -581,7 +610,10 @@ export function setupServerApi(
 				typeof Req
 			>
 
-			const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
+			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
@@ -642,7 +674,10 @@ export function setupServerApi(
 					typeof Req
 				>
 
-				const rendererInstance = await rendererManager.getRendererInstance(request.parameters.path.rendererId)
+				const ns = await namespaces.getNS(ctx.params.namespaceId)
+				if (!ns) return handleNamespaceNotFound(ctx)
+
+				const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 				if (!rendererInstance) {
 					return handleReturn<Method>(ctx, 404, {
 						headers: {},
@@ -684,6 +719,63 @@ export function setupServerApi(
 	// =======================     Non-spec endpoints:     =================================
 	// -------------------------------------------------------------------------------------
 
+	// Register new Namespace endpoint:
+	if (accountStore.enable) {
+		console.log('AAA')
+		router.post('/serverApi/register', async (ctx: CTX) => {
+			console.log('aaa')
+			try {
+				const body = z
+					.object({
+						email: z.email(),
+					})
+					.parse(ctx.request.body)
+
+				const namespaceId = await accountStore.registerNewNamespace(body.email)
+
+				if (!Namespaces.isValidNamespaceId(namespaceId)) {
+					return handleReturn<any>(ctx, 500, {
+						headers: {},
+						content: {
+							'application/json': {
+								error: 'Failed to create namespace',
+							},
+						},
+					})
+				}
+
+				return handleReturn<any>(ctx, 200, {
+					headers: {},
+					content: {
+						'application/json': {
+							namespaceId,
+						},
+					},
+				})
+			} catch (err) {
+				return handleErrorReturn<any>(ctx, err)
+			}
+		})
+	}
+
+	router.get('/serverApi/server-settings', async (ctx: CTX) => {
+		try {
+			const settings: ServerSettings = {
+				namespaceEnabled: accountStore.enable,
+			}
+			return handleReturn<any>(ctx, 200, {
+				headers: {},
+				content: {
+					'application/json': {
+						settings,
+					},
+				},
+			})
+		} catch (err) {
+			return handleErrorReturn<any>(ctx, err)
+		}
+	})
+
 	router.get(getFullUrl('/serverApi/internal/graphics/:graphicId/:localPath*'), async (ctx: CTX) => {
 		try {
 			// Note: We DO serve resources even if the Graphic is marked for removal!
@@ -694,8 +786,9 @@ export function setupServerApi(
 			})
 
 			const params = Req.parse(ctx.params)
-			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-			const resource = await graphicsNs.getGraphicResource(params.graphicId, params.localPath)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+			const resource = await ns.graphicStore.getGraphicResource(params.graphicId, params.localPath)
 
 			if (!resource) {
 				return handleReturn<any>(ctx, 404, {
@@ -721,16 +814,18 @@ export function setupServerApi(
 		getFullUrl(`/serverApi/internal/graphics/graphic`),
 		upload.single('graphic'),
 		handleError(async (ctx: CTX) => {
-			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-			return graphicsNs.uploadGraphic(ctx)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+			return ns.graphicStore.uploadGraphic(ctx)
 		})
 	)
 	router.post(
 		getFullUrl(`/serverApi/internal/graphics/graphic`),
 		upload.single('graphic'),
 		handleError(async (ctx: CTX) => {
-			const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-			return graphicsNs.uploadGraphic(ctx)
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+			return ns.graphicStore.uploadGraphic(ctx)
 		})
 	)
 	if (NAMESPACE_SETTINGS) {
@@ -738,8 +833,9 @@ export function setupServerApi(
 			`/serverApi/internal/registerNamespace`,
 			upload.single('graphic'),
 			handleError(async (ctx: CTX) => {
-				const graphicsNs = await graphicsStore.getNS(ctx.params.namespaceId)
-				return graphicsNs.uploadGraphic(ctx)
+				const ns = await namespaces.getNS(ctx.params.namespaceId)
+				if (!ns) return handleNamespaceNotFound(ctx)
+				return ns.graphicStore.uploadGraphic(ctx)
 			})
 		)
 	}
@@ -835,7 +931,7 @@ function getRequestObject<Method extends AnyMethod>(ctx: CTX): Request<Method> {
 
 	return request as any
 }
-function getFullUrl(url: string): string {
+export function getFullUrl(url: string): string {
 	if (NAMESPACE_SETTINGS) {
 		return '/api/:namespaceId' + url
 	}
@@ -875,6 +971,18 @@ function handleReturn<Method extends AnyMethod>(
 			}
 		}
 	}
+}
+function handleNamespaceNotFound(ctx: CTX): void {
+	return handleReturn(ctx, 401, {
+		headers: {},
+		content: {
+			'application/json': {
+				status: 401,
+				title: 'Namespace not found',
+				detail: 'Namespace with the provided ID does not exist. Register a new namespace at the main page.',
+			} satisfies ServerApi.components['schemas']['ErrorResponse'],
+		},
+	})
 }
 
 type AnyMethodErrorResponse = {

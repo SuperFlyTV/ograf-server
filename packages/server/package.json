@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "run build && run start",
+    "dev": "npx tsx watch src/main.ts --devMode",
     "start": "node dist/main.js",
     "lint:raw": "eslint",
     "lint": "run lint:raw .",
@@ -41,8 +41,11 @@
     "@types/mime-types": "^2.1.4",
     "@types/node": "^24.10.0",
     "eslint": "^9.38.0",
-    "nodemon": "^3.1.7",
     "prettier": "^3.6.2",
+    "tsx": "^4.21.0",
     "typescript": "~5.7.0"
+  },
+  "engines": {
+    "node": ">20"
   }
 }
