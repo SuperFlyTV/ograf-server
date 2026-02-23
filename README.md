@@ -22,7 +22,7 @@ This is a web server that provides:
   corepack enable
 
   # Install dependencies
-  yarn install
+  yarn
 
   # Build libraries
   yarn build
@@ -30,7 +30,11 @@ This is a web server that provides:
   # Run in dev mode
   yarn dev
     # Then access the main app on http://localhost:8080
-    # and the controller on http://localhost:8082
+      # The main app exposes the built versions of the GUI apps. you'll have to run `yarn build` for them to be updated.
+      # OR you can view the vite-dev version of the GUI apps:
+      # * Docs: http://localhost:8082
+      # * Controller: http://localhost:8083
+      # * Renderer-Layer: http://localhost:8084
 
   # Run in production mode
   yarn start

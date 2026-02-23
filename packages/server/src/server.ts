@@ -77,13 +77,13 @@ export async function initializeServer(): Promise<void> {
 		}
 	)
 
-	// Welcome / docs pages:
+	// Docs:
 	httpRouter.get(/\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		console.log('welcome page request:', ctx.path)
+		// console.log('docs page request:', ctx.path)
 		let subUrl = ctx.path.trim().replace(/^\//, '')
 		if (subUrl === '') subUrl = 'index.html'
 
-		await serveFromPath(ctx, path.resolve('../welcome-page/dist'), subUrl)
+		await serveFromPath(ctx, path.resolve('../docs/dist'), subUrl)
 	})
 	// httpRouter.get("/renderer/*", async (ctx) => {
 	//   ctx.body = await fs.readFile("./public/index.html", "utf8");

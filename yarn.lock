@@ -1154,6 +1154,32 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@ograf-server/docs@workspace:packages/docs":
+  version: 0.0.0-use.local
+  resolution: "@ograf-server/docs@workspace:packages/docs"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.1"
+    "@fontsource/roboto": "npm:^5.2.8"
+    "@mui/icons-material": "npm:^7.3.4"
+    "@mui/material": "npm:^7.3.4"
+    "@ograf-server/shared": "npm:*"
+    "@sofie-automation/code-standard-preset": "npm:^3.2.0"
+    "@types/react": "npm:^19.2.2"
+    "@types/react-dom": "npm:^19.2.2"
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    eslint: "npm:^9.38.0"
+    prettier: "npm:^3.6.2"
+    react: "npm:^19.2.0"
+    react-dom: "npm:^19.2.0"
+    sass: "npm:1.77.6"
+    typescript: "npm:~5.7.0"
+    url: "npm:^0.11.4"
+    vite: "npm:^5.4.1"
+    vite-plugin-checker: "npm:^0.11.0"
+  languageName: unknown
+  linkType: soft
+
 "@ograf-server/renderer-layer@workspace:packages/renderer-layer":
   version: 0.0.0-use.local
   resolution: "@ograf-server/renderer-layer@workspace:packages/renderer-layer"
@@ -1223,32 +1249,6 @@ __metadata:
     eslint: "npm:^9.38.0"
     prettier: "npm:^3.6.2"
     typescript: "npm:~5.7.0"
-  languageName: unknown
-  linkType: soft
-
-"@ograf-server/welcome-page@workspace:packages/welcome-page":
-  version: 0.0.0-use.local
-  resolution: "@ograf-server/welcome-page@workspace:packages/welcome-page"
-  dependencies:
-    "@emotion/react": "npm:^11.14.0"
-    "@emotion/styled": "npm:^11.14.1"
-    "@fontsource/roboto": "npm:^5.2.8"
-    "@mui/icons-material": "npm:^7.3.4"
-    "@mui/material": "npm:^7.3.4"
-    "@ograf-server/shared": "npm:*"
-    "@sofie-automation/code-standard-preset": "npm:^3.2.0"
-    "@types/react": "npm:^19.2.2"
-    "@types/react-dom": "npm:^19.2.2"
-    "@vitejs/plugin-react": "npm:^4.3.4"
-    eslint: "npm:^9.38.0"
-    prettier: "npm:^3.6.2"
-    react: "npm:^19.2.0"
-    react-dom: "npm:^19.2.0"
-    sass: "npm:1.77.6"
-    typescript: "npm:~5.7.0"
-    url: "npm:^0.11.4"
-    vite: "npm:^5.4.1"
-    vite-plugin-checker: "npm:^0.11.0"
   languageName: unknown
   linkType: soft
 
