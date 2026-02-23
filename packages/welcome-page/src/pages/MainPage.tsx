@@ -70,7 +70,13 @@ const NamespaceSection: React.FC = () => {
 		<>
 			<Box sx={{ textAlign: 'center', mb: 3 }}>
 				{namespaceId ? (
-					<Introduction namespaceId={namespaceId} />
+					<Introduction
+						namespaceId={namespaceId}
+						onReset={() => {
+							setNamespaceId(null)
+							localStorage.removeItem('namespaceId')
+						}}
+					/>
 				) : (
 					<RegisterForm
 						setNamespaceId={(namespaceId) => {

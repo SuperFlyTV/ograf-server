@@ -97,7 +97,7 @@ export class OgrafApi {
 
 		const url0 = new URL(url, this.BASE_URL_TEMPLATE)
 
-		const response = await this.fetch<Method>(url0, true)
+		const response = await this.fetch<Method>(url0, true, {})
 
 		if (response.status === 200) {
 			return {

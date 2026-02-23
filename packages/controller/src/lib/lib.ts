@@ -1,4 +1,5 @@
 import React from 'react'
+import { getNameSpaceId } from './namespace.js'
 
 /**
  * Helper function to simply assert that the value is of the type never.
@@ -12,11 +13,17 @@ export function useStoredState<T extends string | number | object | undefined | 
 	localStorageId: string,
 	initialState?: T | (() => T)
 ): [T, (newValue: T) => void] {
+	localStorageId = getNameSpaceId() + localStorageId // Ensure we have a unique localStorageId per namespace
+
 	const [value, setValue] = React.useState(() => {
 		const storedValueStr = window.localStorage.getItem(localStorageId)
 		if (storedValueStr) {
-			const storedValue = JSON.parse(storedValueStr)
-			if (storedValue !== undefined) return storedValue
+			try {
+				const storedValue = JSON.parse(storedValueStr)
+				if (storedValue !== undefined) return storedValue
+			} catch (e) {
+				console.error('error parsing stored value from localStorage for key', localStorageId, e)
+			}
 		}
 		return typeof initialState === 'function' ? initialState() : initialState
 	})
@@ -24,7 +31,8 @@ export function useStoredState<T extends string | number | object | undefined | 
 	return [
 		value,
 		(newValue) => {
-			window.localStorage.setItem(localStorageId, JSON.stringify(newValue))
+			if (newValue === undefined) window.localStorage.removeItem(localStorageId)
+			else window.localStorage.setItem(localStorageId, JSON.stringify(newValue))
 
 			setValue(newValue)
 		},

@@ -6,12 +6,9 @@ import cors from '@koa/cors'
 import bodyParser from 'koa-bodyparser'
 import { KoaWsFilter } from '@zimtsui/koa-ws-filter'
 import { Namespaces } from './managers/NS.js'
-import { getFullUrl, setupServerApi } from './serverApi.js'
+import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
 import { AccountStore } from './managers/AccountStore.js'
-import { WebSocket } from 'ws'
-
-const devMode = process.argv.includes('--devMode')
 
 export async function initializeServer(): Promise<void> {
 	const app = new Koa()
@@ -38,6 +35,48 @@ export async function initializeServer(): Promise<void> {
 
 	// Set up static file serving:
 
+	// httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
+	// 	await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
+	// })
+
+	// httpRouter.get(new RegExp(getFullUrl('/renderer-layer/.*', 'renderer')), async (ctx: Koa.ParameterizedContext) => {
+	// 	const basePath = path.resolve('../renderer-layer/dist')
+	// 	console.log('Serving renderer-layer file:', basePath)
+	// 	await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
+	// })
+	// Controller:
+	httpRouter.get(
+		/^\/controller\/(?<namespaceId>[^/]*)\/(?<controllerType>\w*)(?<subPath>\/?.*)/,
+		async (ctx: Koa.ParameterizedContext) => {
+			// let namespaceId = ctx.params.namespaceId
+			const controllerType = ctx.params.controllerType
+			let subPath = ctx.params.subPath
+			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+
+			if (controllerType === 'default') {
+				await serveFromPath(ctx, path.resolve('../controller/dist'), subPath)
+			}
+			// <<Add other controllers here later>>
+		}
+	)
+	// Renderer
+	httpRouter.get(
+		/^\/renderer\/(?<namespaceId>[^/]*)\/(?<rendererType>\w*)(?<subPath>\/?.*)/,
+		async (ctx: Koa.ParameterizedContext) => {
+			// let namespaceId = ctx.params.namespaceId
+			const rendererType = ctx.params.rendererType
+			let subPath = ctx.params.subPath
+			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+
+			if (rendererType === 'default') {
+				await serveFromPath(ctx, path.resolve('../renderer-layer/dist'), subPath)
+			}
+			// <<Add other renderers here later>>
+		}
+	)
+
 	// Welcome / docs pages:
 	httpRouter.get(/\/.*/, async (ctx: Koa.ParameterizedContext) => {
 		console.log('welcome page request:', ctx.path)
@@ -45,19 +84,6 @@ export async function initializeServer(): Promise<void> {
 		if (subUrl === '') subUrl = 'index.html'
 
 		await serveFromPath(ctx, path.resolve('../welcome-page/dist'), subUrl)
-	})
-
-	// httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
-	// 	await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
-	// })
-
-	httpRouter.get(new RegExp(getFullUrl('/renderer/renderer-layer/.*')), async (ctx: Koa.ParameterizedContext) => {
-		const basePath = path.resolve('../renderer-layer/dist')
-		console.log('Serving renderer-layer file:', basePath)
-		await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
-	})
-	httpRouter.get(new RegExp(getFullUrl('/controller/.*')), async (ctx: Koa.ParameterizedContext) => {
-		await serveFromPath(ctx, path.resolve('../controller/dist'), ctx.path.trim().replace(/^\/controller\//, ''))
 	})
 	// httpRouter.get("/renderer/*", async (ctx) => {
 	//   ctx.body = await fs.readFile("./public/index.html", "utf8");

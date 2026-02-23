@@ -29,8 +29,8 @@ const upload = multer({
 
 export function setupServerApi(router: Router, accountStore: AccountStore, namespaces: Namespaces): void {
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
-
-	router.get(getOgrafApiUrl('/'), (ctx: CTX) => {
+	console.log('url', getOgrafApiUrl('/'))
+	router.get([getOgrafApiUrl('/'), getOgrafApiUrl('')], (ctx: CTX) => {
 		type Method = ServerApi.paths['/']['get']
 		try {
 			// const request: Request<Method> = getRequestObject(ctx);
@@ -931,11 +931,11 @@ function getRequestObject<Method extends AnyMethod>(ctx: CTX): Request<Method> {
 
 	return request as any
 }
-export function getFullUrl(url: string): string {
+export function getFullUrl(url: string, baseName = 'api'): string {
 	if (NAMESPACE_SETTINGS) {
-		return '/api/:namespaceId' + url
+		return `/${baseName}/:namespaceId${url}`
 	}
-	return url
+	return `/${baseName}${url}`
 }
 function getOgrafApiUrl(openApiUrl: string): string {
 	return getFullUrl('/ograf/v1' + openApiUrl.replace(/\{([^}]+)\}/g, ':$1'))

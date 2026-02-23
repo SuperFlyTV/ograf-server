@@ -34,25 +34,31 @@ export class RendererApiHandler implements MethodsOnRenderer {
 			rendererName: string
 		}
 	) {
-		this.actions['shake-it'] = async (params: any) => {
-			const el: HTMLDivElement | null = document.querySelector('#main-container')
+		// this.actions['shake-it'] = async (params: any) => {
+		// 	const el: HTMLDivElement | null = document.querySelector('#main-container')
 
-			if (!el) return
+		// 	if (!el) return
 
-			const endTime = Date.now() + (params.duration || 0)
+		// 	const endTime = Date.now() + (params.duration || 0)
 
-			const shakeIt = () => {
-				if (Date.now() < endTime) {
-					el.style.transform = `rotate3d(${Math.random()}, ${Math.random()}, ${Math.random()}, ${Math.random() * 5}deg)`
+		// 	const shakeIt = () => {
+		// 		if (Date.now() < endTime) {
+		// 			el.style.transform = `rotate3d(${Math.random()}, ${Math.random()}, ${Math.random()}, ${Math.random() * 5}deg)`
 
-					setTimeout(() => {
-						shakeIt()
-					}, 1000 / 30)
-				} else {
-					el.style.transform = ''
-				}
-			}
-			shakeIt()
+		// 			setTimeout(() => {
+		// 				shakeIt()
+		// 			}, 1000 / 30)
+		// 		} else {
+		// 			el.style.transform = ''
+		// 		}
+		// 	}
+		// 	shakeIt()
+		// }
+		this.actions['reload-page'] = async () => {
+			// Put in a timeout to allow the reply to be sent before the page is reloaded:
+			setTimeout(() => {
+				window.location.reload()
+			}, 100)
 		}
 
 		// Reconnection logic:
@@ -271,20 +277,26 @@ export class RendererApiHandler implements MethodsOnRenderer {
 				//   // description: `Layer ${layer.id}`
 				// })),
 				customActions: [
+					// {
+					// 	id: 'shake-it',
+					// 	name: 'Shake it up!',
+					// 	description: 'This is just an example renderer-action that shakes the entire renderer.',
+					// 	schema: {
+					// 		type: 'object',
+					// 		properties: {
+					// 			duration: {
+					// 				type: 'number',
+					// 				title: 'Duration (ms)',
+					// 				default: 2000,
+					// 			},
+					// 		},
+					// 	} as any,
+					// },
 					{
-						id: 'shake-it',
-						name: 'Shake it up!',
-						description: 'This is just an example renderer-action that shakes the entire renderer.',
-						schema: {
-							type: 'object',
-							properties: {
-								duration: {
-									type: 'number',
-									title: 'Duration (ms)',
-									default: 2000,
-								},
-							},
-						} as any,
+						id: 'reload-page',
+						name: 'Reload page',
+						description: 'Reload the Renderer HTML page',
+						schema: {} as any,
 					},
 				],
 				renderTargetSchema: {

@@ -5,6 +5,7 @@ import { GraphicCache } from './lib/GraphicsCache.js'
 import { RendererApiHandler } from './lib/RendererApiHandler.js'
 import { LayersManager } from './lib/LayersManager.js'
 import { Layers } from './components/Layers.js'
+import { getDefaultServerUrl } from './lib/namespace.js'
 
 const CHECKERBOARD_COLOR = '#ccc'
 
@@ -28,10 +29,11 @@ export const App: React.FC = () => {
 		document.title = `Renderer | ${rendererName}`
 
 		/** URL to send server requests to: */
-		const serverApiUrl = 'http://localhost:8080'
+		const serverApiUrl = getDefaultServerUrl() // 'http://localhost:8080'
+		console.log('Using serverApiUrl:', serverApiUrl)
 		/** URL to open websocket connection to */
 		// const rendererApiUrl = 'ws://localhost:8080/rendererApi/v1'
-		const rendererApiUrl = 'ws://localhost:8080'
+		const rendererApiUrl = serverApiUrl.replace(/^http/, 'ws') // 'ws://localhost:8080'
 		// const rendererApiUrl = 'ws://google.com'
 
 		const graphicCache = new GraphicCache(serverApiUrl)

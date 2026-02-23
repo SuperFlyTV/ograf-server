@@ -4,11 +4,12 @@ import { serverDataStore } from './serverData.js'
 import * as OGraf from 'ograf'
 import { getDefaultDataFromSchema } from 'ograf-form'
 import { clone } from '../lib/lib.js'
+import { getDefaultServerUrl, getNameSpaceId } from '../lib/namespace.js'
 
 class AppSettings {
-	private LOCALSTORAGE_ID = 'appSettings'
+	private LOCALSTORAGE_ID = 'appSettings' + getNameSpaceId()
 
-	public serverApiUrl = 'http://localhost:8080/ograf/v1/'
+	public serverApiUrl = getDefaultServerUrl() + '/ograf/v1/' // 'http://localhost:8080/ograf/v1/'
 	public selectedRendererId: string = ''
 
 	private ografApi = OgrafApi.getSingleton()
@@ -47,6 +48,7 @@ class AppSettings {
 		autorun(() => {
 			// Send serverApiUrl to the ografApi singleton:
 			this.ografApi.baseURL = this.serverApiUrl
+			console.log('Set ografApi.baseURL to', this.ografApi.baseURL)
 		})
 	}
 	public getSelectedRendererId(): string | undefined {

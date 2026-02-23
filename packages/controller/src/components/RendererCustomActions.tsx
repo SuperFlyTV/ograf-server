@@ -59,6 +59,7 @@ export const RendererCustomAction = observer(
 				)
 				.catch(console.error)
 		}
+		console.log('props.action.schema', props.action.schema)
 
 		return (
 			<Card elevation={1} sx={{ m: 1, p: 1 }}>

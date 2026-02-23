@@ -9,11 +9,12 @@ import Typography from '@mui/material/Typography'
 export const AppSettings: React.FC = observer(() => {
 	return (
 		<>
-			<Box component="form" sx={{ '& > :not(style)': { m: 1, width: '25ch' } }} noValidate autoComplete="off">
+			<Box component="form" sx={{ '& > :not(style)': { my: 2, width: '100%' } }} noValidate autoComplete="off">
 				<TextField
 					id="asdf"
 					label="Server URL"
 					value={appSettingsStore.serverApiUrl}
+					fullWidth
 					onChange={(event) => {
 						appSettingsStore.serverApiUrl = event.target.value
 					}}
