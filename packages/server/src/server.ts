@@ -45,37 +45,75 @@ export async function initializeServer(): Promise<void> {
 	// 	await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
 	// })
 	// Controller:
-	httpRouter.get(
-		/^\/controller\/(?<namespaceId>[^/]*)\/(?<controllerType>\w*)(?<subPath>\/?.*)/,
-		async (ctx: Koa.ParameterizedContext) => {
-			// let namespaceId = ctx.params.namespaceId
-			const controllerType = ctx.params.controllerType
-			let subPath = ctx.params.subPath
-			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
-			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+	if (accountStore.enable) {
+		httpRouter.get(
+			/^\/controller\/(?<namespaceId>[^/]*)\/(?<controllerType>\w*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
+				// let namespaceId = ctx.params.namespaceId
+				const controllerType = ctx.params.controllerType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
 
-			if (controllerType === 'default') {
-				await serveFromPath(ctx, path.resolve('../controller/dist'), subPath)
+				if (controllerType === 'default') {
+					await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
+				} else if (controllerType === 'list') {
+					await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+				}
+				// <<Add other controllers here later>>
 			}
-			// <<Add other controllers here later>>
-		}
-	)
-	// Renderer
-	httpRouter.get(
-		/^\/renderer\/(?<namespaceId>[^/]*)\/(?<rendererType>\w*)(?<subPath>\/?.*)/,
-		async (ctx: Koa.ParameterizedContext) => {
-			// let namespaceId = ctx.params.namespaceId
-			const rendererType = ctx.params.rendererType
-			let subPath = ctx.params.subPath
-			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
-			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+		)
+		// Renderer
+		httpRouter.get(
+			/^\/renderer\/(?<namespaceId>[^/]*)\/(?<rendererType>\w*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
+				// let namespaceId = ctx.params.namespaceId
+				const rendererType = ctx.params.rendererType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+				console.log('rendererType', rendererType)
+				if (rendererType === 'default') {
+					await serveFromPath(ctx, path.resolve('../renderer-layer/dist'), subPath)
+				}
+				// <<Add other renderers here later>>
+			}
+		)
+	} else {
+		httpRouter.get(
+			/^\/controller\/(?<controllerType>\w*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
 
-			if (rendererType === 'default') {
-				await serveFromPath(ctx, path.resolve('../renderer-layer/dist'), subPath)
+				const controllerType = ctx.params.controllerType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+				console.log('controllerType', controllerType)
+				if (controllerType === 'default') {
+					await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
+				} else if (controllerType === 'list') {
+					await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+				}
+				// <<Add other controllers here later>>
 			}
-			// <<Add other renderers here later>>
-		}
-	)
+		)
+		// Renderer
+		httpRouter.get(
+			/^\/renderer\/(?<rendererType>\w*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
+				// console.log('renderer request:', ctx.path, ctx.params)
+				const rendererType = ctx.params.rendererType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+				console.log('rendererType', rendererType)
+				if (rendererType === 'default') {
+					await serveFromPath(ctx, path.resolve('../renderer-layer/dist'), subPath)
+				}
+				// <<Add other renderers here later>>
+			}
+		)
+	}
 
 	// Docs:
 	httpRouter.get(/\/.*/, async (ctx: Koa.ParameterizedContext) => {

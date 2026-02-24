@@ -1,0 +1,18 @@
+
+> @ograf-server/controller-list@0.0.0 build
+> vite build --logLevel warn 
+
+[31mx[39m Build failed in 3.99s
+[31merror during build:
+[31mCould not resolve entry module "index.html".[31m
+    at getRollupError (file:///d:/git/ograf-server/node_modules/rollup/dist/es/shared/parseAst.js:402:41)
+    at error (file:///d:/git/ograf-server/node_modules/rollup/dist/es/shared/parseAst.js:398:42)
+    at ModuleLoader.loadEntryModule (file:///d:/git/ograf-server/node_modules/rollup/dist/es/shared/node-entry.js:21708:20)
+    at async Promise.all (index 0)[39m
+npm error Lifecycle script `build` failed with error:
+npm error code 1
+npm error path d:\git\ograf-server\packages\controller-list
+npm error workspace @ograf-server/controller-list@0.0.0
+npm error location d:\git\ograf-server\packages\controller-list
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vite build --logLevel warn ""

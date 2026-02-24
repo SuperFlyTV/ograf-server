@@ -1,0 +1,86 @@
+
+> @ograf-server/controller-list@0.0.0 build
+> vite build --logLevel warn 
+
+[96msrc/components/EditPanel.tsx[0m:[93m5[0m:[93m27[0m - [91merror[0m[90m TS2835: [0mRelative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Did you mean './OGrafForm.js'?
+
+[7m5[0m import { OGrafForm } from './OGrafForm'
+[7m [0m [91m                          ~~~~~~~~~~~~~[0m
+
+[96msrc/components/EditPanel.tsx[0m:[93m8[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module '../stores/serverData.js' or its corresponding type declarations.
+
+[7m8[0m import { serverDataStore } from '../stores/serverData.js'
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/components/Header.tsx[0m:[93m3[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module '../stores/serverData.js' or its corresponding type declarations.
+
+[7m3[0m import { serverDataStore } from '../stores/serverData.js'
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/components/ListPanel.tsx[0m:[93m74[0m:[93m45[0m - [91merror[0m[90m TS6133: [0m'index' is declared but its value is never read.
+
+[7m74[0m     const onDragOver = (e: React.DragEvent, index: number) => {
+[7m  [0m [91m                                            ~~~~~[0m
+
+[96msrc/lib/graphicsListApi.ts[0m:[93m4[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module '../stores/serverData.js' or its corresponding type declarations.
+
+[7m4[0m import { serverDataStore } from '../stores/serverData.js'
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/lib/graphicsListApi.ts[0m:[93m28[0m:[93m22[0m - [91merror[0m[90m TS18046: [0m'g' is of type 'unknown'.
+
+[7m28[0m                 g => g.graphicId === item.graphicId && g.rendererId === item.rendererId
+[7m  [0m [91m                     ~[0m
+
+[96msrc/lib/graphicsListApi.ts[0m:[93m28[0m:[93m56[0m - [91merror[0m[90m TS18046: [0m'g' is of type 'unknown'.
+
+[7m28[0m                 g => g.graphicId === item.graphicId && g.rendererId === item.rendererId
+[7m  [0m [91m                                                       ~[0m
+
+[96msrc/stores/appSettings.ts[0m:[93m3[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module './serverData.js' or its corresponding type declarations.
+
+[7m3[0m import { serverDataStore } from './serverData.js'
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/stores/appSettings.ts[0m:[93m7[0m:[93m31[0m - [91merror[0m[90m TS6133: [0m'getNameSpaceId' is declared but its value is never read.
+
+[7m7[0m import { getDefaultServerUrl, getNameSpaceId } from '../lib/namespace.js'
+[7m [0m [91m                              ~~~~~~~~~~~~~~[0m
+
+[96msrc/stores/appSettings.ts[0m:[93m70[0m:[93m56[0m - [91merror[0m[90m TS7006: [0mParameter 'r' implicitly has an 'any' type.
+
+[7m70[0m   const renderer = serverDataStore.renderersList.find((r) => r.id === appSettingsStore.selectedRendererId)
+[7m  [0m [91m                                                       ~[0m
+
+[96msrc/stores/graphicsList.ts[0m:[93m1[0m:[93m55[0m - [91merror[0m[90m TS6133: [0m'ObservableMap' is declared but its value is never read.
+
+[7m1[0m import { action, autorun, makeObservable, observable, ObservableMap, runInAction } from 'mobx'
+[7m [0m [91m                                                      ~~~~~~~~~~~~~[0m
+
+[96msrc/stores/graphicsList.ts[0m:[93m3[0m:[93m33[0m - [91merror[0m[90m TS2307: [0mCannot find module './serverData.js' or its corresponding type declarations.
+
+[7m3[0m import { serverDataStore } from './serverData.js'
+[7m [0m [91m                                ~~~~~~~~~~~~~~~~~[0m
+
+[96msrc/stores/graphicsList.ts[0m:[93m56[0m:[93m23[0m - [91merror[0m[90m TS6133: [0m'currentItems' is declared but its value is never read.
+
+[7m56[0m                 const currentItems = clone(this.items)
+[7m  [0m [91m                      ~~~~~~~~~~~~[0m
+
+
+Found 13 errors in 6 files.
+
+Errors  Files
+     2  src/components/EditPanel.tsx[90m:5[0m
+     1  src/components/Header.tsx[90m:3[0m
+     1  src/components/ListPanel.tsx[90m:74[0m
+     3  src/lib/graphicsListApi.ts[90m:4[0m
+     3  src/stores/appSettings.ts[90m:3[0m
+     3  src/stores/graphicsList.ts[90m:1[0m
+npm error Lifecycle script `build` failed with error:
+npm error code 2
+npm error path d:\git\ograf-server\packages\controller-list
+npm error workspace @ograf-server/controller-list@0.0.0
+npm error location d:\git\ograf-server\packages\controller-list
+npm error command failed
+npm error command C:\WINDOWS\system32\cmd.exe /d /s /c vite build --logLevel warn ""

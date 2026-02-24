@@ -37,7 +37,9 @@ export class Namespaces {
 		const cached = this.cache.get(namespaceId)
 		if (cached) return cached
 
-		if (!(await this.accountStore.exists(namespaceId))) return undefined
+		if (this.accountStore.enable) {
+			if (!(await this.accountStore.exists(namespaceId))) return undefined
+		}
 
 		const ns = new NS(this.accountStore, namespaceId)
 		await ns.init()

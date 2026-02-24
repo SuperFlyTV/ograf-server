@@ -1,5 +1,5 @@
 {
-  "name": "@ograf-server/controller",
+  "name": "@ograf-server/controller-default",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
