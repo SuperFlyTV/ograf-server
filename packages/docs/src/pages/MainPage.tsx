@@ -12,7 +12,7 @@ import Stack from '@mui/material/Stack'
 
 import OGrafLogoUrl from '../assets/ograf_logo_colour_draft.svg'
 import SuperFlyLogoUrl from '../assets/SuperFly.tv_Logo_2020_v02.png'
-import { RegisterForm } from '../components/RegisterForm.jsx'
+import { RegisterForm } from '../components/RegisterForm.js'
 import { getServerSettings, usePromise } from '../lib/lib.js'
 import Alert from '@mui/material/Alert'
 import { Introduction } from '../components/Introduction.js'

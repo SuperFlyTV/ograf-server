@@ -23,7 +23,6 @@
     "koa": "^2.15.3",
     "koa-bodyparser": "^4.4.1",
     "mime-types": "^2.1.35",
-    "mnemonic-id": "^4.1.0",
     "multer": "^1.4",
     "ograf": "1.0.1-nightly-feat-server-api-20260204-085830-d56d6d0.0",
     "ts-node": "^10.9.2",

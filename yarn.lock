@@ -1123,9 +1123,40 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ograf-server/controller@workspace:packages/controller":
+"@ograf-server/controller-default@workspace:packages/controller":
   version: 0.0.0-use.local
-  resolution: "@ograf-server/controller@workspace:packages/controller"
+  resolution: "@ograf-server/controller-default@workspace:packages/controller"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.1"
+    "@fontsource/roboto": "npm:^5.2.8"
+    "@mui/icons-material": "npm:^7.3.4"
+    "@mui/material": "npm:^7.3.4"
+    "@ograf-server/shared": "npm:*"
+    "@sofie-automation/code-standard-preset": "npm:^3.2.0"
+    "@types/react": "npm:^19.2.2"
+    "@types/react-dom": "npm:^19.2.2"
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    eslint: "npm:^9.38.0"
+    jsonschema: "npm:^1.4.1"
+    mobx: "npm:^6.15.0"
+    mobx-react: "npm:^9.2.1"
+    ograf: "npm:1.0.1-nightly-feat-server-api-20260204-085830-d56d6d0.0"
+    ograf-form: "npm:^0.1.3"
+    prettier: "npm:^3.6.2"
+    react: "npm:^19.2.0"
+    react-dom: "npm:^19.2.0"
+    sass: "npm:1.77.6"
+    typescript: "npm:~5.7.0"
+    url: "npm:^0.11.4"
+    vite: "npm:^5.4.1"
+    vite-plugin-checker: "npm:^0.11.0"
+  languageName: unknown
+  linkType: soft
+
+"@ograf-server/controller-list@workspace:packages/controller-list":
+  version: 0.0.0-use.local
+  resolution: "@ograf-server/controller-list@workspace:packages/controller-list"
   dependencies:
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
@@ -1229,7 +1260,6 @@ __metadata:
     koa: "npm:^2.15.3"
     koa-bodyparser: "npm:^4.4.1"
     mime-types: "npm:^2.1.35"
-    mnemonic-id: "npm:^4.1.0"
     multer: "npm:^1.4"
     ograf: "npm:1.0.1-nightly-feat-server-api-20260204-085830-d56d6d0.0"
     prettier: "npm:^3.6.2"
@@ -4748,13 +4778,6 @@ __metadata:
   bin:
     mkdirp: bin/cmd.js
   checksum: 10c0/e2e2be789218807b58abced04e7b49851d9e46e88a2f9539242cc8a92c9b5c3a0b9bab360bd3014e02a140fc4fbc58e31176c408b493f8a2a6f4986bd7527b01
-  languageName: node
-  linkType: hard
-
-"mnemonic-id@npm:^4.1.0":
-  version: 4.1.0
-  resolution: "mnemonic-id@npm:4.1.0"
-  checksum: 10c0/8695c7fb7307e9611b7170808a231a86d52ccc5ba54f4cf470c696458edc5ae349825b3ee061837e2ea47009e346ea4f5ddd2e63e6ae64b75e5b4c7b8ce7fb08
   languageName: node
   linkType: hard
 

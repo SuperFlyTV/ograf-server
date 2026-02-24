@@ -1,8 +1,9 @@
 import fs from 'fs'
 import path from 'path'
 import { NAMESPACE_SETTINGS } from '../namespace.js'
-import { createLongNameId } from 'mnemonic-id'
 import { MapTTL } from '../lib/MapTTL.js'
+import { getMnemonicId } from '../lib/mnemonicId.js'
+
 
 // Note: This is a very basic implementation of the AccountStore
 // that stores namespaces as folders on the file system.
@@ -43,7 +44,7 @@ export class AccountStore {
 	}
 	public async registerNewNamespace(email: string): Promise<string> {
 		for (let i = 0; i < 100; i++) {
-			const namespaceId = createLongNameId()
+			const namespaceId = getMnemonicId()
 			// check if namespace exists:
 			if (await this.fsExists(this.namespaceFolderPath(namespaceId))) continue // try another id
 
