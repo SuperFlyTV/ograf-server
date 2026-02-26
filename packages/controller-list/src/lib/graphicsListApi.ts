@@ -48,6 +48,19 @@ class GraphicsListAPIClass {
                 await new Promise(r => setTimeout(r, 200))
             }
 
+            if (actionId === 'clear') {
+                console.log(`Performing action clear for item ${item.id} on target ${item.renderTarget}`)
+                await this.ografApi.renderTargetGraphicClear({
+                    rendererId: item.rendererId
+                }, {
+                    filters: [{
+                        renderTarget: item.renderTarget,
+                        graphicInstanceId: item.id
+                    }]
+                })
+                return
+            }
+
             console.log(`Performing action ${actionId} for item ${item.id}`)
             await this.ografApi.commandAction({
                 rendererId: item.rendererId

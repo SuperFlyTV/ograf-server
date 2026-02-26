@@ -8,7 +8,7 @@ import { getDefaultServerUrl } from '../lib/namespace.js'
 import { dbStore } from './db.js'
 
 class AppSettings {
-	public serverApiUrl = getDefaultServerUrl() + '/ograf/v1/' // 'http://localhost:8080/ograf/v1/'
+	public serverApiUrl = getDefaultServerUrl() + '/api/ograf/v1/' // 'http://localhost:8080/api/ograf/v1/'
 	public selectedRendererId: string = ''
 	public autoLoad: boolean = true
 
@@ -34,7 +34,15 @@ class AppSettings {
 			const stateToLoad = await dbStore.getSetting<StoredState>('appSettings')
 
 			runInAction(() => {
-				if (stateToLoad?.serverApiUrl) this.serverApiUrl = stateToLoad.serverApiUrl
+				if (stateToLoad?.serverApiUrl) {
+					if (stateToLoad.serverApiUrl.includes('http://ograf-server/')) {
+						this.serverApiUrl = getDefaultServerUrl() + '/api/ograf/v1/'
+					} else {
+						this.serverApiUrl = stateToLoad.serverApiUrl
+					}
+				} else {
+					this.serverApiUrl = getDefaultServerUrl() + '/api/ograf/v1/'
+				}
 				if (stateToLoad?.selectedRendererId) this.selectedRendererId = stateToLoad.selectedRendererId
 				if (stateToLoad?.autoLoad !== undefined) this.autoLoad = stateToLoad.autoLoad
 				if (stateToLoad?.queuedGraphics) {
@@ -67,9 +75,8 @@ class AppSettings {
 	}
 
 	public getSelectedRendererId(): string | undefined {
-		const renderer = serverDataStore.renderersList.find((r) => r.id === appSettingsStore.selectedRendererId)
-
-		return renderer?.id
+		// Just return the string. Looking up the renderer list here causes circular dependency before initialization
+		return this.selectedRendererId || undefined
 	}
 	public getSelectedRenderer(): OGraf.ServerApi.components['schemas']['RendererInfo'] | undefined {
 		const id = this.getSelectedRendererId()

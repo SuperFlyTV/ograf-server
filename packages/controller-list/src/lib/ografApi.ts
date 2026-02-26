@@ -33,9 +33,13 @@ export class OgrafApi {
 		content: any
 	}> {
 		try {
-			let baseUrl = this.baseURL
+			let baseUrl = this.baseURL || 'http://localhost:8080/api/ograf/v1'
 			if (!baseUrl.endsWith('/')) baseUrl += '/'
-			const url0 = url.toString().replace(this.BASE_URL_TEMPLATE, '')
+
+			let url0 = new URL(url, this.BASE_URL_TEMPLATE).toString()
+			url0 = url0.replace(this.BASE_URL_TEMPLATE, '')
+            if (url0.startsWith('/')) url0 = url0.substring(1)
+
 			const fullUrl = baseUrl + url0
 
 			options = options ?? {}
