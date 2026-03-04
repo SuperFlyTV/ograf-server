@@ -11,9 +11,45 @@ import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Card from '@mui/material/Card'
 import CardContent from '@mui/material/CardContent'
+import List from '@mui/material/List'
+import ListItem from '@mui/material/ListItem'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
 import { getServerUrl } from '../lib/lib.js'
+import { RegisterForm } from './RegisterForm.js'
+
+
+export const NameSpaceIntro: React.FC = () => {
+	const [namespaceId, setNamespaceId] = React.useState<string | null>(null)
+
+	React.useEffect(() => {
+		const storedNamespaceId = localStorage.getItem('namespaceId')
+		if (storedNamespaceId) setNamespaceId(storedNamespaceId)
+	}, [])
+
+	return (
+		<>
+			<Box sx={{ textAlign: 'center', mb: 3 }}>
+				{namespaceId ? (
+					<Introduction
+						namespaceId={namespaceId}
+						onReset={() => {
+							setNamespaceId(null)
+							localStorage.removeItem('namespaceId')
+						}}
+					/>
+				) : (
+					<RegisterForm
+						setNamespaceId={(namespaceId) => {
+							setNamespaceId(namespaceId)
+							localStorage.setItem('namespaceId', namespaceId)
+						}}
+					/>
+				)}
+			</Box>
+		</>
+	)
+}
 
 export const Introduction: React.FC<{
 	namespaceId: string
@@ -30,7 +66,95 @@ export const Introduction: React.FC<{
 
 	return (
 		<Box sx={{ py: 3 }}>
-			<Box>
+			<Box sx={{ mb: 4 }}>
+				<Typography variant="h4" component="h2" sx={{ mb: 2 }}>
+					Welcome to OGraf Server
+				</Typography>
+				<Typography variant="body1" sx={{ mb: 2 }}>
+					This is a web server that provides:
+				</Typography>
+				<List sx={{ listStyleType: 'disc', pl: 4, mb: 2 }}>
+					<ListItem sx={{ display: 'list-item' }}>
+						<Typography variant="body1">
+							An <strong>OGraf Renderer</strong> (a web page) to be loaded in a HTML renderer (such as CasparCG, OBS, vMix, etc).
+						</Typography>
+					</ListItem>
+					<ListItem sx={{ display: 'list-item' }}>
+						<Typography variant="body1">
+							An API where <strong>OGraf Graphics</strong> can be uploaded, managed, and controlled.
+						</Typography>
+					</ListItem>
+					<ListItem sx={{ display: 'list-item' }}>
+						<Typography variant="body1">
+							A simple <strong>Controller web page</strong> to control OGraf graphics.
+						</Typography>
+					</ListItem>
+				</List>
+				<Typography variant="body1">
+					For more information, please visit the{' '}
+					<Link href="https://ograf.ebu.io" target="_blank" rel="noopener noreferrer">
+						official OGraf documentation
+					</Link>.
+				</Typography>
+			</Box>
+
+			<Typography variant="h4" component="h2" sx={{ mb: 2 }}>
+				How to use
+			</Typography>
+			<List sx={{ pl: 2, counterReset: 'item', listStyle: 'none', mb: 4 }}>
+				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' }, mb: 2 }}>
+					<Typography variant="body1">
+						<strong>Upload OGraf Graphics</strong> by zipping the OGraf graphic folders and uploading via the API Explorer or Controller.
+					</Typography>
+					<Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
+						You can find example OGraf Graphics{' '}
+						<Link href="https://github.com/ebu/ograf/tree/main/v1/examples" target="_blank" rel="noopener noreferrer">
+							here
+						</Link>{' '}
+						(
+						<Link
+							href="https://download-directory.github.io/?url=https%3A%2F%2Fgithub.com%2Febu%2Fograf%2Ftree%2Fmain%2Fv1%2Fexamples"
+							target="_blank"
+							rel="noopener noreferrer"
+						>
+							download zip file
+						</Link>
+						)
+					</Typography>
+				</ListItem>
+				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' }, mb: 2 }}>
+					<Typography variant="body1">
+						<strong>Open an OGraf Renderer</strong> in your HTML renderer (such as CasparCG, OBS, vMix, etc).
+					</Typography>
+					<Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
+						Use the configured URL from the Renderer Configuration below.
+					</Typography>
+					<List sx={{ listStyleType: 'disc', pl: 4, mt: 1 }}>
+						<ListItem sx={{ display: 'list-item' }}>
+							<Typography variant="body2" component="div">
+								CasparCG command:
+								<Box component="pre" sx={{ bgcolor: 'grey.100', p: 1, borderRadius: 1, mt: 1, overflow: 'auto', fontSize: '0.875rem' }}>
+									PLAY 1-10 [html] {rendererUrl}
+								</Box>
+							</Typography>
+						</ListItem>
+					</List>
+				</ListItem>
+				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' }, mb: 2 }}>
+					<Typography variant="body1">
+						<strong>Connect your controller</strong> (or use the included{' '}
+						<Link href={controllerUrl} target="_blank" rel="noopener noreferrer">Simple Controller</Link>)
+					</Typography>
+				</ListItem>
+				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' } }}>
+					<Typography variant="body1">
+						<strong>Explore the API</strong> using the{' '}
+						<Link href="/public/open-api/docs/index.html" target="_blank" rel="noopener noreferrer">API Explorer</Link>
+					</Typography>
+				</ListItem>
+			</List>
+
+			<Box sx={{ mb: 4, textAlign: 'center' }}>
 				<Typography
 					variant="h3"
 					sx={{

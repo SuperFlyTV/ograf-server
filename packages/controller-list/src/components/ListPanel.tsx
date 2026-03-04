@@ -141,9 +141,17 @@ export const ListPanel = observer(function ListPanel() {
                     </React.Fragment>
                 ))}
                 {graphicsListStore.items.length === 0 && (
-                    <Typography color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
-                        List is empty. Click "Add Graphic" to start.
-                    </Typography>
+                    <Box sx={{ textAlign: 'center', mt: 8, px: 4 }}>
+                        <Typography variant="h6" color="text.secondary" gutterBottom>
+                            Welcome! Let's build your graphics list.
+                        </Typography>
+                        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                            To get started, click the "Add Graphic" button below to add your first template.
+                        </Typography>
+                        <Typography variant="body2" color="text.disabled">
+                            Note: Your graphics list is stored securely in your web browser.
+                        </Typography>
+                    </Box>
                 )}
             </Box>
 

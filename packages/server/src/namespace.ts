@@ -5,25 +5,27 @@ NAMESPACE_SETTINGS_NAMESPACE_PATH: Path to folder where to store info about name
 NAMESPACE_SETTINGS_OGRAF_PATH: Path to folder where to store OGraf graphics
 */
 
-export const NAMESPACE_SETTINGS: {
-	namespacePath: string | undefined
-	ografPath: string | undefined
-} | null = getNamespaceSettings()
+export const SERVER_SETTINGS: {
+	namespacePath: string | null
+	ografPath: string | null
+} = getServerSettings()
 
-function getNamespaceSettings() {
+function getServerSettings() {
+	let namespacePath: string | null = null
+	let ografPath: string | null = null
 	if (process.env['NAMESPACE_SETTINGS_NAMESPACE_PATH']) {
-		let namespacePath = process.env['NAMESPACE_SETTINGS_NAMESPACE_PATH']
-		let ografPath = process.env['NAMESPACE_SETTINGS_OGRAF_PATH']
+		namespacePath = process.env['NAMESPACE_SETTINGS_NAMESPACE_PATH'] ?? null
+		ografPath = process.env['NAMESPACE_SETTINGS_OGRAF_PATH']?? null
 
 		if (namespacePath === 'dev') {
 			namespacePath = path.resolve('./dev/namespaces')
 			ografPath = path.resolve('/dev/graphics')
 		}
 
-		return {
-			namespacePath,
-			ografPath,
-		}
 	}
-	return null
+	return {
+		namespacePath,
+		ografPath,
+	}
+
 }

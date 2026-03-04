@@ -17,7 +17,7 @@ import {
 import { z, ZodError } from 'zod/v4'
 import { ErrorReturnValue, GraphicInstanceError, ServerSettings } from '@ograf-server/shared'
 import { JSONRPCErrorException } from 'json-rpc-2.0'
-import { NAMESPACE_SETTINGS } from './namespace.js'
+import { SERVER_SETTINGS } from './namespace.js'
 import { Namespaces } from './managers/NS.js'
 import { AccountStore } from './managers/AccountStore.js'
 
@@ -407,6 +407,7 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 	router.post(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/load'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']
 		try {
+			console.log('load')
 			const Req = z.object({
 				parameters: z.object({
 					path: z.object({
@@ -433,6 +434,8 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
+			console.log('ns')
+
 			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
@@ -445,11 +448,15 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 				})
 			}
 
+			console.log('rendererInstance')
+
 			const result = await rendererInstance.api.loadGraphic({
 				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicId: request.requestBody.content['application/json'].graphicId,
 				params: request.requestBody.content['application/json'].params,
 			})
+
+			console.log('result', result)
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -828,7 +835,7 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 			return ns.graphicStore.uploadGraphic(ctx)
 		})
 	)
-	if (NAMESPACE_SETTINGS) {
+	if (accountStore.enable) {
 		router.post(
 			`/serverApi/internal/registerNamespace`,
 			upload.single('graphic'),
@@ -932,7 +939,7 @@ function getRequestObject<Method extends AnyMethod>(ctx: CTX): Request<Method> {
 	return request as any
 }
 export function getFullUrl(url: string, baseName = 'api'): string {
-	if (NAMESPACE_SETTINGS) {
+	if (SERVER_SETTINGS?.namespacePath) {
 		return `/${baseName}/:namespaceId${url}`
 	}
 	return `/${baseName}${url}`

@@ -1,4 +1,4 @@
-import { action, autorun, makeObservable, observable, ObservableMap, runInAction, computed } from 'mobx'
+import { action, autorun, makeObservable, observable, ObservableMap, runInAction, computed, toJS } from 'mobx'
 import { dbStore } from './db.js'
 import { serverDataStore } from './serverData.js'
 import { appSettingsStore } from './appSettings.js'
@@ -93,7 +93,7 @@ class GraphicsList {
 
             for (const list of this.itemsByRenderer.values()) {
                 for (const item of list) {
-                    await dbStore.putQueuedGraphic(item)
+                    await dbStore.putQueuedGraphic(toJS(item))
                 }
             }
         } catch (e) {
@@ -133,7 +133,7 @@ class GraphicsList {
             this.itemsByRenderer.set(rId, [])
         }
 		this.itemsByRenderer.get(rId)!.push(newItem)
-		dbStore.putQueuedGraphic(newItem).catch(console.error)
+		dbStore.putQueuedGraphic(toJS(newItem)).catch(console.error)
 
 		if (!this.selectedItemIds.get(rId)) {
 		    this.selectedItemIds.set(rId, id)
@@ -191,7 +191,7 @@ class GraphicsList {
 		const itemIndex = list.findIndex(i => i.id === id)
 		if (itemIndex > -1) {
 			list[itemIndex] = { ...list[itemIndex], ...partialData }
-			dbStore.putQueuedGraphic(list[itemIndex]).catch(console.error)
+			dbStore.putQueuedGraphic(toJS(list[itemIndex])).catch(console.error)
 		}
 	}
 

@@ -33,15 +33,15 @@ class GraphicsListAPIClass {
         try {
             if (needsLoad && actionId !== 'load' && actionId !== 'stop') {
                 console.log(`Auto-loading item ${item.id} before action ${actionId}`)
-                await this.ografApi.commandAction({
+                await this.ografApi.renderTargetGraphicLoad({
                     rendererId: item.rendererId
                 }, {
-                    actionId: 'load',
                     graphicId: item.graphicId,
                     graphicInstanceId: item.id,
                     renderTarget: item.renderTarget,
-                    actionData: {}, // default load action data usually empty or standard
-                    graphicData: item.graphicData
+                    params: {
+                        data: item.graphicData
+                    }
                 })
 
                 // artificial delay to ensure load completes before next action (optional depending on API guarantees)
@@ -62,16 +62,50 @@ class GraphicsListAPIClass {
             }
 
             console.log(`Performing action ${actionId} for item ${item.id}`)
-            await this.ografApi.commandAction({
-                rendererId: item.rendererId
-            }, {
-                actionId,
-                graphicId: item.graphicId,
-                graphicInstanceId: item.id,
-                renderTarget: item.renderTarget,
-                actionData: item.customActionData,
-                graphicData: item.graphicData
-            })
+            const pathParams = { rendererId: item.rendererId }
+
+            if (actionId === 'play') {
+                await this.ografApi.renderTargetGraphicPlay(pathParams, {
+                    renderTarget: item.renderTarget,
+                    graphicInstanceId: item.id,
+                    params: item.customActionData?.[actionId] as any || {}
+                })
+            } else if (actionId === 'stop') {
+                await this.ografApi.renderTargetGraphicStop(pathParams, {
+                    renderTarget: item.renderTarget,
+                    graphicInstanceId: item.id,
+                    params: item.customActionData?.[actionId] as any || {}
+                })
+            } else if (actionId === 'load') {
+                await this.ografApi.renderTargetGraphicLoad(pathParams, {
+                    graphicId: item.graphicId,
+                    graphicInstanceId: item.id,
+                    renderTarget: item.renderTarget,
+                    params: {
+                        data: item.graphicData
+                    }
+                })
+            } else if (actionId === 'update') {
+                await this.ografApi.renderTargetGraphicUpdate(pathParams, {
+                    renderTarget: item.renderTarget,
+                    graphicInstanceId: item.id,
+                    params: {
+                        ...(item.customActionData?.[actionId] as any || {}),
+                        data: item.graphicData
+                    }
+                })
+            } else {
+                await this.ografApi.renderTargetGraphicInvokeCustomAction({
+                    rendererId: item.rendererId,
+                    customActionId: actionId
+                }, {
+                    renderTarget: item.renderTarget,
+                    graphicInstanceId: item.id,
+                    params: {
+                        payload: item.customActionData?.[actionId] as any
+                    }
+                })
+            }
 
         } catch (error) {
             console.error(`Failed to perform action ${actionId} on item ${item.id}`, error)

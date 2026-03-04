@@ -2,7 +2,7 @@ import * as React from 'react'
 import { ServerSettings } from '@ograf-server/shared'
 
 export function getServerUrl(): string {
-	if (window.location.host.includes(':8084')) {
+	if (window.location.host.includes(':8082')) {
 		return `http://localhost:8080`
 	} else {
 		return window.location.origin
@@ -10,6 +10,7 @@ export function getServerUrl(): string {
 }
 
 export async function getServerSettings(): Promise<ServerSettings> {
+	console
 	const response = await fetch(`${getServerUrl()}/serverApi/server-settings`)
 
 	const json = await response.json()

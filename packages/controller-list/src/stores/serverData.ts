@@ -130,6 +130,8 @@ class ServerData {
 	private _reloadDataTimeout: number | undefined
 
 	private async _reloadData(asap: boolean | string) {
+		if (!this.ografApi.baseURL) return
+
 		await this._loadServerInfo(typeof asap === 'string' ? asap.includes(`serverInfo`) : asap)
 		await this._loadGraphicsList(typeof asap === 'string' ? asap.includes(`graphicsList`) : asap)
 		await this._loadRendererList(typeof asap === 'string' ? asap.includes(`rendererList`) : asap)

@@ -1,6 +1,6 @@
-import { sentCommandsStore } from '../stores/sentCommands.js'
 import { assertNever } from './lib.js'
 import { ServerApi } from 'ograf'
+// import { getDefaultServerUrl } from './namespace.js'
 
 // --------- This class is written based on the types in ./ograf/server-api.d.ts, --------
 // ---------    If the types are updated, ensure to update this class as well.    --------
@@ -33,14 +33,17 @@ export class OgrafApi {
 		content: any
 	}> {
 		try {
-			let baseUrl = this.baseURL || 'http://localhost:8080/api/ograf/v1'
+			if (!this.baseURL) {
+				throw new Error('baseURL is not set')
+			}
+			let baseUrl = this.baseURL
 			if (!baseUrl.endsWith('/')) baseUrl += '/'
-
-			let url0 = new URL(url, this.BASE_URL_TEMPLATE).toString()
-			url0 = url0.replace(this.BASE_URL_TEMPLATE, '')
-            if (url0.startsWith('/')) url0 = url0.substring(1)
-
+			const url0 = url.toString().replace(this.BASE_URL_TEMPLATE, '')
 			const fullUrl = baseUrl + url0
+
+			recurring = recurring
+
+
 
 			options = options ?? {}
 			options.signal = AbortSignal.timeout(3000)
@@ -50,7 +53,7 @@ export class OgrafApi {
 			options.headers = headers
 
 			// let recurring = false;
-			const method = (options.method ?? 'GET').toUpperCase()
+			// const method = (options.method ?? 'GET').toUpperCase()
 
 			// if (
 			//   method === "GET" &&
@@ -58,27 +61,20 @@ export class OgrafApi {
 			// ) {
 			//   recurring = true;
 			// }
-			const cmd = sentCommandsStore.addCommand({
-				recurring,
-				method,
-				body: JSON.stringify(options.body),
-				url: '/' + url0,
-			})
 
-			try {
-				const response = await fetch(fullUrl, options)
+			console.debug(fullUrl, options)
 
-				const json = await response.json()
-				cmd.updateResponse(response.status, JSON.stringify(json, null, 2))
 
-				return {
-					status: response.status as keyof Method['responses'],
-					content: json,
-				}
-			} catch (e) {
-				cmd.updateResponse(0, `Error: ${e}`)
-				throw e
+			const response = await fetch(fullUrl, options)
+
+			const json = await response.json()
+
+
+			return {
+				status: response.status as keyof Method['responses'],
+				content: json,
 			}
+
 		} catch (e) {
 			console.error('Error when fetching URL:', url.toString())
 			console.error(e)
@@ -643,32 +639,5 @@ export class OgrafApi {
 			assertNever(response.status)
 			throw new Error(`Unexpected response: ${response.status}: ${JSON.stringify(response.content)}`)
 		}
-	}
-
-	async commandAction(
-	    params: { rendererId: string },
-		body: any
-	): Promise<any> {
-	    // The API seems to use specific endpoints per action (e.g. playAction).
-	    // If a generic 'action' endpoint exists it goes here.
-	    // Otherwise, we map it back to the specific action methods based on body.actionId
-
-	    const actionId = (body as any).actionId
-
-	    if (actionId === 'play') {
-	        return this.renderTargetGraphicPlay(params as any, body as any)
-	    } else if (actionId === 'stop') {
-	        return this.renderTargetGraphicStop(params as any, body as any)
-	    } else if (actionId === 'load') {
-	        return this.renderTargetGraphicLoad(params as any, body as any)
-	    } else if (actionId === 'update') {
-	        return this.renderTargetGraphicUpdate(params as any, body as any)
-	    } else {
-	        // Attempt custom action
-	        return this.renderTargetGraphicInvokeCustomAction({
-	            rendererId: params.rendererId,
-	            customActionId: actionId
-	        } as any, body as any)
-	    }
 	}
 }

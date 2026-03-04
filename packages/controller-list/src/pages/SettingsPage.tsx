@@ -6,8 +6,11 @@ import Typography from '@mui/material/Typography'
 import Stack from '@mui/material/Stack'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import Switch from '@mui/material/Switch'
+import Chip from '@mui/material/Chip'
+import Box from '@mui/material/Box'
 
 import { appSettingsStore } from '../stores/appSettings.js'
+import { serverDataStore } from '../stores/serverData.js'
 
 export const SettingsPage = observer(function SettingsPage() {
 	return (
@@ -26,6 +29,14 @@ export const SettingsPage = observer(function SettingsPage() {
 					}}
 					helperText="The URL to the OGraf Server API (e.g. http://localhost:8080/ograf/v1/)"
 				/>
+				<Box>
+					<Chip
+						label={serverDataStore.connectedStatus}
+						color={serverDataStore.isConnected ? "success" : "error"}
+						variant="outlined"
+						size="small"
+					/>
+				</Box>
 
                 <FormControlLabel
                     control={

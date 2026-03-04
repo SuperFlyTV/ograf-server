@@ -1123,9 +1123,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ograf-server/controller-default@workspace:packages/controller":
+"@ograf-server/controller-default@workspace:packages/controller-default":
   version: 0.0.0-use.local
-  resolution: "@ograf-server/controller-default@workspace:packages/controller"
+  resolution: "@ograf-server/controller-default@workspace:packages/controller-default"
   dependencies:
     "@emotion/react": "npm:^11.14.0"
     "@emotion/styled": "npm:^11.14.1"
