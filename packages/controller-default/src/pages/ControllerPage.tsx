@@ -4,7 +4,7 @@ import Grid from '@mui/material/Grid'
 import { UploadGraphic } from '../components/UploadGraphic.js'
 import { RendererPicker } from '../components/RendererPicker.js'
 import { RendererController } from '../components/RendererController.js'
-import { CommandsLog } from '../components/CommandsLog.js'
+// import { CommandsLog } from '../components/CommandsLog.js'
 
 export const ControllerPage: React.FC = () => {
 	return (
@@ -18,9 +18,7 @@ export const ControllerPage: React.FC = () => {
 
 						<RendererController />
 					</Grid>
-					<Grid size={{ xs: 12, md: 5 }}>
-						<CommandsLog />
-					</Grid>
+					<Grid size={{ xs: 12, md: 5 }}>{/* <CommandsLog /> */}</Grid>
 				</Grid>
 			</Container>
 		</Container>

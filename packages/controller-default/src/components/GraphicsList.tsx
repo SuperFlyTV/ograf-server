@@ -229,6 +229,8 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 								>
 									Update
 								</Button>
+								<AutoSendButton renderer={renderer} queuedGraphic={queuedGraphic} ografApi={ografApi} gi={gi} />
+
 								<Button
 									variant="contained"
 									disabled={gi.disabled || !queuedGraphic.renderTarget}
@@ -369,5 +371,55 @@ const GraphicCustomAction = (props: {
 				{action.name}
 			</Button>
 		</Card>
+	)
+}
+const AutoSendButton: React.FC<{
+	renderer: any
+	queuedGraphic: QueuedGraphic
+	ografApi: OgrafApi
+	gi: any
+}> = ({ renderer, queuedGraphic, ografApi, gi }) => {
+	const [data, setData] = React.useState<Record<string, any>>(toJS(queuedGraphic.graphicData) as any)
+
+	// console.log('data', data)
+	return (
+		<Button
+			variant="contained"
+			onClick={() => {
+				if (!renderer) return
+				setInterval(() => {
+					if (!renderer) return
+
+					const newData: Record<string, any> = {
+						...data,
+					}
+
+					const now = new Date()
+					let frame: string | number = Math.floor((now.getMilliseconds() / 1000) * 60)
+					if (frame < 10) frame = '0' + frame
+
+					newData.name = `Frame ${now.getSeconds()}:${frame}`
+					console.log(newData.name)
+
+					setData(newData)
+
+					ografApi
+						.renderTargetGraphicUpdate(
+							{ rendererId: renderer.id },
+							{
+								renderTarget: queuedGraphic.renderTarget,
+								graphicInstanceId: gi.graphicInstanceId,
+								params: {
+									data: newData,
+									// skipAnimation
+								},
+							}
+						)
+						.catch(console.error)
+				}, 1000 / 60)
+			}}
+		>
+			Auto-send: {data.name}
+		</Button>
 	)
 }
