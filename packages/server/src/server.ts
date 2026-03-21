@@ -49,7 +49,30 @@ export async function initializeServer(): Promise<void> {
 	//   await serveFile(ctx, path.resolve("../controller/dist/index.html"));
 	// });
 	httpRouter.get(/\/controller\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		await serveFromPath(ctx, path.resolve('../controller/dist'), ctx.path.trim().replace(/^\/controller\//, ''))
+		const relPath = ctx.path.trim().replace(/^\/controller\//, '')
+		const controllerDist = path.resolve('../controller/dist')
+		// Inject OSC_SERVER_URL into index.html so the controller uses the correct server URL
+		if (relPath === 'index.html' || relPath === '') {
+			const oscHostname = process.env.OSC_HOSTNAME
+			const serverUrl = oscHostname
+				? `https://${oscHostname}/ograf/v1/`
+				: `http://localhost:${process.env.PORT || '8080'}/ograf/v1/`
+			const htmlPath = path.join(controllerDist, 'index.html')
+			try {
+				const html = await fs.readFile(htmlPath, 'utf8')
+				const injected = html.replace(
+					'<head>',
+					`<head><script>window.__OGRAF_SERVER_URL__ = ${JSON.stringify(serverUrl)};</script>`
+				)
+				ctx.set('Content-Type', 'text/html')
+				ctx.set('charset', 'utf-8')
+				ctx.body = injected
+				return
+			} catch {
+				// Fall through to normal serving
+			}
+		}
+		await serveFromPath(ctx, controllerDist, relPath)
 	})
 	// httpRouter.get("/renderer/*", async (ctx) => {
 
@@ -61,7 +84,7 @@ export async function initializeServer(): Promise<void> {
 
 	app.use(filter.protocols())
 
-	const PORT = 8080
+	const PORT = parseInt(process.env.PORT || '8080', 10)
 
 	app.listen(PORT)
 	console.log(`Server running on \x1b[36m http://127.0.0.1:${PORT}/\x1b[0m`)
