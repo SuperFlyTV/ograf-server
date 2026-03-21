@@ -118,3 +118,17 @@ export interface MethodsOnServer {
 	/** CAN be emitted with debugging info (for developers) */
 	debug: (params: { message: string } & VendorExtend) => Promise<EmptyPayload>
 }
+
+/**
+ * If there was an error when invoking a method, the body will be a JSON containing this structure.
+ * @see https://www.jsonrpc.org/specification#error_object
+ */
+export interface ErrorReturnValue {
+	// extends JSONRPCError
+	code: number
+	message: string
+	stack?: string
+	data: {
+		errorType: 'Error' | 'GraphicInstanceError' | 'unknown'
+	}
+}

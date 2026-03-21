@@ -6,6 +6,7 @@ export const RenderTargetIdentifier = z.unknown()
 export const RendererId = z.string()
 export const GraphicId = z.string()
 export const GraphicInstanceId = z.string()
+export const CustomActionId = z.string()
 
 export const Author = z.object({
 	name: z.string(),
@@ -145,8 +146,12 @@ export const StopActionParams = z.object({
 	skipAnimation: z.optional(z.boolean()),
 })
 
-export const CustomActionParams = z.object({
+export const CustomActionParamsWithId = z.object({
 	id: z.string(),
+	payload: z.unknown(),
+	skipAnimation: z.optional(z.boolean()),
+})
+export const CustomActionParams = z.object({
 	payload: z.unknown(),
 	skipAnimation: z.optional(z.boolean()),
 })

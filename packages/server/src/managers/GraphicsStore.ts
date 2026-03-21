@@ -151,6 +151,7 @@ export class GraphicsStore {
 			ctx.body = {
 				code: 400,
 				message: 'Expected a zip file',
+				data: { errorType: 'Error' },
 			}
 			return
 		}
@@ -195,7 +196,7 @@ export class GraphicsStore {
 			//   throw new Error("No manifest files found in zip file");
 			let foundManifestCount = 0
 			for (const file of files) {
-				const basePath = path.dirname(file.path)
+				let basePath = path.dirname(file.path)
 
 				if (!(await this.isManifestFile(file.path, file.data))) {
 					continue
@@ -235,12 +236,15 @@ export class GraphicsStore {
 					ctx.body = {
 						code: 409,
 						message: 'Graphic already exists',
+						data: { errorType: 'Error' },
 					}
 					return
 				}
 
 				// Copy the files to the right folder:
 				await fs.promises.mkdir(folderPath, { recursive: true })
+
+				if (basePath === '.') basePath = '' // If the files are at the root of the zip, the basePath is '.'
 
 				const graphicFiles = files.filter((f) => f.path.startsWith(basePath))
 

@@ -331,23 +331,23 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicClear(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/clear']['put']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/clear']['put']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/clear']['put']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/clear']['put']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/clear']['put']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/clear']['put']['responses'][500]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/clear'
+		const url = '/renderers/{rendererId}/target/graphicInstance/clear'
 		type Method = ServerApi.paths[typeof url]['put']
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
@@ -365,33 +365,37 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicLoad(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/load']['put']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/load'
-		type Method = ServerApi.paths[typeof url]['put']
+		const url = '/renderers/{rendererId}/target/graphicInstance/load'
+		type Method = ServerApi.paths[typeof url]['post']
 
 		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 
 		const response = await this.fetch<Method>(url0, false, {
-			method: 'put',
+			method: 'post',
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)
@@ -399,23 +403,27 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicUpdate(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/updateAction']['post']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/updateAction']['post']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/updateAction'
+		const url = '/renderers/{rendererId}/target/graphicInstance/updateAction'
 		const method = 'post'
 		type Method = ServerApi.paths[typeof url][typeof method]
 
@@ -426,7 +434,7 @@ export class OgrafApi {
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)
@@ -434,23 +442,27 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicPlay(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/playAction']['post']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/playAction']['post']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/playAction'
+		const url = '/renderers/{rendererId}/target/graphicInstance/playAction'
 		const method = 'post'
 		type Method = ServerApi.paths[typeof url][typeof method]
 
@@ -461,7 +473,7 @@ export class OgrafApi {
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)
@@ -469,24 +481,28 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicStop(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['parameters']['path'],
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']['parameters']['path'],
 
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['requestBody']['content']['application/json']
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/stopAction']['post']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/stopAction']['post']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/stopAction'
+		const url = '/renderers/{rendererId}/target/graphicInstance/stopAction'
 		const method = 'post'
 		type Method = ServerApi.paths[typeof url][typeof method]
 
@@ -497,7 +513,7 @@ export class OgrafApi {
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)
@@ -505,34 +521,41 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicInvokeCustomAction(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/customAction']['post']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}']['post']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/customAction'
+		const url = '/renderers/{rendererId}/target/graphicInstance/customActions/{customActionId}'
 		const method = 'post'
 		type Method = ServerApi.paths[typeof url][typeof method]
 
-		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
+		const url0 = new URL(
+			url.replace('{rendererId}', params.rendererId).replace('{customActionId}', params.customActionId),
+			this.BASE_URL_TEMPLATE
+		)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)
@@ -540,23 +563,27 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicGoToTime(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/goToTime']['put']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/goToTime'
+		const url = '/renderers/{rendererId}/target/graphicInstance/goToTime'
 		const method = 'put'
 		type Method = ServerApi.paths[typeof url][typeof method]
 
@@ -567,7 +594,7 @@ export class OgrafApi {
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)
@@ -575,23 +602,27 @@ export class OgrafApi {
 		}
 	}
 	async renderTargetGraphicSetActionsSchedule(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['requestBody']['content']['application/json']
+		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['parameters']['path'],
+		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['requestBody']['content']['application/json']
 	): Promise<
 		| {
 				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['responses'][200]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][200]['content']['application/json']
 		  }
 		| {
 				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['responses'][404]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][404]['content']['application/json']
 		  }
 		| {
 				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphic/setActionsSchedule']['put']['responses'][500]['content']['application/json']
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][500]['content']['application/json']
+		  }
+		| {
+				status: 550
+				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][550]['content']['application/json']
 		  }
 	> {
-		const url = '/renderers/{rendererId}/target/graphic/setActionsSchedule'
+		const url = '/renderers/{rendererId}/target/graphicInstance/setActionsSchedule'
 		const method = 'put'
 		type Method = ServerApi.paths[typeof url][typeof method]
 
@@ -602,7 +633,7 @@ export class OgrafApi {
 			body: JSON.stringify(body),
 		})
 
-		if (response.status === 200 || response.status === 404 || response.status === 500) {
+		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
 			return response
 		} else {
 			assertNever(response.status)

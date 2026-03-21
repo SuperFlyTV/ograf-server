@@ -26,7 +26,6 @@ export class RendererManager {
 	async listRenderers(): Promise<ServerApi.components['schemas']['RendererInfo'][]> {
 		const renderers: ServerApi.components['schemas']['RendererInfo'][] = []
 		for (const rendererInstance of this.rendererInstances) {
-			console.log('rendererInstance', rendererInstance)
 			if (!rendererInstance.info) continue
 			renderers.push(rendererInstance.info)
 		}
