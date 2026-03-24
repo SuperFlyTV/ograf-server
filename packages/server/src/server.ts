@@ -74,6 +74,32 @@ export async function initializeServer(): Promise<void> {
 		}
 		await serveFromPath(ctx, controllerDist, relPath)
 	})
+	httpRouter.get(/\/renderer\/.*/, async (ctx: Koa.ParameterizedContext) => {
+		const relPath = ctx.path.trim().replace(/^\/renderer\//, '')
+		const rendererDist = path.resolve('../renderer-layer/dist')
+		// Inject OSC_WS_URL into renderer index.html so the renderer uses the correct WebSocket URL
+		if (relPath === 'index.html' || relPath === '') {
+			const oscHostname = process.env.OSC_HOSTNAME
+			const wsUrl = oscHostname
+				? `wss://${oscHostname}`
+				: `ws://localhost:${process.env.PORT || '8080'}`
+			const htmlPath = path.join(rendererDist, 'index.html')
+			try {
+				const html = await fs.readFile(htmlPath, 'utf8')
+				const injected = html.replace(
+					'<head>',
+					`<head><script>window.__OGRAF_WS_URL__ = ${JSON.stringify(wsUrl)};</script>`
+				)
+				ctx.set('Content-Type', 'text/html')
+				ctx.set('charset', 'utf-8')
+				ctx.body = injected
+				return
+			} catch {
+				// Fall through to normal serving
+			}
+		}
+		await serveFromPath(ctx, rendererDist, relPath)
+	})
 	// httpRouter.get("/renderer/*", async (ctx) => {
 
 	//   // ctx.body = await fs.readFile("./public/index.html", "utf8");
