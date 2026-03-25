@@ -27,10 +27,12 @@ export const App: React.FC = () => {
 
 		document.title = `Renderer | ${rendererName}`
 
-		/** URL to send server requests to: */
-		const serverApiUrl = 'http://localhost:8080'
+		/** URL to send server requests to.
+		 * Use injected server URL if available, otherwise derive from window.location.
+		 */
+		const serverApiUrl = (window as any).__OGRAF_SERVER_URL__ || window.location.origin
 		/** URL to open websocket connection to.
-		 * Use injected OSC WebSocket URL if available, otherwise derive from window.location.
+		 * Use injected WebSocket URL if available, otherwise derive from window.location.
 		 */
 		const injectedWsUrl = (window as any).__OGRAF_WS_URL__
 		const rendererApiUrl =

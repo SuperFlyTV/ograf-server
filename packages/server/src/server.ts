@@ -33,6 +33,12 @@ export async function initializeServer(): Promise<void> {
 	setupServerApi(httpRouter, graphicsStore, rendererManager) // HTTP API (ServerAPI)
 	setupRendererApi(wsRouter, rendererManager) // WebSocket API (RendererAPI)
 
+	// Derive the public base URL from PUBLIC_URL env var, falling back to localhost.
+	// PUBLIC_URL can be set by a deployment entrypoint (e.g., from a platform hostname).
+	const PORT = process.env.PORT || '8080'
+	const publicUrl = process.env.PUBLIC_URL || `http://localhost:${PORT}`
+	const publicWsUrl = publicUrl.replace(/^https:/, 'wss:').replace(/^http:/, 'ws:')
+
 	// Set up static file serving:
 	httpRouter.get('/', async (ctx: Koa.ParameterizedContext) => {
 		await serveFile(ctx, path.resolve('./public/index.html'))
@@ -51,12 +57,9 @@ export async function initializeServer(): Promise<void> {
 	httpRouter.get(/\/controller\/.*/, async (ctx: Koa.ParameterizedContext) => {
 		const relPath = ctx.path.trim().replace(/^\/controller\//, '')
 		const controllerDist = path.resolve('../controller/dist')
-		// Inject OSC_SERVER_URL into index.html so the controller uses the correct server URL
+		// Inject server URL into index.html so the controller uses the correct server URL
 		if (relPath === 'index.html' || relPath === '') {
-			const oscHostname = process.env.OSC_HOSTNAME
-			const serverUrl = oscHostname
-				? `https://${oscHostname}/ograf/v1/`
-				: `http://localhost:${process.env.PORT || '8080'}/ograf/v1/`
+			const serverUrl = `${publicUrl}/ograf/v1/`
 			const htmlPath = path.join(controllerDist, 'index.html')
 			try {
 				const html = await fs.readFile(htmlPath, 'utf8')
@@ -77,18 +80,14 @@ export async function initializeServer(): Promise<void> {
 	httpRouter.get(/\/renderer\/.*/, async (ctx: Koa.ParameterizedContext) => {
 		const relPath = ctx.path.trim().replace(/^\/renderer\//, '')
 		const rendererDist = path.resolve('../renderer-layer/dist')
-		// Inject OSC_WS_URL into renderer index.html so the renderer uses the correct WebSocket URL
+		// Inject server URL and WebSocket URL into renderer index.html
 		if (relPath === 'index.html' || relPath === '') {
-			const oscHostname = process.env.OSC_HOSTNAME
-			const wsUrl = oscHostname
-				? `wss://${oscHostname}`
-				: `ws://localhost:${process.env.PORT || '8080'}`
 			const htmlPath = path.join(rendererDist, 'index.html')
 			try {
 				const html = await fs.readFile(htmlPath, 'utf8')
 				const injected = html.replace(
 					'<head>',
-					`<head><script>window.__OGRAF_WS_URL__ = ${JSON.stringify(wsUrl)};</script>`
+					`<head><script>window.__OGRAF_SERVER_URL__ = ${JSON.stringify(publicUrl)};window.__OGRAF_WS_URL__ = ${JSON.stringify(publicWsUrl)};</script>`
 				)
 				ctx.set('Content-Type', 'text/html')
 				ctx.set('charset', 'utf-8')
@@ -110,10 +109,10 @@ export async function initializeServer(): Promise<void> {
 
 	app.use(filter.protocols())
 
-	const PORT = parseInt(process.env.PORT || '8080', 10)
+	const port = parseInt(PORT, 10)
 
-	app.listen(PORT)
-	console.log(`Server running on \x1b[36m http://127.0.0.1:${PORT}/\x1b[0m`)
+	app.listen(port)
+	console.log(`Server running on \x1b[36m http://127.0.0.1:${port}/\x1b[0m`)
 }
 
 async function serveFromPath(ctx: Koa.ParameterizedContext, folderPath: string, url: string) {

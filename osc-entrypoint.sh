@@ -5,8 +5,11 @@ set -e
 export GRAPHICS_STORAGE_PATH="${GRAPHICS_STORAGE_PATH:-/data/localGraphicsStorage}"
 mkdir -p "$GRAPHICS_STORAGE_PATH"
 
-# OSC_HOSTNAME → used by server.ts to inject the correct API URL into the controller UI
-# (No export needed here; server.ts reads process.env.OSC_HOSTNAME directly)
+# Map OSC_HOSTNAME to PUBLIC_URL for the server to derive client-facing URLs
+if [ -n "$OSC_HOSTNAME" ] && [ -z "$PUBLIC_URL" ]; then
+  export PUBLIC_URL="https://${OSC_HOSTNAME}"
+  echo "[OSC] PUBLIC_URL set to $PUBLIC_URL"
+fi
 
 # S3/MinIO sync for graphics storage
 # Set S3_GRAPHICS_URL to enable bidirectional sync with an S3-compatible bucket
