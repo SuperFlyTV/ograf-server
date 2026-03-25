@@ -1,0 +1,60 @@
+FROM node:20-alpine AS builder
+
+RUN apk add --no-cache python3 make g++
+
+# Enable corepack for yarn 4
+RUN corepack enable
+
+WORKDIR /build
+COPY package.json yarn.lock .yarnrc.yml ./
+COPY packages/server/package.json packages/server/package.json
+COPY packages/controller/package.json packages/controller/package.json
+COPY packages/renderer-layer/package.json packages/renderer-layer/package.json
+COPY packages/shared/package.json packages/shared/package.json
+
+RUN yarn install --immutable
+
+COPY packages/ packages/
+
+RUN yarn build
+
+# ---- Runtime image ----
+FROM node:20-alpine
+
+RUN apk add --no-cache bash aws-cli
+
+# Enable corepack for yarn 4
+RUN corepack enable
+
+ENV NODE_ENV=production
+ENV PORT=8080
+
+WORKDIR /app
+
+# Copy workspace root config
+COPY --from=builder /build/package.json /build/yarn.lock /build/.yarnrc.yml ./
+
+# Copy built packages
+COPY --from=builder /build/packages/server/package.json packages/server/package.json
+COPY --from=builder /build/packages/server/dist packages/server/dist
+COPY --from=builder /build/packages/server/public packages/server/public
+COPY --from=builder /build/packages/renderer-layer/package.json packages/renderer-layer/package.json
+COPY --from=builder /build/packages/renderer-layer/dist packages/renderer-layer/dist
+COPY --from=builder /build/packages/controller/package.json packages/controller/package.json
+COPY --from=builder /build/packages/controller/dist packages/controller/dist
+COPY --from=builder /build/packages/shared/package.json packages/shared/package.json
+COPY --from=builder /build/packages/shared/dist packages/shared/dist
+
+# Yarn workspace hoists all deps to root node_modules
+COPY --from=builder /build/node_modules node_modules
+
+# Create data directory for persistent graphics storage
+RUN mkdir -p /data/localGraphicsStorage
+
+EXPOSE 8080
+
+COPY --chmod=755 osc-entrypoint.sh /usr/local/bin/osc-entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/osc-entrypoint.sh"]
+# Run from packages/server so relative paths (../controller/dist etc.) resolve correctly
+WORKDIR /app/packages/server
+CMD ["node", "dist/main.js"]

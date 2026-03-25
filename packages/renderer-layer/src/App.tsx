@@ -27,12 +27,19 @@ export const App: React.FC = () => {
 
 		document.title = `Renderer | ${rendererName}`
 
-		/** URL to send server requests to: */
-		const serverApiUrl = 'http://localhost:8080'
-		/** URL to open websocket connection to */
-		// const rendererApiUrl = 'ws://localhost:8080/rendererApi/v1'
-		const rendererApiUrl = 'ws://localhost:8080'
-		// const rendererApiUrl = 'ws://google.com'
+		/** URL to send server requests to.
+		 * Use injected server URL if available, otherwise derive from window.location.
+		 */
+		const serverApiUrl = (window as any).__OGRAF_SERVER_URL__ || window.location.origin
+		/** URL to open websocket connection to.
+		 * Use injected WebSocket URL if available, otherwise derive from window.location.
+		 */
+		const injectedWsUrl = (window as any).__OGRAF_WS_URL__
+		const rendererApiUrl =
+			injectedWsUrl ||
+			(window.location.protocol === 'https:'
+				? `wss://${window.location.host}`
+				: `ws://${window.location.host}`)
 
 		const graphicCache = new GraphicCache(serverApiUrl)
 		const layersManager = new LayersManager(graphicCache)

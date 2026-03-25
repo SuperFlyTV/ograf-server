@@ -7,7 +7,7 @@ import { CTX } from '../lib/lib.js'
 
 export class GraphicsStore {
 	/** File path where to store Graphics */
-	private FILE_PATH = path.resolve('./localGraphicsStorage')
+	private FILE_PATH = path.resolve(process.env.GRAPHICS_STORAGE_PATH || './localGraphicsStorage')
 	/** How long to wait before removing Graphics, in ms */
 	private REMOVAL_WAIT_TIME = 1000 * 3600 * 24 // 24 hours
 

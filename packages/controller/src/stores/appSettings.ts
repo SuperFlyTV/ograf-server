@@ -8,7 +8,7 @@ import { clone } from '../lib/lib.js'
 class AppSettings {
 	private LOCALSTORAGE_ID = 'appSettings'
 
-	public serverApiUrl = 'http://localhost:8080/ograf/v1/'
+	public serverApiUrl = (window as any).__OGRAF_SERVER_URL__ || `${window.location.origin}/ograf/v1/`
 	public selectedRendererId: string = ''
 
 	private ografApi = OgrafApi.getSingleton()
@@ -19,7 +19,14 @@ class AppSettings {
 		try {
 			const stateToLoad: StoredState | undefined = stateToLoadStr ? JSON.parse(stateToLoadStr) : undefined
 
-			if (stateToLoad?.serverApiUrl) this.serverApiUrl = stateToLoad.serverApiUrl
+			// Prefer injected OSC server URL; fall back to stored URL only if it's not a localhost URL
+			const injectedUrl: string | undefined = (window as any).__OGRAF_SERVER_URL__
+			const storedUrl = stateToLoad?.serverApiUrl
+			if (injectedUrl) {
+				this.serverApiUrl = injectedUrl
+			} else if (storedUrl && !storedUrl.includes('localhost')) {
+				this.serverApiUrl = storedUrl
+			}
 			if (stateToLoad?.selectedRendererId) this.selectedRendererId = stateToLoad.selectedRendererId
 			if (stateToLoad?.queuedGraphics) {
 				stateToLoad.queuedGraphics.forEach(([key, value]) => this.queuedGraphics.set(key, value))
