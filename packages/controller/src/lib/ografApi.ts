@@ -17,6 +17,7 @@ export class OgrafApi {
 	private BASE_URL_TEMPLATE = 'http://ograf-server/'
 
 	public baseURL = ''
+	public authorization: string | undefined = undefined
 
 	async fetch<
 		Method extends {
@@ -43,6 +44,10 @@ export class OgrafApi {
 
 			const headers: any = options.headers ?? {}
 			headers['Content-Type'] = 'application/json'
+			if (this.authorization) {
+				headers['Authorization'] = this.authorization
+			}
+
 			options.headers = headers
 
 			// let recurring = false;
