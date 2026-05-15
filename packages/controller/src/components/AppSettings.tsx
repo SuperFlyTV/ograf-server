@@ -10,14 +10,26 @@ export const AppSettings: React.FC = observer(() => {
 	return (
 		<>
 			<Box component="form" sx={{ '& > :not(style)': { m: 1, width: '25ch' } }} noValidate autoComplete="off">
-				<TextField
-					id="asdf"
-					label="Server URL"
-					value={appSettingsStore.serverApiUrl}
-					onChange={(event) => {
-						appSettingsStore.serverApiUrl = event.target.value
-					}}
-				/>
+				<Box>
+					<TextField
+						id="server-url"
+						label="Server URL"
+						value={appSettingsStore.serverApiUrl}
+						onChange={(event) => {
+							appSettingsStore.serverApiUrl = event.target.value
+						}}
+					/>
+				</Box>
+				<Box>
+					<TextField
+						id="authorization"
+						label="Authorization"
+						value={appSettingsStore.serverAuthorization ?? ''}
+						onChange={(event) => {
+							appSettingsStore.serverAuthorization = event.target.value || null
+						}}
+					/>
+				</Box>
 			</Box>
 			<Typography>Status: {serverDataStore.connectedStatus}</Typography>
 			<Typography>{serverDataStore.currentOperation}</Typography>
