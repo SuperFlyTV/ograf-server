@@ -28,11 +28,9 @@ export const App: React.FC = () => {
 		document.title = `Renderer | ${rendererName}`
 
 		/** URL to send server requests to: */
-		const serverApiUrl = 'http://localhost:8080'
+		const serverApiUrl = `http://${window.location.host}`
 		/** URL to open websocket connection to */
-		// const rendererApiUrl = 'ws://localhost:8080/rendererApi/v1'
-		const rendererApiUrl = 'ws://localhost:8080'
-		// const rendererApiUrl = 'ws://google.com'
+		const rendererApiUrl = `ws://${window.location.host}`
 
 		const graphicCache = new GraphicCache(serverApiUrl)
 		const layersManager = new LayersManager(graphicCache)
