@@ -3,9 +3,11 @@ import { JSONRPCServerAndClient } from 'json-rpc-2.0'
 import * as RendererAPI from '@ograf-server/shared'
 import { RendererInfo } from '@ograf-server/shared'
 
-export class RendererManager {
+export class RendererManagerNS {
 	private rendererInstances: Set<RendererInstance> = new Set()
 	private registeredRenderers: Map<string, RendererInstance> = new Map()
+
+	constructor(public readonly namespaceId: string) {}
 
 	public addRenderer(jsonRpcConnection: JSONRPCServerAndClient<void, void>): RendererInstance {
 		// const id = RendererInstance.ID()
@@ -64,7 +66,7 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 	}
 
 	constructor(
-		private manager: RendererManager,
+		private manager: RendererManagerNS,
 		private jsonRpcConnection: JSONRPCServerAndClient<void, void>
 	) {}
 

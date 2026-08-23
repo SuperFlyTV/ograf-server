@@ -5,12 +5,13 @@ import Router from '@koa/router'
 import cors from '@koa/cors'
 import bodyParser from 'koa-bodyparser'
 import { KoaWsFilter } from '@zimtsui/koa-ws-filter'
-import { GraphicsStore } from './managers/GraphicsStore.js'
-import { RendererManager } from './managers/RendererManager.js'
+import { Namespaces } from './managers/NS.js'
 import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
+import { AccountStore } from './managers/AccountStore.js'
+import { ConfigOptions } from './config.js'
 
-export async function initializeServer(): Promise<void> {
+export async function initializeServer(config: ConfigOptions): Promise<void> {
 	const app = new Koa()
 
 	app.on('error', (err: unknown) => {
@@ -26,34 +27,94 @@ export async function initializeServer(): Promise<void> {
 	const filter = new KoaWsFilter()
 
 	// Initialize internal business logic
-	const graphicsStore = new GraphicsStore()
-	const rendererManager = new RendererManager()
+	const accountStore = new AccountStore(config)
+	const namespaces = new Namespaces(accountStore)
 
 	// Setup APIs:
-	setupServerApi(httpRouter, graphicsStore, rendererManager) // HTTP API (ServerAPI)
-	setupRendererApi(wsRouter, rendererManager) // WebSocket API (RendererAPI)
+	setupServerApi(config, httpRouter, accountStore, namespaces) // HTTP API (ServerAPI)
+	setupRendererApi(config, wsRouter, namespaces) // WebSocket API (RendererAPI)
 
 	// Set up static file serving:
-	httpRouter.get('/', async (ctx: Koa.ParameterizedContext) => {
-		await serveFile(ctx, path.resolve('./public/index.html'))
-	})
-	httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
-	})
-	httpRouter.get(/\/renderer\/renderer-layer\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		const basePath = path.resolve('../renderer-layer/dist')
-		console.log('Serving renderer-layer file:', basePath)
-		await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
-	})
-	// httpRouter.get("/controller", async (ctx) => {
-	//   await serveFile(ctx, path.resolve("../controller/dist/index.html"));
-	// });
-	httpRouter.get(/\/controller\/.*/, async (ctx: Koa.ParameterizedContext) => {
-		await serveFromPath(ctx, path.resolve('../controller/dist'), ctx.path.trim().replace(/^\/controller\//, ''))
+
+	// httpRouter.get(/\/public\/.*/, async (ctx: Koa.ParameterizedContext) => {
+	// 	await serveFromPath(ctx, path.resolve('./public'), ctx.path.trim().replace(/^\/public\//, ''))
+	// })
+
+	// httpRouter.get(new RegExp(getFullUrl('/renderer-layer/.*', 'renderer')), async (ctx: Koa.ParameterizedContext) => {
+	// 	const basePath = path.resolve('../renderer-layer/dist')
+	// 	console.log('Serving renderer-layer file:', basePath)
+	// 	await serveFromPath(ctx, basePath, ctx.path.trim().replace(/^\/renderer\/renderer-layer\//, ''))
+	// })
+	// Controller:
+	if (accountStore.enable) {
+		httpRouter.get(
+			/^\/controller\/(?<namespaceId>[^/]*)\/(?<controllerType>\w*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
+				// let namespaceId = ctx.params.namespaceId
+				const controllerType = ctx.params.controllerType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+
+				if (controllerType === 'default') {
+					await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
+				} else if (controllerType === 'list') {
+					await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+				}
+				// <<Add other controllers here later>>
+			}
+		)
+		// Renderer
+		httpRouter.get(
+			/^\/renderer\/(?<namespaceId>[^/]*)\/(?<rendererType>\w*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
+				// let namespaceId = ctx.params.namespaceId
+				const rendererType = ctx.params.rendererType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+				if (rendererType === 'default') {
+					await serveFromPath(ctx, path.resolve('../renderer-layer/dist'), subPath)
+				}
+				// <<Add other renderers here later>>
+			}
+		)
+	} else {
+		httpRouter.get(/^\/controller\/(?<controllerType>\w*)(?<subPath>\/?.*)/, async (ctx: Koa.ParameterizedContext) => {
+			const controllerType = ctx.params.controllerType
+			let subPath = ctx.params.subPath
+			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+			if (controllerType === 'default') {
+				await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
+			} else if (controllerType === 'list') {
+				await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+			}
+			// <<Add other controllers here later>>
+		})
+		// Renderer
+		httpRouter.get(/^\/renderer\/(?<rendererType>\w*)(?<subPath>\/?.*)/, async (ctx: Koa.ParameterizedContext) => {
+			const rendererType = ctx.params.rendererType
+			let subPath = ctx.params.subPath
+			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+
+			if (rendererType === 'default') {
+				await serveFromPath(ctx, path.resolve('../renderer-layer/dist'), subPath)
+			}
+			// <<Add other renderers here later>>
+		})
+	}
+
+	// Docs:
+	httpRouter.get(/\/.*/, async (ctx: Koa.ParameterizedContext) => {
+		let subUrl = ctx.path.trim().replace(/^\//, '')
+		if (subUrl === '') subUrl = 'index.html'
+
+		await serveFromPath(ctx, path.resolve('../docs/dist'), subUrl)
 	})
 	// httpRouter.get("/renderer/*", async (ctx) => {
-
-	//   // ctx.body = await fs.readFile("./public/index.html", "utf8");
+	//   ctx.body = await fs.readFile("./public/index.html", "utf8");
 	// });
 
 	filter.http(httpRouter.routes())
@@ -71,7 +132,7 @@ async function serveFromPath(ctx: Koa.ParameterizedContext, folderPath: string, 
 	const filePath = path.resolve(folderPath, url)
 
 	// ensure that the resulting path is in public:
-	if (!filePath.startsWith(folderPath)) throw new Error('Invalid path')
+	if (!filePath.startsWith(folderPath)) throw new Error(`Invalid path, url ${url}, ${filePath} is not in ${folderPath}`)
 
 	await serveFile(ctx, filePath)
 }
@@ -91,6 +152,7 @@ async function serveFile(
 	else if (ext === '.png') contentType = 'image/png'
 	else if (ext === '.svg') contentType = 'image/svg+xml'
 	else if (ext === '.map') contentType = 'application/json'
+	else if (ext === '.woff2') contentType = 'font/woff2'
 	else {
 		console.error(`Unknown file type: ${ext} (${filePath})`)
 	}

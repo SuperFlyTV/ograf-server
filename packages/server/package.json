@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "dev": "run build && run start",
+    "dev": "npx tsx watch src/main.ts --devMode",
     "start": "node dist/main.js",
     "lint:raw": "eslint",
     "lint": "run lint:raw .",
@@ -24,9 +24,10 @@
     "koa-bodyparser": "^4.4.1",
     "mime-types": "^2.1.35",
     "multer": "^1.4",
-    "ograf": "1.0.1-nightly-feat-server-api-20260204-085830-d56d6d0.0",
+    "ograf": "1.2.0",
     "ts-node": "^10.9.2",
     "ws": "^8.18.0",
+    "yargs": "^18.1.0",
     "zod": "^3.25.32"
   },
   "devDependencies": {
@@ -39,9 +40,13 @@
     "@types/koa__router": "^12.0.4",
     "@types/mime-types": "^2.1.4",
     "@types/node": "^24.10.0",
+    "@types/yargs": "^17.0.35",
     "eslint": "^9.38.0",
-    "nodemon": "^3.1.7",
     "prettier": "^3.6.2",
+    "tsx": "^4.21.0",
     "typescript": "~5.7.0"
+  },
+  "engines": {
+    "node": ">20"
   }
 }

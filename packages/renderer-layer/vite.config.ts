@@ -11,7 +11,7 @@ export default defineConfig({
 	//     }
 	//   },
 	server: {
-		port: 8083,
+		port: 8084,
 	},
 	build: {
 		outDir: path.resolve(__dirname, 'dist'),

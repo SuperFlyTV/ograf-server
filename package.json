@@ -15,5 +15,5 @@
     "start": "yarn workspace @ograf-server/server start"
   },
   "prettier": "@sofie-automation/code-standard-preset/.prettierrc.json",
-  "packageManager": "yarn@4.6.0"
+  "packageManager": "yarn@4.9.1"
 }
