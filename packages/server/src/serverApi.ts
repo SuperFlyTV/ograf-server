@@ -17,9 +17,9 @@ import {
 import { z, ZodError } from 'zod/v4'
 import { ErrorReturnValue, GraphicInstanceError, ServerSettings } from '@ograf-server/shared'
 import { JSONRPCErrorException } from 'json-rpc-2.0'
-import { SERVER_SETTINGS } from './namespace.js'
 import { Namespaces } from './managers/NS.js'
 import { AccountStore } from './managers/AccountStore.js'
+import { ConfigOptions } from './config.js'
 
 const upload = multer({
 	storage: multer.diskStorage({
@@ -27,9 +27,16 @@ const upload = multer({
 	}),
 })
 
-export function setupServerApi(router: Router, accountStore: AccountStore, namespaces: Namespaces): void {
+export function setupServerApi(
+	config: ConfigOptions,
+	router: Router,
+	accountStore: AccountStore,
+	namespaces: Namespaces
+): void {
+	const getOgrafApiUrl = (openApiUrl: string): string => {
+		return getFullUrl(config, '/ograf/v1' + openApiUrl.replace(/\{([^}]+)\}/g, ':$1'))
+	}
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
-	console.log('url', getOgrafApiUrl('/'))
 	router.get([getOgrafApiUrl('/'), getOgrafApiUrl('')], (ctx: CTX) => {
 		type Method = ServerApi.paths['/']['get']
 		try {
@@ -407,7 +414,6 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 	router.post(getOgrafApiUrl('/renderers/{rendererId}/target/graphicInstance/load'), async (ctx: CTX) => {
 		type Method = ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/load']['post']
 		try {
-			console.log('load')
 			const Req = z.object({
 				parameters: z.object({
 					path: z.object({
@@ -434,8 +440,6 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			console.log('ns')
-
 			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
 			if (!rendererInstance) {
 				return handleReturn<Method>(ctx, 404, {
@@ -448,15 +452,11 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 				})
 			}
 
-			console.log('rendererInstance')
-
 			const result = await rendererInstance.api.loadGraphic({
 				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicId: request.requestBody.content['application/json'].graphicId,
 				params: request.requestBody.content['application/json'].params,
 			})
-
-			console.log('result', result)
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -728,9 +728,7 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 
 	// Register new Namespace endpoint:
 	if (accountStore.enable) {
-		console.log('AAA')
 		router.post('/serverApi/register', async (ctx: CTX) => {
-			console.log('aaa')
 			try {
 				const body = z
 					.object({
@@ -783,7 +781,7 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 		}
 	})
 
-	router.get(getFullUrl('/serverApi/internal/graphics/:graphicId/:localPath*'), async (ctx: CTX) => {
+	router.get(getFullUrl(config, '/serverApi/internal/graphics/:graphicId/:localPath*'), async (ctx: CTX) => {
 		try {
 			// Note: We DO serve resources even if the Graphic is marked for removal!
 
@@ -818,7 +816,7 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 		}
 	})
 	router.post(
-		getFullUrl(`/serverApi/internal/graphics/graphic`),
+		getFullUrl(config, `/serverApi/internal/graphics/graphic`),
 		upload.single('graphic'),
 		handleError(async (ctx: CTX) => {
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
@@ -827,7 +825,7 @@ export function setupServerApi(router: Router, accountStore: AccountStore, names
 		})
 	)
 	router.post(
-		getFullUrl(`/serverApi/internal/graphics/graphic`),
+		getFullUrl(config, `/serverApi/internal/graphics/graphic`),
 		upload.single('graphic'),
 		handleError(async (ctx: CTX) => {
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
@@ -938,15 +936,7 @@ function getRequestObject<Method extends AnyMethod>(ctx: CTX): Request<Method> {
 
 	return request as any
 }
-export function getFullUrl(url: string, baseName = 'api'): string {
-	if (SERVER_SETTINGS?.namespacePath) {
-		return `/${baseName}/:namespaceId${url}`
-	}
-	return `/${baseName}${url}`
-}
-function getOgrafApiUrl(openApiUrl: string): string {
-	return getFullUrl('/ograf/v1' + openApiUrl.replace(/\{([^}]+)\}/g, ':$1'))
-}
+
 function handleReturn<Method extends AnyMethod>(
 	ctx: CTX,
 	statusCode: keyof Method['responses'],
@@ -1083,4 +1073,10 @@ function handleErrorReturn<_Method extends AnyMethodErrorResponse>(ctx: CTX, err
 			} satisfies ServerApi.components['schemas']['ErrorResponse'],
 		},
 	})
+}
+export function getFullUrl(config: ConfigOptions, url: string, baseName = 'api'): string {
+	if (config.namespacePath) {
+		return `/${baseName}/:namespaceId${url}`
+	}
+	return `/${baseName}${url}`
 }

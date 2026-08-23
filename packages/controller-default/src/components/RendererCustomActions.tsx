@@ -59,19 +59,21 @@ export const RendererCustomAction = observer(
 				)
 				.catch(console.error)
 		}
-		console.log('props.action.schema', props.action.schema)
 
 		return (
 			<Card elevation={1} sx={{ m: 1, p: 1 }}>
 				<CardHeader title={props.action.name} subheader={props.action.description} />
 				<CardContent>
-					<OGrafForm
-						schema={props.action.schema}
-						value={dataStr === undefined ? undefined : JSON.parse(dataStr)}
-						onDataChangeCallback={(newData: unknown) => {
-							setData(JSON.stringify(newData))
-						}}
-					/>
+					{props.action.schema !== null ? (
+						<OGrafForm
+							schema={props.action.schema}
+							value={dataStr === undefined ? undefined : JSON.parse(dataStr)}
+							onDataChangeCallback={(newData: unknown) => {
+								setData(JSON.stringify(newData))
+							}}
+						/>
+					) : null}
+
 					<Button variant="contained" onClick={invokeAction}>
 						{props.action.name}
 					</Button>

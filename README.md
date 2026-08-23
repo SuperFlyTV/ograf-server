@@ -41,7 +41,3 @@ This is a web server that provides:
     # Then access the app on http://localhost:8080
 
 ```
-
-## Disclaimer
-
-The control API exposed by this server is NOT stable yet, it is based on early drafts of the **OGraf Server API**.

@@ -1,9 +1,8 @@
 import fs from 'fs'
 import path from 'path'
-import { SERVER_SETTINGS } from '../namespace.js'
 import { MapTTL } from '../lib/MapTTL.js'
 import { getMnemonicId } from '../lib/mnemonicId.js'
-
+import { ConfigOptions } from '../config.js'
 
 // Note: This is a very basic implementation of the AccountStore
 // that stores namespaces as folders on the file system.
@@ -15,8 +14,8 @@ export class AccountStore {
 
 	public readonly enable: boolean
 
-	constructor() {
-		this.enable = typeof SERVER_SETTINGS?.namespacePath === 'string'
+	constructor(private config: ConfigOptions) {
+		this.enable = typeof this.config.namespacePath === 'string'
 
 		if (!this.enable) return
 		// Ensure the directory exists
@@ -24,10 +23,10 @@ export class AccountStore {
 	}
 
 	private get folderPath(): string {
-		if (typeof SERVER_SETTINGS?.namespacePath !== 'string')
+		if (typeof this.config.namespacePath !== 'string')
 			throw new Error('Internal Error: NamespaceStore is not enabled. Check env variables.')
 
-		return SERVER_SETTINGS.namespacePath
+		return this.config.namespacePath
 	}
 	private namespaceFolderPath(namespaceId: string): string {
 		return path.resolve(this.folderPath, namespaceId)

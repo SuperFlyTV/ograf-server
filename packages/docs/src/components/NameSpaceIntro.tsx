@@ -18,7 +18,6 @@ import Button from '@mui/material/Button'
 import { getServerUrl } from '../lib/lib.js'
 import { RegisterForm } from './RegisterForm.js'
 
-
 export const NameSpaceIntro: React.FC = () => {
 	const [namespaceId, setNamespaceId] = React.useState<string | null>(null)
 
@@ -76,7 +75,8 @@ export const Introduction: React.FC<{
 				<List sx={{ listStyleType: 'disc', pl: 4, mb: 2 }}>
 					<ListItem sx={{ display: 'list-item' }}>
 						<Typography variant="body1">
-							An <strong>OGraf Renderer</strong> (a web page) to be loaded in a HTML renderer (such as CasparCG, OBS, vMix, etc).
+							An <strong>OGraf Renderer</strong> (a web page) to be loaded in a HTML renderer (such as CasparCG, OBS,
+							vMix, etc).
 						</Typography>
 					</ListItem>
 					<ListItem sx={{ display: 'list-item' }}>
@@ -94,7 +94,8 @@ export const Introduction: React.FC<{
 					For more information, please visit the{' '}
 					<Link href="https://ograf.ebu.io" target="_blank" rel="noopener noreferrer">
 						official OGraf documentation
-					</Link>.
+					</Link>
+					.
 				</Typography>
 			</Box>
 
@@ -104,7 +105,8 @@ export const Introduction: React.FC<{
 			<List sx={{ pl: 2, counterReset: 'item', listStyle: 'none', mb: 4 }}>
 				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' }, mb: 2 }}>
 					<Typography variant="body1">
-						<strong>Upload OGraf Graphics</strong> by zipping the OGraf graphic folders and uploading via the API Explorer or Controller.
+						<strong>Upload OGraf Graphics</strong> by zipping the OGraf graphic folders and uploading via the API
+						Explorer or Controller.
 					</Typography>
 					<Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mt: 1 }}>
 						You can find example OGraf Graphics{' '}
@@ -133,7 +135,7 @@ export const Introduction: React.FC<{
 						<ListItem sx={{ display: 'list-item' }}>
 							<Typography variant="body2" component="div">
 								CasparCG command:
-								<Box component="pre" sx={{ bgcolor: 'grey.100', p: 1, borderRadius: 1, mt: 1, overflow: 'auto', fontSize: '0.875rem' }}>
+								<Box component="pre" sx={{ p: 1, borderRadius: 1, mt: 1, overflow: 'auto', fontSize: '0.875rem' }}>
 									PLAY 1-10 [html] {rendererUrl}
 								</Box>
 							</Typography>
@@ -143,13 +145,18 @@ export const Introduction: React.FC<{
 				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' }, mb: 2 }}>
 					<Typography variant="body1">
 						<strong>Connect your controller</strong> (or use the included{' '}
-						<Link href={controllerUrl} target="_blank" rel="noopener noreferrer">Simple Controller</Link>)
+						<Link href={controllerUrl} target="_blank" rel="noopener noreferrer">
+							Simple Controller
+						</Link>
+						)
 					</Typography>
 				</ListItem>
 				<ListItem sx={{ display: 'list-item', listStyleType: 'decimal', '&::marker': { fontWeight: 'bold' } }}>
 					<Typography variant="body1">
 						<strong>Explore the API</strong> using the{' '}
-						<Link href="/public/open-api/docs/index.html" target="_blank" rel="noopener noreferrer">API Explorer</Link>
+						<Link href="/public/open-api/docs/index.html" target="_blank" rel="noopener noreferrer">
+							API Explorer
+						</Link>
 					</Typography>
 				</ListItem>
 			</List>

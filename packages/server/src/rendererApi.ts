@@ -4,10 +4,11 @@ import { JSONRPCServerAndClient, JSONRPCServer, JSONRPCClient } from 'json-rpc-2
 import { RendererManagerNS } from './managers/RendererManager.js'
 import { getFullUrl } from './serverApi.js'
 import { Namespaces } from './managers/NS.js'
+import { ConfigOptions } from './config.js'
 
-export function setupRendererApi(wsRouter: Router, namespaces: Namespaces): void {
+export function setupRendererApi(config: ConfigOptions, wsRouter: Router, namespaces: Namespaces): void {
 	// Set up websocket server, listen to connection requests at /rendererApi/v1
-	wsRouter.all(getFullUrl('/rendererApi/v1'), async (ctx, next) => {
+	wsRouter.all(getFullUrl(config, '/rendererApi/v1'), async (ctx, next) => {
 		// A client has connected,
 		// accept the websocket upgrade request
 

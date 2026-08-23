@@ -296,7 +296,7 @@ export class RendererApiHandler implements MethodsOnRenderer {
 						id: 'reload-page',
 						name: 'Reload page',
 						description: 'Reload the Renderer HTML page',
-						schema: {} as any,
+						schema: null,
 					},
 				],
 				renderTargetSchema: {

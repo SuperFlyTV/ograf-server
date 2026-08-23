@@ -17,6 +17,7 @@ export class OgrafApi {
 	private BASE_URL_TEMPLATE = 'http://ograf-server/'
 
 	public baseURL = ''
+	public authorization: string | undefined = undefined
 
 	async fetch<
 		Method extends {
@@ -26,7 +27,7 @@ export class OgrafApi {
 		},
 	>(
 		url: URL,
-		recurring: boolean,
+		_recurring: boolean,
 		options?: RequestInit
 	): Promise<{
 		status: keyof Method['responses']
@@ -41,15 +42,15 @@ export class OgrafApi {
 			const url0 = url.toString().replace(this.BASE_URL_TEMPLATE, '')
 			const fullUrl = baseUrl + url0
 
-			recurring = recurring
-
-
-
 			options = options ?? {}
 			options.signal = AbortSignal.timeout(3000)
 
 			const headers: any = options.headers ?? {}
 			headers['Content-Type'] = 'application/json'
+			if (this.authorization) {
+				headers['Authorization'] = this.authorization
+			}
+
 			options.headers = headers
 
 			// let recurring = false;
@@ -64,17 +65,14 @@ export class OgrafApi {
 
 			console.debug(fullUrl, options)
 
-
 			const response = await fetch(fullUrl, options)
 
 			const json = await response.json()
-
 
 			return {
 				status: response.status as keyof Method['responses'],
 				content: json,
 			}
-
 		} catch (e) {
 			console.error('Error when fetching URL:', url.toString())
 			console.error(e)
@@ -549,84 +547,6 @@ export class OgrafApi {
 			url.replace('{rendererId}', params.rendererId).replace('{customActionId}', params.customActionId),
 			this.BASE_URL_TEMPLATE
 		)
-
-		const response = await this.fetch<Method>(url0, false, {
-			method,
-			body: JSON.stringify(body),
-		})
-
-		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
-			return response
-		} else {
-			assertNever(response.status)
-			throw new Error(`Unexpected response: ${response.status}: ${JSON.stringify(response.content)}`)
-		}
-	}
-	async renderTargetGraphicGoToTime(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['requestBody']['content']['application/json']
-	): Promise<
-		| {
-				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][200]['content']['application/json']
-		  }
-		| {
-				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][404]['content']['application/json']
-		  }
-		| {
-				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][500]['content']['application/json']
-		  }
-		| {
-				status: 550
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/goToTime']['put']['responses'][550]['content']['application/json']
-		  }
-	> {
-		const url = '/renderers/{rendererId}/target/graphicInstance/goToTime'
-		const method = 'put'
-		type Method = ServerApi.paths[typeof url][typeof method]
-
-		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
-
-		const response = await this.fetch<Method>(url0, false, {
-			method,
-			body: JSON.stringify(body),
-		})
-
-		if (response.status === 200 || response.status === 404 || response.status === 500 || response.status === 550) {
-			return response
-		} else {
-			assertNever(response.status)
-			throw new Error(`Unexpected response: ${response.status}: ${JSON.stringify(response.content)}`)
-		}
-	}
-	async renderTargetGraphicSetActionsSchedule(
-		params: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['parameters']['path'],
-		body: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['requestBody']['content']['application/json']
-	): Promise<
-		| {
-				status: 200
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][200]['content']['application/json']
-		  }
-		| {
-				status: 404
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][404]['content']['application/json']
-		  }
-		| {
-				status: 500
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][500]['content']['application/json']
-		  }
-		| {
-				status: 550
-				content: ServerApi.paths['/renderers/{rendererId}/target/graphicInstance/setActionsSchedule']['put']['responses'][550]['content']['application/json']
-		  }
-	> {
-		const url = '/renderers/{rendererId}/target/graphicInstance/setActionsSchedule'
-		const method = 'put'
-		type Method = ServerApi.paths[typeof url][typeof method]
-
-		const url0 = new URL(url.replace('{rendererId}', params.rendererId), this.BASE_URL_TEMPLATE)
 
 		const response = await this.fetch<Method>(url0, false, {
 			method,
