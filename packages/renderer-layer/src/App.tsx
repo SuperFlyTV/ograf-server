@@ -32,9 +32,7 @@ export const App: React.FC = () => {
 		const serverApiUrl = getDefaultServerUrl() // 'http://localhost:8080'
 		console.log('Using serverApiUrl:', serverApiUrl)
 		/** URL to open websocket connection to */
-		// const rendererApiUrl = 'ws://localhost:8080/rendererApi/v1'
 		const rendererApiUrl = serverApiUrl.replace(/^http/, 'ws') // 'ws://localhost:8080'
-		// const rendererApiUrl = 'ws://google.com'
 
 		const graphicCache = new GraphicCache(serverApiUrl)
 		const layersManager = new LayersManager(graphicCache)
