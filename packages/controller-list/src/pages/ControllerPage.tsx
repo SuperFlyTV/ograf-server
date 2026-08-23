@@ -16,13 +16,15 @@ export const ControllerPage: React.FC = observer(() => {
 
 	// Expose the API globally, or instantiate it once securely:
 	React.useEffect(() => {
-	   GraphicsListAPI.init()
+		GraphicsListAPI.init()
 	}, [])
 
 	if (serverDataStore.renderersList.length === 0) {
 		return (
 			<Container sx={{ mt: 4 }}>
-				<Typography>No renderers available on the server. Please check your connection or server configuration.</Typography>
+				<Typography>
+					No renderers available on the server. Please check your connection or server configuration.
+				</Typography>
 			</Container>
 		)
 	}

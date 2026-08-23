@@ -1,4 +1,3 @@
-
 // List of broadcast-related verbs, nouns, and adjectives for generating mnemonic IDs
 // Why? Because it's fun!
 const NOUNS: string[] = [
@@ -396,8 +395,6 @@ const ADJECTIVES: string[] = [
  * @returns a random, human-readable ID in the format of "adjective-adjective-noun-number", e.g. "bouncy-sunny-camera-42"
  */
 export function getMnemonicId(): string {
-
-
 	const adjectives = []
 	for (let i = 0; i < 2; i++) {
 		const randomI = randomInt(0, ADJECTIVES.length)
@@ -407,20 +404,14 @@ export function getMnemonicId(): string {
 	{
 		const randomI = randomInt(0, NOUNS.length)
 		subject = NOUNS[randomI]
-
 	}
 	const endingNumber = randomInt(0, 999)
 
-	return [
-		...adjectives,
-		subject,
-		endingNumber
-	].join('-')
+	return [...adjectives, subject, endingNumber].join('-')
 }
 
 function randomInt(min: number, max: number): number {
 	min = Math.floor(min)
 	max = Math.floor(max)
-	return Math.floor(Math.random() * (max - min) + min);
+	return Math.floor(Math.random() * (max - min) + min)
 }
-

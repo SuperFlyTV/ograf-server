@@ -12,7 +12,7 @@ export class DB {
 
 			request.onerror = (event) => {
 				console.error('Database error:', event)
-				reject('Error opening database')
+				reject(new Error('Error opening database'))
 			}
 
 			request.onsuccess = (event) => {
@@ -37,10 +37,11 @@ export class DB {
 	async getSetting<T>(key: string): Promise<T | undefined> {
 		await this.init()
 		return new Promise((resolve, reject) => {
-			if (!this.db) return reject('DB not initialized')
+			if (!this.db) return reject(new Error('DB not initialized'))
 			const transaction = this.db.transaction(['settings'], 'readonly')
 			const store = transaction.objectStore('settings')
 			const request = store.get(key)
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			request.onerror = () => reject(request.error)
 			request.onsuccess = () => resolve(request.result as T | undefined)
 		})
@@ -49,10 +50,11 @@ export class DB {
 	async setSetting<T>(key: string, value: T): Promise<void> {
 		await this.init()
 		return new Promise((resolve, reject) => {
-			if (!this.db) return reject('DB not initialized')
+			if (!this.db) return reject(new Error('DB not initialized'))
 			const transaction = this.db.transaction(['settings'], 'readwrite')
 			const store = transaction.objectStore('settings')
 			const request = store.put(value, key)
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			request.onerror = () => reject(request.error)
 			request.onsuccess = () => resolve()
 		})
@@ -61,10 +63,11 @@ export class DB {
 	async getAllQueuedGraphics<T>(): Promise<T[]> {
 		await this.init()
 		return new Promise((resolve, reject) => {
-			if (!this.db) return reject('DB not initialized')
+			if (!this.db) return reject(new Error('DB not initialized'))
 			const transaction = this.db.transaction(['queuedGraphics'], 'readonly')
 			const store = transaction.objectStore('queuedGraphics')
 			const request = store.getAll()
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			request.onerror = () => reject(request.error)
 			request.onsuccess = () => resolve(request.result as T[])
 		})
@@ -73,10 +76,11 @@ export class DB {
 	async putQueuedGraphic<T>(item: T): Promise<void> {
 		await this.init()
 		return new Promise((resolve, reject) => {
-			if (!this.db) return reject('DB not initialized')
+			if (!this.db) return reject(new Error('DB not initialized'))
 			const transaction = this.db.transaction(['queuedGraphics'], 'readwrite')
 			const store = transaction.objectStore('queuedGraphics')
 			const request = store.put(item)
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			request.onerror = () => reject(request.error)
 			request.onsuccess = () => resolve()
 		})
@@ -85,10 +89,11 @@ export class DB {
 	async removeQueuedGraphic(id: string): Promise<void> {
 		await this.init()
 		return new Promise((resolve, reject) => {
-			if (!this.db) return reject('DB not initialized')
+			if (!this.db) return reject(new Error('DB not initialized'))
 			const transaction = this.db.transaction(['queuedGraphics'], 'readwrite')
 			const store = transaction.objectStore('queuedGraphics')
 			const request = store.delete(id)
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			request.onerror = () => reject(request.error)
 			request.onsuccess = () => resolve()
 		})

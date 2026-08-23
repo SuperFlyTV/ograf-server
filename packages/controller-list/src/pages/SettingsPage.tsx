@@ -32,28 +32,29 @@ export const SettingsPage = observer(function SettingsPage() {
 				<Box>
 					<Chip
 						label={serverDataStore.connectedStatus}
-						color={serverDataStore.isConnected ? "success" : "error"}
+						color={serverDataStore.isConnected ? 'success' : 'error'}
 						variant="outlined"
 						size="small"
 					/>
 				</Box>
 
-                <FormControlLabel
-                    control={
-                        <Switch
-                            checked={appSettingsStore.autoLoad}
-                            onChange={(e) => {
-                                appSettingsStore.autoLoad = e.target.checked
-                            }}
-                            name="autoLoad"
-                            color="primary"
-                        />
-                    }
-                    label="Auto-load graphics"
-                />
-                <Typography variant="body2" color="textSecondary">
-                    When enabled, the controller will automatically send a Load command before any Action (Play, Update, etc.) if the graphic isn't currently loaded.
-                </Typography>
+				<FormControlLabel
+					control={
+						<Switch
+							checked={appSettingsStore.autoLoad}
+							onChange={(e) => {
+								appSettingsStore.autoLoad = e.target.checked
+							}}
+							name="autoLoad"
+							color="primary"
+						/>
+					}
+					label="Auto-load graphics"
+				/>
+				<Typography variant="body2" color="textSecondary">
+					When enabled, the controller will automatically send a Load command before any Action (Play, Update, etc.) if
+					the graphic isn't currently loaded.
+				</Typography>
 			</Stack>
 		</Container>
 	)

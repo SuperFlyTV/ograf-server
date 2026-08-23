@@ -25,7 +25,7 @@ class AppSettings {
 			isInitialized: observable,
 		})
 
-		this.init().catch(e => console.error("AppSettings init failed", e))
+		this.init().catch((e) => console.error('AppSettings init failed', e))
 	}
 
 	private async init() {
@@ -108,17 +108,17 @@ class AppSettings {
 
 	// Stub method for sending data to server
 	public async sendDataToServer() {
-		console.log("Stub: Send data to server", {
+		console.log('Stub: Send data to server', {
 			serverApiUrl: this.serverApiUrl,
 			selectedRendererId: this.selectedRendererId,
 			autoLoad: this.autoLoad,
-			queuedGraphics: Array.from(this.queuedGraphics.entries())
+			queuedGraphics: Array.from(this.queuedGraphics.entries()),
 		})
 	}
 
 	// Stub method for loading from server
 	public async loadDataFromServer() {
-		console.log("Stub: Load data from server")
+		console.log('Stub: Load data from server')
 	}
 }
 

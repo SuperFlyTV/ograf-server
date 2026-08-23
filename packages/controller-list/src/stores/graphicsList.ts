@@ -36,7 +36,7 @@ class GraphicsList {
 			selectPrev: action,
 		})
 
-		this.init().catch(e => console.error("GraphicsList init failed", e))
+		this.init().catch((e) => console.error('GraphicsList init failed', e))
 	}
 
 	private async init() {
@@ -45,16 +45,17 @@ class GraphicsList {
 
 			runInAction(() => {
 				const grouped = new Map<string, PlaybackItem[]>()
-				for (const item of (storedItems || [])) {
-				    const rId = item.rendererId || 'default'
-				    if (!grouped.has(rId)) {
-				        grouped.set(rId, [])
-				    }
-				    grouped.get(rId)!.push(item)
+				for (const item of storedItems || []) {
+					const rId = item.rendererId || 'default'
+					if (!grouped.has(rId)) {
+						grouped.set(rId, [])
+					}
+					const group = grouped.get(rId)
+					if (group) group.push(item)
 				}
 
 				for (const [rId, list] of grouped.entries()) {
-				    this.itemsByRenderer.set(rId, list)
+					this.itemsByRenderer.set(rId, list)
 				}
 
 				this.isInitialized = true
@@ -70,36 +71,36 @@ class GraphicsList {
 	}
 
 	public get items(): PlaybackItem[] {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    return this.itemsByRenderer.get(rId) || []
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		return this.itemsByRenderer.get(rId) || []
 	}
 
 	public get selectedItemId(): string | null {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    return this.selectedItemIds.get(rId) || null
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		return this.selectedItemIds.get(rId) || null
 	}
 
 	public set selectedItemId(id: string | null) {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    this.selectedItemIds.set(rId, id)
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		this.selectedItemIds.set(rId, id)
 	}
 
-    public async saveListOrder() {
-        try {
-            const currentObj = await dbStore.getAllQueuedGraphics<PlaybackItem>()
-            for (const c of currentObj) {
-                await dbStore.removeQueuedGraphic(c.id)
-            }
+	public async saveListOrder() {
+		try {
+			const currentObj = await dbStore.getAllQueuedGraphics<PlaybackItem>()
+			for (const c of currentObj) {
+				await dbStore.removeQueuedGraphic(c.id)
+			}
 
-            for (const list of this.itemsByRenderer.values()) {
-                for (const item of list) {
-                    await dbStore.putQueuedGraphic(toJS(item))
-                }
-            }
-        } catch (e) {
-            console.error("Failed to save list data", e)
-        }
-    }
+			for (const list of this.itemsByRenderer.values()) {
+				for (const item of list) {
+					await dbStore.putQueuedGraphic(toJS(item))
+				}
+			}
+		} catch (e) {
+			console.error('Failed to save list data', e)
+		}
+	}
 
 	public getSelectedItem(): PlaybackItem | undefined {
 		if (!this.selectedItemId) return undefined
@@ -115,9 +116,7 @@ class GraphicsList {
 			: undefined
 
 		const graphicInfo = serverDataStore.graphicsInfo.get(graphicId)
-		const graphicData = graphicInfo?.graphic.schema
-			? getDefaultDataFromSchema(graphicInfo.graphic.schema)
-			: undefined
+		const graphicData = graphicInfo?.graphic.schema ? getDefaultDataFromSchema(graphicInfo.graphic.schema) : undefined
 
 		const newItem: PlaybackItem = {
 			id,
@@ -125,70 +124,72 @@ class GraphicsList {
 			rendererId,
 			graphicData,
 			customActionData: {},
-			renderTarget: clone(renderTarget)
+			renderTarget: clone(renderTarget),
 		}
 
-        const rId = rendererId || 'default'
-        if (!this.itemsByRenderer.has(rId)) {
-            this.itemsByRenderer.set(rId, [])
-        }
-		this.itemsByRenderer.get(rId)!.push(newItem)
+		const rId = rendererId || 'default'
+		if (!this.itemsByRenderer.has(rId)) {
+			this.itemsByRenderer.set(rId, [])
+		}
+		const rendererItem = this.itemsByRenderer.get(rId)
+		if (rendererItem) rendererItem.push(newItem)
+
 		dbStore.putQueuedGraphic(toJS(newItem)).catch(console.error)
 
 		if (!this.selectedItemIds.get(rId)) {
-		    this.selectedItemIds.set(rId, id)
+			this.selectedItemIds.set(rId, id)
 		}
 	}
 
 	public removeItem(id: string) {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    const list = this.itemsByRenderer.get(rId)
-	    if (list) {
-	        const newList = list.filter((i) => i.id !== id)
-	        this.itemsByRenderer.set(rId, newList)
-	    }
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		const list = this.itemsByRenderer.get(rId)
+		if (list) {
+			const newList = list.filter((i) => i.id !== id)
+			this.itemsByRenderer.set(rId, newList)
+		}
 
 		dbStore.removeQueuedGraphic(id).catch(console.error)
 
 		if (this.selectedItemIds.get(rId) === id) {
-		    this.selectedItemIds.set(rId, null)
+			this.selectedItemIds.set(rId, null)
 		}
 	}
 
 	public clearItems() {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    const list = this.itemsByRenderer.get(rId) || []
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		const list = this.itemsByRenderer.get(rId) || []
 
 		this.itemsByRenderer.set(rId, [])
 		this.selectedItemIds.set(rId, null)
 
-		for(const item of list) {
-		    dbStore.removeQueuedGraphic(item.id).catch(console.error)
+		for (const item of list) {
+			dbStore.removeQueuedGraphic(item.id).catch(console.error)
 		}
 	}
 
 	public moveItem(fromIndex: number, toIndex: number) {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    const list = this.itemsByRenderer.get(rId)
-	    if (!list) return
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		const list = this.itemsByRenderer.get(rId)
+		if (!list) return
 		if (fromIndex < 0 || toIndex < 0 || fromIndex >= list.length || toIndex >= list.length) return
 
 		const item = list.splice(fromIndex, 1)[0]
 		list.splice(toIndex, 0, item)
 
-		this.saveListOrder()
+		this.saveListOrder().catch(console.error)
 	}
 
 	public selectItem(id: string | null) {
-        const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
 		this.selectedItemIds.set(rId, id)
 	}
 
 	public updateItemData(id: string, partialData: Partial<PlaybackItem>) {
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    const list = this.itemsByRenderer.get(rId)
-	    if (!list) return
-		const itemIndex = list.findIndex(i => i.id === id)
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		const list = this.itemsByRenderer.get(rId)
+		if (!list) return
+		const itemIndex = list.findIndex((i) => i.id === id)
 		if (itemIndex > -1) {
 			list[itemIndex] = { ...list[itemIndex], ...partialData }
 			dbStore.putQueuedGraphic(toJS(list[itemIndex])).catch(console.error)
@@ -196,35 +197,35 @@ class GraphicsList {
 	}
 
 	public selectNext() {
-	    const list = this.items
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    if (list.length === 0) return;
-	    const currentSelected = this.selectedItemIds.get(rId)
+		const list = this.items
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		if (list.length === 0) return
+		const currentSelected = this.selectedItemIds.get(rId)
 
-	    if (!currentSelected) {
-	        this.selectedItemIds.set(rId, list[0].id)
-	        return
-	    }
-	    const ix = list.findIndex(i => i.id === currentSelected)
-	    if (ix > -1 && ix < list.length - 1) {
-	        this.selectedItemIds.set(rId, list[ix + 1].id)
-	    }
+		if (!currentSelected) {
+			this.selectedItemIds.set(rId, list[0].id)
+			return
+		}
+		const ix = list.findIndex((i) => i.id === currentSelected)
+		if (ix > -1 && ix < list.length - 1) {
+			this.selectedItemIds.set(rId, list[ix + 1].id)
+		}
 	}
 
 	public selectPrev() {
-	    const list = this.items
-	    const rId = appSettingsStore.getSelectedRendererId() || 'default'
-	    if (list.length === 0) return;
-	    const currentSelected = this.selectedItemIds.get(rId)
+		const list = this.items
+		const rId = appSettingsStore.getSelectedRendererId() || 'default'
+		if (list.length === 0) return
+		const currentSelected = this.selectedItemIds.get(rId)
 
-	    if (!currentSelected) {
-	        this.selectedItemIds.set(rId, list[list.length - 1].id)
-	        return
-	    }
-	    const ix = list.findIndex(i => i.id === currentSelected)
-	    if (ix > 0) {
-	        this.selectedItemIds.set(rId, list[ix - 1].id)
-	    }
+		if (!currentSelected) {
+			this.selectedItemIds.set(rId, list[list.length - 1].id)
+			return
+		}
+		const ix = list.findIndex((i) => i.id === currentSelected)
+		if (ix > 0) {
+			this.selectedItemIds.set(rId, list[ix - 1].id)
+		}
 	}
 }
 

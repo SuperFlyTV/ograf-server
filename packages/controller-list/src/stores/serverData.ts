@@ -73,7 +73,10 @@ class ServerData {
 		autorun(() => {
 			if (this.renderersList.length > 0) {
 				const renderer = this.renderersList[0]
-				if (!appSettingsStore.selectedRendererId || !this.renderersList.find(r => r.id === appSettingsStore.selectedRendererId)) {
+				if (
+					!appSettingsStore.selectedRendererId ||
+					!this.renderersList.find((r) => r.id === appSettingsStore.selectedRendererId)
+				) {
 					// Select the first renderer if none is selected or selected doesn't exist anymore:
 					runInAction(() => {
 						appSettingsStore.selectedRendererId = renderer.id

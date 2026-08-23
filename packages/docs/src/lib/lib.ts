@@ -10,7 +10,6 @@ export function getServerUrl(): string {
 }
 
 export async function getServerSettings(): Promise<ServerSettings> {
-	console
 	const response = await fetch(`${getServerUrl()}/serverApi/server-settings`)
 
 	const json = await response.json()

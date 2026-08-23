@@ -18,8 +18,6 @@ import { NoNameSpaceIntro } from '../components/NoNameSpaceIntro.js'
 export const MainPage: React.FC = () => {
 	const serverSettings = usePromise(getServerSettings)
 
-
-
 	return (
 		<Container maxWidth="lg" sx={{ py: 4 }}>
 			<Stack spacing={3}>

@@ -31,18 +31,13 @@ export const HeaderController = observer(() => {
 				<Box sx={{ bgcolor: 'action.hover', borderRadius: 2, p: 0.5 }}>
 					<Tabs
 						value={appSettingsStore.selectedRendererId || false}
-						onChange={(_, newValue) => appSettingsStore.selectedRendererId = newValue}
+						onChange={(_, newValue) => (appSettingsStore.selectedRendererId = newValue)}
 						textColor="primary"
 						indicatorColor="primary"
 						sx={{ minHeight: '36px' }}
 					>
 						{renderers.map((r: any, index: number) => (
-							<Tab
-								key={`${r.id}-${index}`}
-								label={r.name || r.id}
-								value={r.id}
-								sx={{ minHeight: '36px', py: 0 }}
-							/>
+							<Tab key={`${r.id}-${index}`} label={r.name || r.id} value={r.id} sx={{ minHeight: '36px', py: 0 }} />
 						))}
 					</Tabs>
 				</Box>
