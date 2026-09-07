@@ -44,6 +44,8 @@ export function isEqual(a: any, b: any): boolean {
 	if (typeof a !== typeof b) return false
 
 	if (typeof a === 'object') {
+		if (a === null || b === null) return a === b
+
 		if (Array.isArray(a)) {
 			if (!Array.isArray(b)) return false
 			// Compare arrays

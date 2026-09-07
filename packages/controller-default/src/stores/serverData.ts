@@ -72,8 +72,11 @@ class ServerData {
 		autorun(() => {
 			if (this.renderersList.length === 1) {
 				const renderer = this.renderersList[0]
-				if (appSettingsStore.selectedRendererId !== renderer.id) {
-					// Select the only renderer, if there's only one:
+				if (
+					// Select the only renderer, if none is selected:
+					!appSettingsStore.selectedRendererId &&
+					appSettingsStore.selectedRendererId !== renderer.id
+				) {
 					runInAction(() => {
 						appSettingsStore.selectedRendererId = renderer.id
 					})
