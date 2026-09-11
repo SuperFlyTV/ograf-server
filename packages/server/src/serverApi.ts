@@ -219,9 +219,9 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
 
-			if (!rendererInstance?.info) {
+			if (!rendererRegistration?.info) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -232,13 +232,13 @@ export function setupServerApi(
 				})
 			}
 
-			await rendererInstance.updateInfo()
+			await rendererRegistration.updateInfo()
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
 				content: {
 					'application/json': {
-						renderer: rendererInstance.info,
+						renderer: rendererRegistration.info,
 					},
 				},
 			})
@@ -268,9 +268,9 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
 
-			if (!rendererInstance?.info) {
+			if (!rendererRegistration?.info) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -281,16 +281,14 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.getTargetStatus({
+			const result = await rendererRegistration.api.getTargetStatus({
 				renderTarget: request.parameters.query.renderTarget,
 			})
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
 				content: {
-					'application/json': {
-						renderTarget: result.renderTargetInfo,
-					},
+					'application/json': result.renderTargetInfo,
 				},
 			})
 		} catch (err) {
@@ -323,9 +321,9 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
 
-			if (!rendererInstance) {
+			if (!rendererRegistration) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -336,7 +334,7 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.invokeRendererAction({
+			const result = await rendererRegistration.api.invokeRendererAction({
 				action: {
 					id: request.parameters.path.customActionId,
 					payload: request.requestBody.content['application/json'].payload,
@@ -380,8 +378,8 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
-			if (!rendererInstance) {
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
+			if (!rendererRegistration) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -392,7 +390,7 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.clearGraphics({
+			const result = await rendererRegistration.api.clearGraphics({
 				filters: request.requestBody.content['application/json'].filters,
 			})
 
@@ -440,8 +438,8 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
-			if (!rendererInstance) {
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
+			if (!rendererRegistration) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -452,7 +450,7 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.loadGraphic({
+			const result = await rendererRegistration.api.loadGraphic({
 				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicId: request.requestBody.content['application/json'].graphicId,
 				params: request.requestBody.content['application/json'].params,
@@ -500,8 +498,8 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
-			if (!rendererInstance) {
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
+			if (!rendererRegistration) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -512,7 +510,7 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.invokeGraphicUpdateAction({
+			const result = await rendererRegistration.api.invokeGraphicUpdateAction({
 				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
@@ -560,8 +558,8 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
-			if (!rendererInstance) {
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
+			if (!rendererRegistration) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -572,7 +570,7 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.invokeGraphicPlayAction({
+			const result = await rendererRegistration.api.invokeGraphicPlayAction({
 				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
@@ -620,8 +618,8 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
-			if (!rendererInstance) {
+			const rendererRegistration = await ns.rendererManager.getRendererRegistration(request.parameters.path.rendererId)
+			if (!rendererRegistration) {
 				return handleReturn<Method>(ctx, 404, {
 					headers: {},
 					content: {
@@ -632,7 +630,7 @@ export function setupServerApi(
 				})
 			}
 
-			const result = await rendererInstance.api.invokeGraphicStopAction({
+			const result = await rendererRegistration.api.invokeGraphicStopAction({
 				renderTarget: request.requestBody.content['application/json'].renderTarget,
 				graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 				params: request.requestBody.content['application/json'].params,
@@ -684,8 +682,10 @@ export function setupServerApi(
 				const ns = await namespaces.getNS(ctx.params.namespaceId)
 				if (!ns) return handleNamespaceNotFound(ctx)
 
-				const rendererInstance = await ns.rendererManager.getRendererInstance(request.parameters.path.rendererId)
-				if (!rendererInstance) {
+				const rendererRegistration = await ns.rendererManager.getRendererRegistration(
+					request.parameters.path.rendererId
+				)
+				if (!rendererRegistration) {
 					return handleReturn<Method>(ctx, 404, {
 						headers: {},
 						content: {
@@ -696,7 +696,7 @@ export function setupServerApi(
 					})
 				}
 
-				const result = await rendererInstance.api.invokeGraphicCustomAction({
+				const result = await rendererRegistration.api.invokeGraphicCustomAction({
 					renderTarget: request.requestBody.content['application/json'].renderTarget,
 					graphicInstanceId: request.requestBody.content['application/json'].graphicInstanceId,
 					params: {

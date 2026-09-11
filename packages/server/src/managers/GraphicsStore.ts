@@ -92,7 +92,13 @@ export class GraphicsStoreNS {
 		// Don't list Graphics that are marked for removal:
 		if (await this.isGraphicMarkedForRemoval(id)) return undefined
 
-		const manifestFilePath = await this.findManifestFile(path.join(this.folderPath, folder))
+		const fullFolderPath = path.join(this.folderPath, folder)
+
+		if (!(await this.fileExists(fullFolderPath))) {
+			return undefined
+		}
+
+		const manifestFilePath = await this.findManifestFile(fullFolderPath)
 
 		const pStat = fs.promises.stat(manifestFilePath)
 

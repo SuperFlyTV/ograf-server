@@ -68,7 +68,8 @@ function setupClientConnection(ws: WebSocket, rendererManager: RendererManagerNS
 			.catch(console.error)
 	})
 	ws.on('close', (_code, reason) => {
-		rendererManager.closeRenderer(rendererInstance)
+		rendererInstance.onClose()
+
 		jsonRpcConnection.rejectAllPendingRequests(`Connection is closed (${reason}).`)
 
 		console.log(`${label}: Renderer disconnected`)
