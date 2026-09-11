@@ -140,7 +140,6 @@ class ServerData {
 				if (!this.graphicsInfo.has(q.graphicId)) {
 					await this._loadGraphic(q.graphicId, typeof asap === 'string' ? asap.includes(`graphic`) : asap)
 				}
-
 				if (q.renderTarget) {
 					renderTargetMap.set(`${q.rendererId}::${JSON.stringify(q.renderTarget)}`, {
 						rendererId: q.rendererId,
@@ -257,7 +256,7 @@ class ServerData {
 						renderTarget: renderTarget,
 					}
 				)
-				if (r.status === 200)
+				if (r.status === 200) {
 					runInAction(() => {
 						if (r.content.graphicInstances) {
 							// Replace any existing on the renderTarget with new ones:
@@ -283,6 +282,7 @@ class ServerData {
 							})
 						}
 					})
+				}
 			}
 		)
 	}

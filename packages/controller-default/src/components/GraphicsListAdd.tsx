@@ -13,7 +13,6 @@ export const GraphicsListAdd: React.FC<{ rendererId: string }> = observer(({ ren
 	const onChange = React.useCallback((e: SelectChangeEvent<string>) => {
 		const graphicId = e.target.value
 		appSettingsStore.addGraphic(rendererId, graphicId)
-		// console.log(e.target.value);
 	}, [])
 
 	if (serverDataStore.graphicsList.length === 0) {

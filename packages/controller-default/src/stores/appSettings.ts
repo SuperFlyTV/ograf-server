@@ -87,6 +87,10 @@ class AppSettings {
 	public removeGraphic = action((key: string) => {
 		this.queuedGraphics.delete(key)
 	})
+	public clearStored() {
+		window.localStorage.removeItem(this.LOCALSTORAGE_ID)
+		window.location.reload()
+	}
 }
 interface StoredState {
 	serverApiUrl: string

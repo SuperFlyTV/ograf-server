@@ -98,7 +98,6 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 				title={graphic.graphic.name}
 				subheader={descriptions.join(', ')}
 			/>
-
 			<CardContent>
 				<Box>
 					<Typography>RenderTarget</Typography>

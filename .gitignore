@@ -13,3 +13,4 @@
 .pnp.*
 node_modules
 packages/server/dev/
+specification/

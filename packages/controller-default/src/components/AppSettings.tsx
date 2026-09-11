@@ -5,6 +5,7 @@ import { serverDataStore } from '../stores/serverData.js'
 import TextField from '@mui/material/TextField'
 import Box from '@mui/material/Box'
 import Typography from '@mui/material/Typography'
+import { Button } from '@mui/material'
 
 export const AppSettings: React.FC = observer(() => {
 	return (
@@ -35,6 +36,15 @@ export const AppSettings: React.FC = observer(() => {
 			</Box>
 			<Typography>Status: {serverDataStore.connectedStatus}</Typography>
 			<Typography>{serverDataStore.currentOperation}</Typography>
+			<Box>
+				<Button
+					onClick={() => {
+						appSettingsStore.clearStored()
+					}}
+				>
+					Clear all local data
+				</Button>
+			</Box>
 		</>
 	)
 })
