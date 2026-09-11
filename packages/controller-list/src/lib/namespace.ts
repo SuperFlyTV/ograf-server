@@ -19,8 +19,8 @@ export function getDefaultServerUrl(baseName = 'api'): string {
 export function getNameSpaceId(): string {
 	{
 		// Using namespace mode
-		// window.location.pathname = "/controller/large-wasteful-starfish/default/"
-		const m = window.location.pathname.match(/^\/controller\/(?<namespaceId>[^/]*)\/default/)
+		// window.location.pathname = "/controller/large-wasteful-starfish/list/"
+		const m = window.location.pathname.match(/^\/controller\/(?<namespaceId>[^/]*)\/list/)
 		if (m && m.groups) {
 			return m.groups.namespaceId
 		}
