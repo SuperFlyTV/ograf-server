@@ -18,6 +18,8 @@ export class LayerHandler {
 	) {}
 	setRef(ref: HTMLDivElement | null): void {
 		this.ref = ref
+
+		if (this.ref) this.ref.style.display = 'none'
 	}
 	getInfo(): RenderTargetInfo {
 		// RenderTargetInfo
@@ -63,6 +65,7 @@ export class LayerHandler {
 		const element = document.createElement(elementName) as HTMLElement & OGraf.GraphicsAPI.Graphic
 
 		this.ref.appendChild(element)
+		this.ref.style.display = ''
 
 		this.graphicInstance = new GraphicInstance(graphicId, element, graphicInfo)
 
@@ -93,7 +96,10 @@ export class LayerHandler {
 			} catch (err) {
 				console.error('Error disposing GraphicInstance:', err)
 			} finally {
-				if (this.ref) this.ref.innerHTML = ''
+				if (this.ref) {
+					this.ref.innerHTML = ''
+					this.ref.style.display = ''
+				}
 				this.graphicInstance = null
 			}
 		}
