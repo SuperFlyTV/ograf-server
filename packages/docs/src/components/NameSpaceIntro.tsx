@@ -62,6 +62,7 @@ export const Introduction: React.FC<{
 	const ografApiUrl = `${serverUrl}/api/${namespaceId}/ograf/v1/`
 	const rendererUrl = `${serverUrl}/renderer/${namespaceId}/default/?name=${encodeURIComponent(rendererName)}&id=${encodeURIComponent(rendererId)}&background=${encodeURIComponent(background)}`
 	const controllerUrl = `${serverUrl}/controller/${namespaceId}/default/`
+	const controllerListUrl = `${serverUrl}/controller/${namespaceId}/list/`
 
 	return (
 		<Box sx={{ py: 3 }}>
@@ -148,6 +149,10 @@ export const Introduction: React.FC<{
 						<Link href={controllerUrl} target="_blank" rel="noopener noreferrer">
 							Simple Controller
 						</Link>
+						{' or '}
+						<Link href={controllerListUrl} target="_blank" rel="noopener noreferrer">
+							List Controller
+						</Link>
 						)
 					</Typography>
 				</ListItem>
@@ -208,12 +213,16 @@ export const Introduction: React.FC<{
 						{/* Controller Link */}
 						<CardContent>
 							<Typography variant="h5" component="h3" sx={{ mb: 2 }}>
-								Controller
+								Controllers
 							</Typography>
-							<Typography variant="body1" sx={{ mb: 2 }}>
-								Link to Controller:
+							<Typography variant="body1" sx={{ mb: 1 }}>
+								Link to Simple Controller:
 							</Typography>
 							<UrlLink url={controllerUrl} />
+							<Typography variant="body1" sx={{ mb: 1, mt: 2 }}>
+								Link to List Controller:
+							</Typography>
+							<UrlLink url={controllerListUrl} />
 						</CardContent>
 					</Card>
 				</Grid>

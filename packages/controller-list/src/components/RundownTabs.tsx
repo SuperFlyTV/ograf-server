@@ -88,14 +88,21 @@ export const RundownTabs: React.FC = observer(() => {
 					graphicsListStore.setActiveTab(val)
 				}}
 				variant="scrollable"
-				scrollButtons="auto"
-				allowScrollButtonsMobile
+				scrollButtons={graphicsListStore.tabs.length > 4 ? 'auto' : false}
+				allowScrollButtonsMobile={graphicsListStore.tabs.length > 4}
 				sx={{
 					minHeight: 44,
 					flexGrow: 0,
 					flexShrink: 1,
 					maxWidth: 'calc(100% - 48px)',
 					'& .MuiTabScrollButton-root': {
+						...(graphicsListStore.tabs.length <= 4 && {
+							display: 'none !important',
+							width: 0,
+							minWidth: 0,
+							p: 0,
+							m: 0,
+						}),
 						'&.Mui-disabled': {
 							width: 0,
 							minWidth: 0,
