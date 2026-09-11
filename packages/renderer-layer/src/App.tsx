@@ -11,7 +11,17 @@ const CHECKERBOARD_COLOR = '#ccc'
 
 export const App: React.FC = () => {
 	const urlParams = new URLSearchParams(window.location.search)
-	const displayBackground = urlParams.get('background') === '1'
+	const displayCheckerboardBackground =
+		urlParams.get('background') === '1' || urlParams.get('background') === 'checkerboard'
+	const displayOgrafLogo = urlParams.get('background') === '1'
+
+	let backgroundColor = 'transparent'
+	if (!displayCheckerboardBackground) {
+		backgroundColor = urlParams.get('background') ?? 'transparent'
+
+		const elRoot = document.querySelector('html')
+		if (elRoot) elRoot.style.backgroundColor = backgroundColor
+	}
 
 	// constants.id = urlParams.get("id") || undefined;
 
@@ -60,8 +70,8 @@ export const App: React.FC = () => {
 				zIndex: -2,
 			}}
 		>
-			{displayBackground ? (
-				<>
+			<>
+				{displayOgrafLogo ? (
 					<OGrafLogo
 						className="ograf-logo"
 						style={{
@@ -74,7 +84,8 @@ export const App: React.FC = () => {
 							height: 'auto',
 						}}
 					/>
-
+				) : null}
+				{displayCheckerboardBackground ? (
 					<div
 						style={{
 							position: 'absolute',
@@ -90,8 +101,8 @@ export const App: React.FC = () => {
 							backgroundPosition: `0 0, 0 10px, 10px -10px, -10px 0px`,
 						}}
 					></div>
-				</>
-			) : null}
+				) : null}
+			</>
 			<div>
 				<Layers layersManager={layersManager} />
 				<div id="layers"></div>
