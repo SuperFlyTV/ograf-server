@@ -6,14 +6,11 @@ import Typography from '@mui/material/Typography'
 import Button from '@mui/material/Button'
 import IconButton from '@mui/material/IconButton'
 import Tooltip from '@mui/material/Tooltip'
-import Menu from '@mui/material/Menu'
-import MenuItem from '@mui/material/MenuItem'
 import TextField from '@mui/material/TextField'
 import InputAdornment from '@mui/material/InputAdornment'
 import Chip from '@mui/material/Chip'
 import Snackbar from '@mui/material/Snackbar'
 import Alert from '@mui/material/Alert'
-import Divider from '@mui/material/Divider'
 
 import SearchIcon from '@mui/icons-material/Search'
 import ClearIcon from '@mui/icons-material/Clear'
@@ -34,11 +31,12 @@ import { ListItem } from './ListItem.js'
 import { GroupItem } from './GroupItem.js'
 import { ContextMenu, ContextMenuState } from './ContextMenu.js'
 import { UploadGraphicDialog } from './UploadGraphicDialog.js'
+import { AddGraphicDialog } from './AddGraphicDialog.js'
 import { GraphicsListAPI } from '../lib/graphicsListApi.js'
 import { uploadGraphicZip } from '../lib/uploadGraphic.js'
 
 export const ListPanel = observer(function ListPanel() {
-	const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null)
+	const [addGraphicDialogOpen, setAddGraphicDialogOpen] = React.useState(false)
 	const [contextMenuState, setContextMenuState] = React.useState<ContextMenuState | null>(null)
 	const [allCollapsed, setAllCollapsed] = React.useState(false)
 	const [uploadDialogOpen, setUploadDialogOpen] = React.useState(false)
@@ -46,6 +44,7 @@ export const ListPanel = observer(function ListPanel() {
 	const dragCounterRef = React.useRef(0)
 
 	const handleFileDragEnter = (e: React.DragEvent) => {
+		if (addGraphicDialogOpen || uploadDialogOpen) return
 		if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
 			e.preventDefault()
 			dragCounterRef.current++
@@ -54,6 +53,7 @@ export const ListPanel = observer(function ListPanel() {
 	}
 
 	const handleFileDragOver = (e: React.DragEvent) => {
+		if (addGraphicDialogOpen || uploadDialogOpen) return
 		if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
 			e.preventDefault()
 			e.dataTransfer.dropEffect = 'copy'
@@ -61,6 +61,7 @@ export const ListPanel = observer(function ListPanel() {
 	}
 
 	const handleFileDragLeave = (e: React.DragEvent) => {
+		if (addGraphicDialogOpen || uploadDialogOpen) return
 		if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
 			e.preventDefault()
 			dragCounterRef.current--
@@ -72,6 +73,7 @@ export const ListPanel = observer(function ListPanel() {
 	}
 
 	const handleFileDrop = (e: React.DragEvent) => {
+		if (addGraphicDialogOpen || uploadDialogOpen) return
 		if (e.dataTransfer.types && Array.from(e.dataTransfer.types).includes('Files')) {
 			e.preventDefault()
 			dragCounterRef.current = 0
@@ -101,19 +103,6 @@ export const ListPanel = observer(function ListPanel() {
 					})
 			}
 		}
-	}
-
-	const handleAddClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-		setAnchorEl(event.currentTarget)
-	}
-
-	const handleClose = () => {
-		setAnchorEl(null)
-	}
-
-	const handleAddGraphic = (graphicId: string) => {
-		void graphicsListStore.addItem(undefined, graphicId)
-		handleClose()
 	}
 
 	// Global keyboard shortcuts
@@ -416,7 +405,12 @@ export const ListPanel = observer(function ListPanel() {
 					}}
 				/>
 
-				<Button variant="contained" startIcon={<AddIcon />} onClick={handleAddClick} sx={{ whiteSpace: 'nowrap' }}>
+				<Button
+					variant="contained"
+					startIcon={<AddIcon />}
+					onClick={() => setAddGraphicDialogOpen(true)}
+					sx={{ whiteSpace: 'nowrap' }}
+				>
 					Add Graphic
 				</Button>
 
@@ -513,8 +507,16 @@ export const ListPanel = observer(function ListPanel() {
 								<Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
 									Click <strong>Add Graphic</strong> or <strong>New Group</strong> to begin.
 								</Typography>
-								{serverDataStore.severIsOurs && (
-									<Box sx={{ mb: 2 }}>
+								<Stack direction="row" spacing={1.5} justifyContent="center" sx={{ mb: 2 }}>
+									<Button
+										variant="contained"
+										size="small"
+										startIcon={<AddIcon />}
+										onClick={() => setAddGraphicDialogOpen(true)}
+									>
+										Add Graphic
+									</Button>
+									{serverDataStore.severIsOurs && (
 										<Button
 											variant="outlined"
 											size="small"
@@ -523,8 +525,8 @@ export const ListPanel = observer(function ListPanel() {
 										>
 											Upload Graphic (.zip)
 										</Button>
-									</Box>
-								)}
+									)}
+								</Stack>
 								<Typography variant="body2" color="text.disabled">
 									Tip: You can reorder, group, multi-select with Shift/Ctrl, and Alt+Drag to duplicate items.
 								</Typography>
@@ -538,31 +540,8 @@ export const ListPanel = observer(function ListPanel() {
 				)}
 			</Box>
 
-			{/* Add Graphic Dropdown Menu */}
-			<Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
-				{serverDataStore.graphicsList.length === 0 ? (
-					<MenuItem disabled>No graphics available</MenuItem>
-				) : (
-					serverDataStore.graphicsList.map((g) => (
-						<MenuItem key={g.id} onClick={() => handleAddGraphic(g.id)}>
-							{g.name || g.id}
-						</MenuItem>
-					))
-				)}
-				{serverDataStore.severIsOurs && serverDataStore.graphicsList.length > 0 && <Divider />}
-				{serverDataStore.severIsOurs && (
-					<MenuItem
-						onClick={() => {
-							handleClose()
-							setUploadDialogOpen(true)
-						}}
-						sx={{ color: 'primary.main', fontWeight: 500 }}
-					>
-						<CloudUploadIcon sx={{ mr: 1, fontSize: 18 }} />
-						Upload Graphic (.zip)...
-					</MenuItem>
-				)}
-			</Menu>
+			{/* Add Graphic Modal Dialog */}
+			<AddGraphicDialog open={addGraphicDialogOpen} onClose={() => setAddGraphicDialogOpen(false)} />
 
 			{/* Context Menu */}
 			<ContextMenu
