@@ -60,6 +60,14 @@ export class DB {
 		})
 	}
 
+	async getRundownTabs<T>(): Promise<T | undefined> {
+		return this.getSetting<T>('rundown_tabs')
+	}
+
+	async setRundownTabs<T>(tabs: T): Promise<void> {
+		return this.setSetting<T>('rundown_tabs', tabs)
+	}
+
 	async getAllQueuedGraphics<T>(): Promise<T[]> {
 		await this.init()
 		return new Promise((resolve, reject) => {
@@ -96,6 +104,24 @@ export class DB {
 			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
 			request.onerror = () => reject(request.error)
 			request.onsuccess = () => resolve()
+		})
+	}
+
+	async clearAll(): Promise<void> {
+		await this.init()
+		return new Promise((resolve, reject) => {
+			if (!this.db) return reject(new Error('DB not initialized'))
+			const storeNames = Array.from(this.db.objectStoreNames)
+			if (storeNames.length === 0) {
+				return resolve()
+			}
+			const transaction = this.db.transaction(storeNames, 'readwrite')
+			for (const storeName of storeNames) {
+				transaction.objectStore(storeName).clear()
+			}
+			// eslint-disable-next-line @typescript-eslint/prefer-promise-reject-errors
+			transaction.onerror = () => reject(transaction.error)
+			transaction.oncomplete = () => resolve()
 		})
 	}
 }

@@ -7,10 +7,13 @@ import { clone } from '../lib/lib.js'
 import { getDefaultServerUrl } from '../lib/namespace.js'
 import { dbStore } from './db.js'
 
+export type ThemeMode = 'default' | 'light' | 'dark'
+
 class AppSettings {
 	public serverApiUrl = getDefaultServerUrl() + '/api/ograf/v1/' // 'http://localhost:8080/api/ograf/v1/'
 	public selectedRendererId: string = ''
 	public autoLoad: boolean = true
+	public themeMode: ThemeMode = 'default'
 
 	private ografApi = OgrafApi.getSingleton()
 	public queuedGraphics = new ObservableMap<string, QueuedGraphic>()
@@ -22,6 +25,7 @@ class AppSettings {
 			selectedRendererId: observable,
 			serverApiUrl: observable,
 			autoLoad: observable,
+			themeMode: observable,
 			isInitialized: observable,
 		})
 
@@ -45,6 +49,7 @@ class AppSettings {
 				}
 				if (stateToLoad?.selectedRendererId) this.selectedRendererId = stateToLoad.selectedRendererId
 				if (stateToLoad?.autoLoad !== undefined) this.autoLoad = stateToLoad.autoLoad
+				if (stateToLoad?.themeMode) this.themeMode = stateToLoad.themeMode
 				if (stateToLoad?.queuedGraphics) {
 					stateToLoad.queuedGraphics.forEach(([key, value]) => this.queuedGraphics.set(key, value))
 				}
@@ -58,6 +63,7 @@ class AppSettings {
 					serverApiUrl: this.serverApiUrl,
 					selectedRendererId: this.selectedRendererId,
 					autoLoad: this.autoLoad,
+					themeMode: this.themeMode,
 					queuedGraphics: Array.from(this.queuedGraphics.entries()),
 				}
 
@@ -126,6 +132,7 @@ interface StoredState {
 	serverApiUrl: string
 	selectedRendererId: string
 	autoLoad?: boolean
+	themeMode?: ThemeMode
 	queuedGraphics: [string, QueuedGraphic][]
 }
 

@@ -297,7 +297,7 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 	public debug = async (payload: { message: string }): Promise<EmptyPayload> => {
 		// JSONRPC METHOD, called by the Renderer
 		if (!this.isRegistered) throw new Error('Renderer is not registered')
-
+		console.log('DEBUG Renderer', payload)
 		return {}
 	}
 
@@ -336,8 +336,6 @@ class GraphicInstanceIdTracker {
 			return undefined
 		}
 		const trackedId = primaryMap.get(primaryId)
-		if (trackedId === undefined) {
-		}
 		return trackedId
 	}
 	clear(renderTarget?: unknown) {

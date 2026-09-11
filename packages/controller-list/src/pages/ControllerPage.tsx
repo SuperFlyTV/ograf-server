@@ -34,8 +34,8 @@ export const ControllerPage: React.FC = observer(() => {
 	}
 
 	return (
-		<Container disableGutters maxWidth={false} sx={{ height: 'calc(100vh - 64px)', p: 2 }}>
-			<Grid container spacing={2} sx={{ height: '100%' }}>
+		<Container disableGutters maxWidth={false} sx={{ height: 'calc(100vh - 64px)', p: 0.75, px: 0.75 }}>
+			<Grid container spacing={1} sx={{ height: '100%' }}>
 				<Grid size={{ xs: 12, md: 6 }} sx={{ height: '100%' }}>
 					<ListPanel />
 				</Grid>

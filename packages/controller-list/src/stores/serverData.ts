@@ -144,7 +144,7 @@ class ServerData {
 
 			for (const q of graphicsListStore.items) {
 				if (!this.graphicsInfo.has(q.graphicId)) {
-					await this._loadGraphic(q.graphicId, typeof asap === 'string' ? asap.includes(`graphic`) : asap)
+					await this.loadGraphic(q.graphicId, typeof asap === 'string' ? asap.includes(`graphic`) : asap)
 				}
 
 				if (q.renderTarget) {
@@ -156,7 +156,7 @@ class ServerData {
 			}
 
 			for (const rt of renderTargetMap.values()) {
-				await this._loadGraphicsInstances(
+				await this.loadGraphicsInstances(
 					rt.rendererId,
 					rt.renderTarget,
 					typeof asap === 'string' ? asap.includes(`renderTarget::${JSON.stringify(rt.renderTarget)}`) : asap
@@ -188,7 +188,7 @@ class ServerData {
 		}
 
 		const lastTime = this.doIfEnoughTimeHasPassedMap.get(key) ?? 0
-		if (Date.now() - lastTime > duration) {
+		if (duration === 0 || Date.now() - lastTime > duration) {
 			this.doIfEnoughTimeHasPassedMap.set(key, Date.now())
 			return await cb()
 		}
@@ -208,10 +208,16 @@ class ServerData {
 		await this.doIfEnoughTimeHasPassed('_loadGraphicsList', asap ? 0 : 10000, async () => {
 			this.setCurrentOperation('Retrieving list of graphics...')
 			const r = await this.ografApi.listGraphics()
-			if (r.status === 200)
+			if (r.status === 200) {
 				runInAction(() => {
 					if (!isEqual(this.graphicsList, r.content.graphics)) this.graphicsList = r.content.graphics
 				})
+				for (const g of r.content.graphics) {
+					if (!this.graphicsInfo.has(g.id)) {
+						await this.loadGraphic(g.id, false)
+					}
+				}
+			}
 		})
 	}
 	private async _loadRendererList(asap: boolean) {
@@ -228,19 +234,29 @@ class ServerData {
 			}
 		)
 	}
-	private async _loadRenderer(asap: boolean) {
-		const rendererId = appSettingsStore.getSelectedRendererId()
-		if (rendererId) {
-			await this.doIfEnoughTimeHasPassed('_loadRenderer', asap ? 0 : 10000, async () => {
-				this.setCurrentOperation('Retrieving list of renderers...')
-				const r = await this.ografApi.getRenderer({
-					rendererId: rendererId,
-				})
-				if (r.status === 200) runInAction(() => mapSetIfNotEqual(this.renderersInfo, rendererId, r.content.renderer))
+	public async loadRenderer(rendererId: string, asap: boolean = true) {
+		await this.doIfEnoughTimeHasPassed(`_loadRenderer::${rendererId}`, asap ? 0 : 10000, async () => {
+			this.setCurrentOperation(`Retrieving renderer info for "${rendererId}"...`)
+			const r = await this.ografApi.getRenderer({
+				rendererId: rendererId,
 			})
+			if (r.status === 200) runInAction(() => mapSetIfNotEqual(this.renderersInfo, rendererId, r.content.renderer))
+		})
+		return this.renderersInfo.get(rendererId)
+	}
+	private async _loadRenderer(asap: boolean) {
+		const rendererIdsToLoad = new Set<string>()
+		for (const r of this.renderersList) {
+			rendererIdsToLoad.add(r.id)
+		}
+		const selected = appSettingsStore.getSelectedRendererId()
+		if (selected) rendererIdsToLoad.add(selected)
+
+		for (const rendererId of rendererIdsToLoad) {
+			await this.loadRenderer(rendererId, asap)
 		}
 	}
-	private async _loadGraphic(graphicId: string, asap: boolean) {
+	public async loadGraphic(graphicId: string, asap: boolean = true) {
 		await this.doIfEnoughTimeHasPassed(`_loadGraphic::${graphicId}`, asap ? 0 : 10000, async () => {
 			this.setCurrentOperation(`Retrieving graphic info for "${graphicId}"...`)
 			const r = await this.ografApi.getGraphic({
@@ -248,9 +264,10 @@ class ServerData {
 			})
 			if (r.status === 200) runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
 		})
+		return this.graphicsInfo.get(graphicId)
 	}
-	private async _loadGraphicsInstances(rendererId: string, renderTarget: unknown, asap: boolean) {
-		await this.doIfEnoughTimeHasPassed(
+	public async loadGraphicsInstances(rendererId: string, renderTarget: unknown, asap: boolean = true) {
+		return await this.doIfEnoughTimeHasPassed(
 			`_loadGraphicsInstances::${rendererId}::${JSON.stringify(renderTarget)}`,
 			asap ? 0 : 1000,
 			async () => {
@@ -263,7 +280,7 @@ class ServerData {
 						renderTarget: renderTarget,
 					}
 				)
-				if (r.status === 200)
+				if (r.status === 200) {
 					runInAction(() => {
 						if (r.content.graphicInstances) {
 							// Replace any existing on the renderTarget with new ones:
@@ -289,8 +306,18 @@ class ServerData {
 							})
 						}
 					})
+					return r.content.graphicInstances
+				}
+				return undefined
 			}
 		)
+	}
+
+	public getGraphicInstanceId(rendererId: string, renderTarget: unknown, graphicId: string): string | undefined {
+		const instances = Array.from(this.graphicsInstanceMap.values()).filter(
+			(g) => g.rendererId === rendererId && isEqual(g.renderTarget, renderTarget) && g.graphicId === graphicId
+		)
+		return instances.length > 0 ? instances[instances.length - 1].graphicInstanceId : undefined
 	}
 
 	graphicsInstanceMapKey(entry: GraphicsInstanceMapEntry): string {

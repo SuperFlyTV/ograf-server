@@ -33,50 +33,44 @@ export class OgrafApi {
 		status: keyof Method['responses']
 		content: any
 	}> {
-		try {
-			if (!this.baseURL) {
-				throw new Error('baseURL is not set')
-			}
-			let baseUrl = this.baseURL
-			if (!baseUrl.endsWith('/')) baseUrl += '/'
-			const url0 = url.toString().replace(this.BASE_URL_TEMPLATE, '')
-			const fullUrl = baseUrl + url0
+		if (!this.baseURL) {
+			throw new Error('baseURL is not set')
+		}
+		let baseUrl = this.baseURL
+		if (!baseUrl.endsWith('/')) baseUrl += '/'
+		const url0 = url.toString().replace(this.BASE_URL_TEMPLATE, '')
+		const fullUrl = baseUrl + url0
 
-			options = options ?? {}
-			options.signal = AbortSignal.timeout(3000)
+		options = options ?? {}
+		options.signal = AbortSignal.timeout(3000)
 
-			const headers: any = options.headers ?? {}
-			headers['Content-Type'] = 'application/json'
-			if (this.authorization) {
-				headers['Authorization'] = this.authorization
-			}
+		const headers: any = options.headers ?? {}
+		headers['Content-Type'] = 'application/json'
+		if (this.authorization) {
+			headers['Authorization'] = this.authorization
+		}
 
-			options.headers = headers
+		options.headers = headers
 
-			// let recurring = false;
-			// const method = (options.method ?? 'GET').toUpperCase()
+		// let recurring = false;
+		// const method = (options.method ?? 'GET').toUpperCase()
 
-			// if (
-			//   method === "GET" &&
-			//   (url0 === "" || url0 === "graphics" || url0 === "renderers")
-			// ) {
-			//   recurring = true;
-			// }
+		// if (
+		//   method === "GET" &&
+		//   (url0 === "" || url0 === "graphics" || url0 === "renderers")
+		// ) {
+		//   recurring = true;
+		// }
 
-			console.debug(fullUrl, options)
+		// console.debug(fullUrl, options)
 
-			const response = await fetch(fullUrl, options)
+		const response = await fetch(fullUrl, options)
 
-			const json = await response.json()
+		const json = await response.json()
 
-			return {
-				status: response.status as keyof Method['responses'],
-				content: json,
-			}
-		} catch (e) {
-			console.error('Error when fetching URL:', url.toString())
-			console.error(e)
-			throw e
+		return {
+			status: response.status as keyof Method['responses'],
+			content: json,
 		}
 	}
 

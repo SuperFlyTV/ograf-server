@@ -35,17 +35,13 @@ export const OGrafForm: React.FC<{
 }> = ({ schema, initialValue, value, onDataChangeCallback }) => {
 	/** Ref to the form component */
 	const formRef = React.useRef<HTMLElement>(null)
+	const onDataChangeCallbackRef = React.useRef(onDataChangeCallback)
+	onDataChangeCallbackRef.current = onDataChangeCallback
+
 	/** State to hold the data */
 	const [data, setData] = React.useState(() =>
-		// Use default data from schema as initial data:
-		initialValue ? initialValue : schema ? getDefaultDataFromSchema(schema) : {}
+		value !== undefined ? value : initialValue ? initialValue : schema ? getDefaultDataFromSchema(schema) : {}
 	)
-
-	React.useEffect(() => {
-		// Initial callback with data
-
-		onDataChangeCallback(data)
-	}, [])
 
 	React.useEffect(() => {
 		if (value !== undefined) setData(value)
@@ -54,7 +50,7 @@ export const OGrafForm: React.FC<{
 	/** Callback when the data changes */
 	const onDataChange = React.useCallback((newData: unknown) => {
 		setData(newData)
-		onDataChangeCallback(newData)
+		onDataChangeCallbackRef.current(newData)
 	}, [])
 
 	// Set up listener for when the data has changed in the form:
@@ -86,8 +82,13 @@ export const OGrafForm: React.FC<{
 	}
 
 	return (
-		<div>
-			<superflytv-ograf-form ref={formRef} schema={schema} value={data}></superflytv-ograf-form>
+		<div style={{ overflow: 'auto', maxWidth: '100%' }}>
+			<superflytv-ograf-form
+				ref={formRef}
+				schema={schema}
+				value={data}
+				style={{ display: 'block', maxWidth: '100%' }}
+			></superflytv-ograf-form>
 		</div>
 	)
 }
