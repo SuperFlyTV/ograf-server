@@ -1,7 +1,7 @@
 import Router from '@koa/router'
 import multer from '@koa/multer'
 import { ServerApi } from 'ograf'
-import { CTX } from './lib/lib.js'
+import { CTX, getFullUrl } from './lib/lib.js'
 import {
 	CustomActionId,
 	CustomActionParams,
@@ -66,7 +66,7 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const list = await ns.graphicStore.listGraphics()
+			const list = await ns.graphicStore.listGraphics(config)
 
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -99,7 +99,7 @@ export function setupServerApi(
 			const ns = await namespaces.getNS(ctx.params.namespaceId)
 			if (!ns) return handleNamespaceNotFound(ctx)
 
-			const graphicInfo = await ns.graphicStore.getGraphicInfo(request.parameters.path.graphicId)
+			const graphicInfo = await ns.graphicStore.getGraphicInfo(config, request.parameters.path.graphicId)
 
 			if (!graphicInfo) {
 				return handleReturn<Method>(ctx, 404, {
@@ -1073,10 +1073,4 @@ function handleErrorReturn<_Method extends AnyMethodErrorResponse>(ctx: CTX, err
 			} satisfies ServerApi.components['schemas']['ErrorResponse'],
 		},
 	})
-}
-export function getFullUrl(config: ConfigOptions, url: string, baseName = 'api'): string {
-	if (config.namespacePath) {
-		return `/${baseName}/:namespaceId${url}`
-	}
-	return `/${baseName}${url}`
 }

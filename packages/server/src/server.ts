@@ -10,6 +10,7 @@ import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
 import { AccountStore } from './managers/AccountStore.js'
 import { ConfigOptions } from './config.js'
+import { DEFAULT_PORT, getRootUrl } from './lib/lib.js'
 
 export async function initializeServer(config: ConfigOptions): Promise<void> {
 	const app = new Koa()
@@ -122,10 +123,11 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 
 	app.use(filter.protocols())
 
-	const PORT = 8080
-
+	const PORT = DEFAULT_PORT
 	app.listen(PORT)
-	console.log(`Server running on \x1b[36m http://127.0.0.1:${PORT}/\x1b[0m`)
+
+	console.log(`Server running on port ${PORT}`)
+	console.log(`Serving on url \x1b[36m ${getRootUrl()}/\x1b[0m`)
 }
 
 async function serveFromPath(ctx: Koa.ParameterizedContext, folderPath: string, url: string) {

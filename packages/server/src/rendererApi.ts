@@ -2,7 +2,7 @@ import Router from '@koa/router'
 import { WebSocket } from 'ws'
 import { JSONRPCServerAndClient, JSONRPCServer, JSONRPCClient } from 'json-rpc-2.0'
 import { RendererManagerNS } from './managers/RendererManager.js'
-import { getFullUrl } from './serverApi.js'
+import { getFullUrl } from './lib/lib.js'
 import { Namespaces } from './managers/NS.js'
 import { ConfigOptions } from './config.js'
 

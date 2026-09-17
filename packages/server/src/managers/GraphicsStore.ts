@@ -3,7 +3,8 @@ import mime from 'mime-types'
 import path from 'path'
 import decompress from 'decompress'
 import { GraphicsManifest, ServerApi } from 'ograf'
-import { CTX } from '../lib/lib.js'
+import { CTX, getFullUrl, getRootUrl } from '../lib/lib.js'
+import { ConfigOptions } from '../config.js'
 
 export class GraphicsStoreNS {
 	/** File path where to store Graphics */
@@ -53,7 +54,7 @@ export class GraphicsStoreNS {
 
 		throw new Error(`No OGraf manifest found in folder ${graphicsFolder}`)
 	}
-	async listGraphics(): Promise<ServerApi.components['schemas']['GraphicListInfo'][]> {
+	async listGraphics(config: ConfigOptions): Promise<ServerApi.components['schemas']['GraphicListInfo'][]> {
 		const folderList = await fs.promises.readdir(this.folderPath)
 
 		const graphics: ServerApi.components['schemas']['GraphicListInfo'][] = []
@@ -69,7 +70,7 @@ export class GraphicsStoreNS {
 
 			if (await this.isGraphicMarkedForRemoval(id)) continue
 
-			const graphicInfo = await this.getGraphicInfo(id)
+			const graphicInfo = await this.getGraphicInfo(config, id)
 			if (!graphicInfo) continue
 
 			graphics.push({
@@ -80,7 +81,10 @@ export class GraphicsStoreNS {
 		}
 		return graphics
 	}
-	async getGraphicInfo(id: string): Promise<
+	async getGraphicInfo(
+		config: ConfigOptions,
+		id: string
+	): Promise<
 		| {
 				graphic: ServerApi.components['schemas']['GraphicManifest']
 				metadata: ServerApi.components['schemas']['GraphicMetadata']
@@ -110,8 +114,10 @@ export class GraphicsStoreNS {
 			return undefined
 		}
 
-		const stat = await pStat
+		const url = getRootUrl() + getFullUrl(config, `/serverApi/internal/graphics/${id}/`)
+		const files = await this.listAllFiles(fullFolderPath)
 
+		const stat = await pStat
 		return {
 			graphic: manifest as any, // the types don't exactly match, due to differences in generation
 			metadata: {
@@ -119,6 +125,17 @@ export class GraphicsStoreNS {
 				createdAt: new Date(stat.ctimeMs).toISOString(),
 				updatedAt: new Date(stat.mtimeMs).toISOString(),
 				// updatedBy: N/A
+
+				// Not in specification (yet):
+				content: {
+					url: url,
+					files: files,
+				} satisfies {
+					url: string
+					files: {
+						path: string
+					}[]
+				},
 			} satisfies ServerApi.components['schemas']['GraphicMetadata'],
 		}
 	}
@@ -591,6 +608,34 @@ export class GraphicsStoreNS {
 	private get manifestFilePath(): string {
 		// internal manifest file name
 		return 'manifest.json'
+	}
+	/**
+	 * List all files in the given folder.
+	 * Includes files in all subdirectories recursively.
+	 * Returned path is relative to the base folder.
+	 */
+	private async listAllFiles(baseFolderPath: string): Promise<{ path: string }[]> {
+		const returnFiles: { path: string }[] = []
+		const readFiles = async (baseFolder: string, currentFolder: string) => {
+			const files = await fs.promises.readdir(path.join(baseFolder, currentFolder))
+
+			await Promise.all(
+				files.map(async (file) => {
+					const filerRelativePath = path.join(currentFolder, file)
+
+					const fileFullPath = path.join(baseFolder, filerRelativePath)
+
+					const stat = await fs.promises.stat(fileFullPath)
+					if (stat.isDirectory()) {
+						await readFiles(baseFolder, filerRelativePath)
+					} else {
+						returnFiles.push({ path: filerRelativePath })
+					}
+				})
+			)
+		}
+		await readFiles(baseFolderPath, '')
+		return returnFiles
 	}
 }
 
