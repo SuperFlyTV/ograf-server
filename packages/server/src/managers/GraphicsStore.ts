@@ -55,7 +55,13 @@ export class GraphicsStoreNS {
 		throw new Error(`No OGraf manifest found in folder ${graphicsFolder}`)
 	}
 	async listGraphics(config: ConfigOptions): Promise<ServerApi.components['schemas']['GraphicListInfo'][]> {
-		const folderList = await fs.promises.readdir(this.folderPath)
+		// Only directories. A storage root can also contain files - macOS Finder
+		// drops a .DS_Store in any folder it has displayed. readdir() on one throws
+		// ENOTDIR, and fromFileName() throws for a name without the graphic- prefix,
+		// which took the whole namespace down with a 500 on every request.
+		const folderList = (await fs.promises.readdir(this.folderPath, { withFileTypes: true }))
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name)
 
 		const graphics: ServerApi.components['schemas']['GraphicListInfo'][] = []
 		for (const folder of folderList) {
@@ -499,7 +505,13 @@ export class GraphicsStoreNS {
 	private async removeExpiredGraphics() {
 		if (this.destroyed) return
 
-		const folderList = await fs.promises.readdir(this.folderPath)
+		// Only directories. A storage root can also contain files - macOS Finder
+		// drops a .DS_Store in any folder it has displayed. readdir() on one throws
+		// ENOTDIR, and fromFileName() throws for a name without the graphic- prefix,
+		// which took the whole namespace down with a 500 on every request.
+		const folderList = (await fs.promises.readdir(this.folderPath, { withFileTypes: true }))
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name)
 		for (const folder of folderList) {
 			const { id } = this.fromFileName(folder)
 
@@ -522,7 +534,13 @@ export class GraphicsStoreNS {
 
 	/** Find any folders that are of from the old version, and migrate them */
 	private async migrateOldFolders() {
-		const folderList = await fs.promises.readdir(this.folderPath)
+		// Only directories. A storage root can also contain files - macOS Finder
+		// drops a .DS_Store in any folder it has displayed. readdir() on one throws
+		// ENOTDIR, and fromFileName() throws for a name without the graphic- prefix,
+		// which took the whole namespace down with a 500 on every request.
+		const folderList = (await fs.promises.readdir(this.folderPath, { withFileTypes: true }))
+			.filter((entry) => entry.isDirectory())
+			.map((entry) => entry.name)
 		for (const folder of folderList) {
 			let fileNameIsOk = false
 			try {
