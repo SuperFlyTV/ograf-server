@@ -810,6 +810,16 @@ export function setupServerApi(
 			ctx.lastModified = resource.lastModified
 			ctx.length = resource.length
 			ctx.type = resource.mimeType
+			// Graphic files are replaced in place on re-upload but served from a stable
+			// URL, so with no directive a client may reuse a stale copy for hours.
+			// no-cache forces revalidation, and Last-Modified above keeps it cheap.
+			ctx.set('Cache-Control', 'no-cache')
+			// Koa computes ctx.fresh but does not act on it, so answer conditional
+			// requests here: an unchanged asset costs an empty 304.
+			if (ctx.fresh) {
+				ctx.status = 304
+				return
+			}
 			ctx.body = resource.readStream
 		} catch (err) {
 			return handleErrorReturn<any>(ctx, err)
