@@ -3,6 +3,21 @@ import { JSONRPCServerAndClient } from 'json-rpc-2.0'
 import * as RendererAPI from '@ograf-server/shared'
 import { RendererInfo } from '@ograf-server/shared'
 
+/**
+ * How long to wait for a Renderer to answer a request before giving up on it.
+ * A Renderer that never answers (a suspended tab, a paused browser source, a
+ * laptop with its lid closed) must not be able to stall the API.
+ */
+const RPC_TIMEOUT = 10 * 1000
+/** Loading a Graphic fetches its module and runs its load(), so it gets longer. */
+const LOAD_TIMEOUT = 60 * 1000
+/**
+ * When loading, how long to wait for the mirror instances after the primary has
+ * finished, so that a play right after the load reaches them too. Mirrors that
+ * take longer keep loading in the background.
+ */
+const MIRROR_LOAD_GRACE = 3 * 1000
+
 export class RendererManagerNS {
 	private rendererInstances = new Set<RendererInstance>()
 	private rendererRegistrations = new Map<string, RendererRegistration>()
@@ -57,11 +72,28 @@ export class RendererManagerNS {
 	}
 }
 
+type LoadGraphicPayload = Parameters<RendererAPI.MethodsOnRenderer['loadGraphic']>[0]
+
 /**
- * Represents a group of connected Renderer instances (that share the same ID)
+ * Represents a group of connected Renderer instances (that share the same ID).
+ *
+ * The first instance is the primary: the API reports its state and returns its
+ * results. The rest mirror it: every command is forwarded to them, with the
+ * graphicInstanceId re-mapped to their own (see GraphicInstanceIdTracker).
+ * An instance that connects (or re-connects) after a graphic was loaded is
+ * brought up to date by syncInstance().
  */
 class RendererRegistration {
 	private rendererInstances: RendererInstance[] = []
+	/**
+	 * The last load per renderTarget (keyed by JSON.stringify(renderTarget)) and
+	 * the step it has been played to, so that an instance joining later can be
+	 * given the same graphic at the same step.
+	 */
+	private lastLoads = new Map<
+		string,
+		{ payload: LoadGraphicPayload; primaryInstanceId: string; currentStep: number | undefined }
+	>()
 
 	constructor(
 		private manager: RendererManagerNS,
@@ -69,8 +101,11 @@ class RendererRegistration {
 	) {
 		this.rendererInstances.push(initialRendererInstance)
 	}
-	addInstance(initialRendererInstance: RendererInstance) {
-		this.rendererInstances.push(initialRendererInstance)
+	addInstance(rendererInstance: RendererInstance) {
+		this.rendererInstances.push(rendererInstance)
+		this.syncInstance(rendererInstance).catch((err) => {
+			console.error(`Error syncing a Renderer instance with its primary: ${err instanceof Error ? err.message : err}`)
+		})
 	}
 	removeInstance(rendererInstance: RendererInstance) {
 		const index = this.rendererInstances.indexOf(rendererInstance)
@@ -89,8 +124,67 @@ class RendererRegistration {
 	get info(): RendererInfo | undefined {
 		return this.firstInstance.info
 	}
+	/**
+	 * Refreshes the primary's info (what the API reports). The mirrors are
+	 * refreshed in the background: a stalled mirror must not stall the API.
+	 */
 	async updateInfo(): Promise<void> {
-		await Promise.all(this.rendererInstances.map(async (instance) => instance.updateInfo()))
+		for (const instance of this.restInstances) {
+			instance.updateInfo().catch(() => {})
+		}
+		await this.firstInstance.updateInfo()
+	}
+
+	/**
+	 * Brings an instance that joined late (or re-connected) in line with the
+	 * primary: graphic instances it already has (kept across a re-connect) are
+	 * mapped, the ones it lacks are loaded and jumped to the current step.
+	 */
+	private async syncInstance(instance: RendererInstance): Promise<void> {
+		const primary = this.firstInstance
+		if (!primary || primary === instance) return
+
+		try {
+			await primary.updateInfo()
+		} catch (_err) {
+			// Use the last known info
+		}
+		if (!this.rendererInstances.includes(instance)) return // disconnected meanwhile
+
+		for (const target of primary.info?.renderTargets ?? []) {
+			const targetKey = JSON.stringify(target.renderTarget)
+			for (const graphicInstance of target.graphicInstances ?? []) {
+				const own = (instance.info?.renderTargets ?? [])
+					.find((t) => JSON.stringify(t.renderTarget) === targetKey)
+					?.graphicInstances?.find((g) => g.graphic.id === graphicInstance.graphic.id)
+
+				const last = this.lastLoads.get(targetKey)
+				const known = last && last.primaryInstanceId === graphicInstance.graphicInstanceId ? last : undefined
+
+				let ownInstanceId: string
+				if (own) {
+					ownInstanceId = own.graphicInstanceId
+				} else {
+					if (!known) continue // nothing to replay
+					const result = await instance.api.loadGraphic(known.payload)
+					if (!this.rendererInstances.includes(instance)) return
+					ownInstanceId = result.graphicInstanceId
+				}
+				instance.graphicsInstanceIdTracker.addGraphicsId(
+					target.renderTarget,
+					graphicInstance.graphicInstanceId,
+					ownInstanceId
+				)
+				// Jump to the current step (also heals a play missed during a re-connect):
+				if (known?.currentStep !== undefined) {
+					await instance.api.invokeGraphicPlayAction({
+						renderTarget: target.renderTarget,
+						graphicInstanceId: ownInstanceId,
+						params: { goto: known.currentStep, skipAnimation: true },
+					})
+				}
+			}
+		}
 	}
 
 	private async forwardCommand(command: keyof RendererAPI.MethodsOnRenderer, payload: any): Promise<any> {
@@ -111,22 +205,36 @@ class RendererRegistration {
 		invokeRendererAction: async (payload) => this.forwardCommand('invokeRendererAction', payload),
 		loadGraphic: async (payload) => {
 			const pFirst = this.firstInstance.api.loadGraphic(payload)
-			const pRest = this.restInstances.map((instance) => ({
-				instance,
-				pResult: instance.api.loadGraphic(payload),
-			}))
 
-			const first = await pFirst
-
-			// Track the graphicsInstanceIds, so that we can re-map subsequent graphics operations:
-			for (const { instance, pResult } of pRest) {
-				const result = await pResult
+			// The mirrors load concurrently. Their ids are tracked once both they
+			// and the primary have finished; a failing mirror is logged, not fatal.
+			const pMirrors = this.restInstances.map(async (instance) => {
+				const pMine = instance.api.loadGraphic(payload)
+				const [first, mine] = await Promise.all([pFirst, pMine])
 				instance.graphicsInstanceIdTracker.addGraphicsId(
 					payload.renderTarget,
 					first.graphicInstanceId,
-					result.graphicInstanceId
+					mine.graphicInstanceId
 				)
+			})
+			for (const p of pMirrors) {
+				p.catch((err) => console.error('A mirror Renderer failed to load the graphic:', err))
 			}
+
+			const first = await pFirst
+			this.lastLoads.set(JSON.stringify(payload.renderTarget), {
+				payload,
+				primaryInstanceId: first.graphicInstanceId,
+				currentStep: undefined,
+			})
+
+			// Give the mirrors a moment to catch up, so that an action sent right
+			// after the load reaches them too — but never wait on a broken one.
+			await Promise.race([
+				Promise.allSettled(pMirrors),
+				new Promise((resolve) => setTimeout(resolve, MIRROR_LOAD_GRACE)),
+			])
+
 			return first
 		},
 		clearGraphics: async (payload) => {
@@ -166,11 +274,16 @@ class RendererRegistration {
 					console.log(e)
 				})
 
-				return pResult
+				const result = await pResult
+				for (const cleared of result.graphicInstances ?? []) {
+					this.lastLoads.delete(JSON.stringify(cleared.renderTarget))
+				}
+				return result
 			} else {
 				for (const instance of this.rendererInstances) {
 					instance.graphicsInstanceIdTracker.clear()
 				}
+				this.lastLoads.clear()
 				return this.forwardCommand('clearGraphics', payload)
 			}
 		},
@@ -206,7 +319,17 @@ class RendererRegistration {
 			instance.api[command](payload2).catch(() => {})
 		}
 
-		return pFirst
+		const result = await pFirst
+
+		// Remember the step the graphic is on, for instances that join later:
+		if (command === 'invokeGraphicPlayAction') {
+			const last = this.lastLoads.get(JSON.stringify(payload.renderTarget))
+			const currentStep = (result as { result?: { currentStep?: unknown } } | undefined)?.result?.currentStep
+			if (last && last.primaryInstanceId === payload.graphicInstanceId && typeof currentStep === 'number') {
+				last.currentStep = currentStep
+			}
+		}
+		return result
 	}
 }
 /** Represents a connection to one (1) connected Renderer */
@@ -223,18 +346,18 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 
 	/** Methods that can be called on the Renderer */
 	public api: RendererAPI.MethodsOnRenderer = {
-		// getManifest: async (payload) => this.jsonRpcConnection.request('getManifest', payload),
-		// listGraphicInstances: async (payload) => this.jsonRpcConnection.request('listGraphicInstances', payload),
-		getInfo: async (payload) => this.jsonRpcConnection.request('getInfo', payload),
-		getTargetStatus: async (payload) => this.jsonRpcConnection.request('getTargetStatus', payload),
-		invokeRendererAction: async (payload) => this.jsonRpcConnection.request('invokeRendererAction', payload),
-		loadGraphic: async (payload) => this.jsonRpcConnection.request('loadGraphic', payload),
-		clearGraphics: async (payload) => this.jsonRpcConnection.request('clearGraphics', payload),
+		// getManifest: async (payload) => this.request('getManifest', payload),
+		// listGraphicInstances: async (payload) => this.request('listGraphicInstances', payload),
+		getInfo: async (payload) => this.request('getInfo', payload),
+		getTargetStatus: async (payload) => this.request('getTargetStatus', payload),
+		invokeRendererAction: async (payload) => this.request('invokeRendererAction', payload),
+		loadGraphic: async (payload) => this.request('loadGraphic', payload, LOAD_TIMEOUT),
+		clearGraphics: async (payload) => this.request('clearGraphics', payload),
 
-		invokeGraphicUpdateAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicUpdateAction', payload),
-		invokeGraphicPlayAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicPlayAction', payload),
-		invokeGraphicStopAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicStopAction', payload),
-		invokeGraphicCustomAction: async (payload) => this.jsonRpcConnection.request('invokeGraphicCustomAction', payload),
+		invokeGraphicUpdateAction: async (payload) => this.request('invokeGraphicUpdateAction', payload),
+		invokeGraphicPlayAction: async (payload) => this.request('invokeGraphicPlayAction', payload),
+		invokeGraphicStopAction: async (payload) => this.request('invokeGraphicStopAction', payload),
+		invokeGraphicCustomAction: async (payload) => this.request('invokeGraphicCustomAction', payload),
 	}
 
 	constructor(
@@ -242,6 +365,11 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 		private jsonRpcConnection: JSONRPCServerAndClient<void, void>
 	) {
 		this.internalId = RendererInstance.InternalIdIndex++
+	}
+
+	/** Sends a request to the Renderer. Rejects with "Request timeout" if it doesn't answer in time. */
+	private async request(method: string, payload: unknown, timeout = RPC_TIMEOUT): Promise<any> {
+		return this.jsonRpcConnection.timeout(timeout).request(method, payload as any)
 	}
 
 	public register = async (payload: { info: RendererInfo }): Promise<{ rendererId: string } & VendorExtend> => {
