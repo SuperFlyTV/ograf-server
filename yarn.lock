@@ -1254,8 +1254,8 @@ __metadata:
     "@types/koa__router": "npm:^12.0.4"
     "@types/mime-types": "npm:^2.1.4"
     "@types/node": "npm:^24.10.0"
+    "@types/ws": "npm:^8.18.1"
     "@types/yargs": "npm:^17.0.35"
-    "@zimtsui/koa-ws-filter": "npm:^0.0.5"
     decompress: "npm:^4.2.1"
     eslint: "npm:^9.38.0"
     json-rpc-2.0: "npm:^1.7.0"
@@ -1855,7 +1855,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/koa-compose@npm:*, @types/koa-compose@npm:^3.2.4":
+"@types/koa-compose@npm:*":
   version: 3.2.9
   resolution: "@types/koa-compose@npm:3.2.9"
   dependencies:
@@ -1936,13 +1936,6 @@ __metadata:
   dependencies:
     undici-types: "npm:~7.18.0"
   checksum: 10c0/7b2b18c9d68047157367fc2f786d4f166d22dc0ad9f82331ca02fb16f2f391854123dbe604dcb938cda119c87051e4bb71dcb9ece44a579f483a6f96d4bd41de
-  languageName: node
-  linkType: hard
-
-"@types/node@npm:^16.11.38":
-  version: 16.18.126
-  resolution: "@types/node@npm:16.18.126"
-  checksum: 10c0/5c137eb141d33de32b16ff26047ff6d449432b58d0d25f7cced2040c97727d81fe1099a7581eb336d14a6840f5b09e363bdd43d7a6995e8e81eb47aa51e413fc
   languageName: node
   linkType: hard
 
@@ -2036,7 +2029,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/ws@npm:^8.5.4":
+"@types/ws@npm:^8.18.1":
   version: 8.18.1
   resolution: "@types/ws@npm:8.18.1"
   dependencies:
@@ -2228,21 +2221,6 @@ __metadata:
     vitest:
       optional: true
   checksum: 10c0/37325e6e50c812fba52477683a8c46fe5a98d2ef441d108736309236889850af466e56af0ec625af0df036cb841005cc5c916266319453c316e661b3ce539a10
-  languageName: node
-  linkType: hard
-
-"@zimtsui/koa-ws-filter@npm:^0.0.5":
-  version: 0.0.5
-  resolution: "@zimtsui/koa-ws-filter@npm:0.0.5"
-  dependencies:
-    "@types/koa-compose": "npm:^3.2.4"
-    "@types/node": "npm:^16.11.38"
-    "@types/ws": "npm:^8.5.4"
-    koa-compose: "npm:^4.1.0"
-  peerDependencies:
-    koa: ^2.8.2
-    ws: ^8.12.0
-  checksum: 10c0/c44410874f5bca60e3e57f5af54984f0febda3425eeea04a0192474c26d3a57b29039b76189b4e14696a3a8dac3cce4592678d0a5e193139e18738c7f2c40a55
   languageName: node
   linkType: hard
 

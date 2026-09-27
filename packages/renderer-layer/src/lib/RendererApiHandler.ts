@@ -78,6 +78,10 @@ export class RendererApiHandler implements MethodsOnRenderer {
 
 		if (!this.rendererApiUrl) throw new Error('Not rendererApiUrl set!')
 
+		if (this.ws && (this.ws.readyState === WebSocket.CONNECTING || this.ws.readyState === WebSocket.OPEN)) {
+			return
+		}
+
 		console.log('connecting to Renderer API at', this.rendererApiUrl)
 		this.ws = new WebSocket(this.rendererApiUrl)
 
@@ -188,6 +192,10 @@ export class RendererApiHandler implements MethodsOnRenderer {
 			console.log('Connection to Renderer API closed', ev)
 
 			this.connected = false
+			for (const waiting of this.waitingForReply.values()) {
+				waiting.reject(new Error(`Connection to Renderer API closed (code: ${ev.code}, reason: ${ev.reason})`))
+			}
+			this.waitingForReply.clear()
 		}
 
 		this.ws.onerror = (error) => {

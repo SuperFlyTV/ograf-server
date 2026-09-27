@@ -1,10 +1,10 @@
 import * as path from 'path'
 import * as fs from 'fs/promises'
+import * as http from 'http'
 import Koa from 'koa'
 import Router from '@koa/router'
 import cors from '@koa/cors'
 import bodyParser from 'koa-bodyparser'
-import { KoaWsFilter } from '@zimtsui/koa-ws-filter'
 import { Namespaces } from './managers/NS.js'
 import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
@@ -24,8 +24,6 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 	// app.use(())
 
 	const httpRouter = new Router()
-	const wsRouter = new Router()
-	const filter = new KoaWsFilter()
 
 	// Initialize internal business logic
 	const accountStore = new AccountStore(config)
@@ -33,7 +31,6 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 
 	// Setup APIs:
 	setupServerApi(config, httpRouter, accountStore, namespaces) // HTTP API (ServerAPI)
-	setupRendererApi(config, wsRouter, namespaces) // WebSocket API (RendererAPI)
 
 	// Set up static file serving:
 
@@ -118,13 +115,16 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 	//   ctx.body = await fs.readFile("./public/index.html", "utf8");
 	// });
 
-	filter.http(httpRouter.routes())
-	filter.ws(wsRouter.routes())
+	app.use(httpRouter.routes())
 
-	app.use(filter.protocols())
+	const handleRequest = app.callback()
+	const server = http.createServer((req, res) => {
+		void handleRequest(req, res)
+	})
+	setupRendererApi(config, server, namespaces) // WebSocket API (RendererAPI), on the 'upgrade' event
 
 	const PORT = DEFAULT_PORT
-	app.listen(PORT)
+	server.listen(PORT)
 
 	console.log(`Server running on port ${PORT}`)
 	console.log(`Serving on url \x1b[36m ${getRootUrl()}/\x1b[0m`)
