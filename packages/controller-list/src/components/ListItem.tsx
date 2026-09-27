@@ -15,11 +15,13 @@ import RefreshIcon from '@mui/icons-material/Refresh'
 import ControlPointDuplicateIcon from '@mui/icons-material/ControlPointDuplicate'
 import DeleteIcon from '@mui/icons-material/Delete'
 import CheckCircleIcon from '@mui/icons-material/CheckCircle'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
 import _Draggable, { DraggableData, DraggableEvent, DraggableProps } from 'react-draggable'
 import { DataPreview } from './DataPreview.js'
 import { graphicsListStore, PlaybackItem } from '../stores/graphicsList.js'
 import { serverDataStore } from '../stores/serverData.js'
+import { PRELIMINARY_RENDERER_ID } from '../stores/appSettings.js'
 import { GraphicsListAPI } from '../lib/graphicsListApi.js'
 import { dndManager } from '../lib/dndManager.js'
 
@@ -74,7 +76,23 @@ export const ListItem = observer(function ListItem({
 		item.graphicInstanceId || serverDataStore.getGraphicInstanceId(item.rendererId, item.renderTarget, item.graphicId)
 	)
 
+	const isRendererMissing = serverDataStore.isRendererMissing(item.rendererId)
+
 	const targetSummary = formatRenderTarget(item.renderTarget)
+
+	const missingRendererTooltip = !item.rendererId
+		? 'No renderer assigned to this graphic'
+		: item.rendererId === PRELIMINARY_RENDERER_ID
+			? 'Preliminary renderer: No renderer is currently connected to the server'
+			: !serverDataStore.isConnected
+				? `Server is disconnected (renderer "${item.rendererId}" unavailable)`
+				: `Renderer "${item.rendererId}" does not exist on the server`
+
+	const missingRendererLabel = !item.rendererId
+		? 'Missing renderer'
+		: item.rendererId === PRELIMINARY_RENDERER_ID
+			? 'No renderer connected'
+			: `Renderer not found: ${item.rendererId}`
 
 	const handleClick = (e: React.MouseEvent) => {
 		e.stopPropagation()
@@ -191,16 +209,39 @@ export const ListItem = observer(function ListItem({
 								</Tooltip>
 							)}
 
-							{graphicsListStore.hasMultipleRenderersInList && (
-								<Tooltip title={`Renderer: ${item.rendererId}`}>
+							{isRendererMissing ? (
+								<Tooltip title={missingRendererTooltip}>
 									<Chip
-										label={item.rendererId}
+										icon={<WarningAmberIcon sx={{ fontSize: '14px !important', color: 'inherit !important' }} />}
+										label={missingRendererLabel}
 										size="small"
-										color="info"
-										variant="outlined"
-										sx={{ height: 18, fontSize: '0.68rem', px: 0.25, maxWidth: 120 }}
+										color="warning"
+										sx={{
+											height: 18,
+											fontSize: '0.68rem',
+											fontWeight: 600,
+											px: 0.25,
+											maxWidth: 220,
+											'& .MuiChip-label': {
+												overflow: 'hidden',
+												textOverflow: 'ellipsis',
+												whiteSpace: 'nowrap',
+											},
+										}}
 									/>
 								</Tooltip>
+							) : (
+								graphicsListStore.hasMultipleRenderersInList && (
+									<Tooltip title={`Renderer: ${item.rendererId}`}>
+										<Chip
+											label={item.rendererId}
+											size="small"
+											color="info"
+											variant="outlined"
+											sx={{ height: 18, fontSize: '0.68rem', px: 0.25, maxWidth: 120 }}
+										/>
+									</Tooltip>
+								)
 							)}
 
 							{graphicsListStore.hasMultipleRenderTargetsInList && targetSummary && (

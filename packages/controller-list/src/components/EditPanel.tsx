@@ -27,6 +27,7 @@ import ControlPointDuplicateIcon from '@mui/icons-material/ControlPointDuplicate
 import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
 import { getDefaultDataFromSchema } from 'ograf-form'
 import { OGrafForm } from './OGrafForm.js'
@@ -150,7 +151,8 @@ export const EditPanel = observer(function EditPanel() {
 				distinctRenderers.length > 1 ||
 				serverDataStore.renderersList.length > 1 ||
 				(serverDataStore.renderersList.length === 1 &&
-					distinctRenderers.some((rId) => rId !== serverDataStore.renderersList[0].id))
+					distinctRenderers.some((rId) => rId !== serverDataStore.renderersList[0].id)) ||
+				selectedItems.some((i) => serverDataStore.isRendererMissing(i.rendererId))
 
 			const commonRenderTarget = selectedItems[0]?.renderTarget
 			const allRenderTargetsEqual =
@@ -230,7 +232,18 @@ export const EditPanel = observer(function EditPanel() {
 						<Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
 							<AlertTitle sx={{ fontSize: '0.85rem', fontWeight: 700, m: 0 }}>Preliminary Renderer</AlertTitle>
 							<Typography variant="caption" color="text.secondary">
-								One or more selected graphics are assigned to a preliminary renderer. They will be migrated automatically once a renderer connects.
+								One or more selected graphics are assigned to a preliminary renderer. They will be migrated
+								automatically once a renderer connects.
+							</Typography>
+						</Alert>
+					)}
+					{selectedItems.some(
+						(i) => i.rendererId !== PRELIMINARY_RENDERER_ID && serverDataStore.isRendererMissing(i.rendererId)
+					) && (
+						<Alert severity="warning" variant="outlined" sx={{ mb: 2 }}>
+							<AlertTitle sx={{ fontSize: '0.85rem', fontWeight: 700, m: 0 }}>Non-Existing Renderer</AlertTitle>
+							<Typography variant="caption" color="text.secondary">
+								One or more selected graphics are assigned to a non-existing renderer.
 							</Typography>
 						</Alert>
 					)}
@@ -515,42 +528,88 @@ export const EditPanel = observer(function EditPanel() {
 		return (
 			<Box sx={{ p: 1 }}>
 				<Box sx={{ mb: 2 }}>
-					<Typography variant="h5" fontWeight={700} gutterBottom>
-						{singleSelectedItem.graphicId}
-					</Typography>
+					<Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" sx={{ mb: 1 }}>
+						<Typography variant="h5" fontWeight={700}>
+							{singleSelectedItem.graphicId}
+						</Typography>
+						{serverDataStore.isRendererMissing(singleSelectedItem.rendererId) && (
+							<Tooltip
+								title={
+									singleSelectedItem.rendererId === PRELIMINARY_RENDERER_ID
+										? 'Preliminary renderer: No renderer is currently connected to the server'
+										: `Renderer "${singleSelectedItem.rendererId || 'none'}" does not exist on the server`
+								}
+							>
+								<Chip
+									icon={<WarningAmberIcon sx={{ fontSize: '14px !important', color: 'inherit !important' }} />}
+									label={
+										singleSelectedItem.rendererId && singleSelectedItem.rendererId !== PRELIMINARY_RENDERER_ID
+											? `Renderer not found: ${singleSelectedItem.rendererId}`
+											: 'Missing renderer'
+									}
+									size="small"
+									color="warning"
+									sx={{ height: 20, fontSize: '0.72rem', fontWeight: 600 }}
+								/>
+							</Tooltip>
+						)}
+					</Stack>
 
 					{singleSelectedItem.rendererId === PRELIMINARY_RENDERER_ID && (
 						<Alert severity="warning" variant="outlined" sx={{ mt: 1, mb: 1 }}>
 							<AlertTitle sx={{ fontSize: '0.85rem', fontWeight: 700, m: 0 }}>Preliminary Renderer</AlertTitle>
 							<Typography variant="caption" color="text.secondary">
-								This graphic is assigned to a preliminary renderer ID. It will migrate automatically once a renderer connects to the server.
+								This graphic is assigned to a preliminary renderer ID. It will migrate automatically once a renderer
+								connects to the server.
 							</Typography>
 						</Alert>
 					)}
+					{singleSelectedItem.rendererId !== PRELIMINARY_RENDERER_ID &&
+						serverDataStore.isRendererMissing(singleSelectedItem.rendererId) && (
+							<Alert severity="warning" variant="outlined" sx={{ mt: 1, mb: 1 }}>
+								<AlertTitle sx={{ fontSize: '0.85rem', fontWeight: 700, m: 0 }}>Renderer Not Found</AlertTitle>
+								<Typography variant="caption" color="text.secondary">
+									The assigned renderer "{singleSelectedItem.rendererId || 'none'}" does not exist on the server. Please
+									select an available renderer below.
+								</Typography>
+							</Alert>
+						)}
 					{(serverDataStore.renderersList.length > 1 ||
 						(serverDataStore.renderersList.length === 1 &&
-							singleSelectedItem.rendererId !== serverDataStore.renderersList[0].id)) && (
-						<FormControl size="small" sx={{ mt: 1, minWidth: 200 }}>
-							<InputLabel id="select-renderer-label">Target Renderer</InputLabel>
-							<Select
-								labelId="select-renderer-label"
-								id="select-renderer"
-								value={singleSelectedItem.rendererId}
-								label="Target Renderer"
-								onChange={(e) => {
-									graphicsListStore.updateItemData(singleSelectedItem.id, {
-										rendererId: e.target.value,
-									})
-								}}
-							>
-								{serverDataStore.renderersList.map((renderer) => (
-									<MenuItem key={renderer.id} value={renderer.id}>
-										{renderer.name || renderer.id} ({renderer.id})
-									</MenuItem>
-								))}
-							</Select>
-						</FormControl>
-					)}
+							singleSelectedItem.rendererId !== serverDataStore.renderersList[0].id) ||
+						serverDataStore.isRendererMissing(singleSelectedItem.rendererId)) &&
+						serverDataStore.renderersList.length > 0 && (
+							<FormControl size="small" sx={{ mt: 1, minWidth: 200 }}>
+								<InputLabel id="select-renderer-label">Target Renderer</InputLabel>
+								<Select
+									labelId="select-renderer-label"
+									id="select-renderer"
+									value={
+										serverDataStore.renderersList.some((r) => r.id === singleSelectedItem.rendererId)
+											? singleSelectedItem.rendererId
+											: singleSelectedItem.rendererId || ''
+									}
+									label="Target Renderer"
+									onChange={(e) => {
+										graphicsListStore.updateItemData(singleSelectedItem.id, {
+											rendererId: e.target.value,
+										})
+									}}
+								>
+									{!serverDataStore.renderersList.some((r) => r.id === singleSelectedItem.rendererId) &&
+										singleSelectedItem.rendererId && (
+											<MenuItem value={singleSelectedItem.rendererId} disabled>
+												<em>{singleSelectedItem.rendererId} (not found)</em>
+											</MenuItem>
+										)}
+									{serverDataStore.renderersList.map((renderer) => (
+										<MenuItem key={renderer.id} value={renderer.id}>
+											{renderer.name || renderer.id} ({renderer.id})
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						)}
 				</Box>
 
 				{/* Actions Card */}

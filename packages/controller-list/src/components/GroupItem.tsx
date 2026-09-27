@@ -27,9 +27,11 @@ import MoreVertIcon from '@mui/icons-material/MoreVert'
 import EditIcon from '@mui/icons-material/Edit'
 import ControlPointDuplicateIcon from '@mui/icons-material/ControlPointDuplicate'
 import DeleteIcon from '@mui/icons-material/Delete'
+import WarningAmberIcon from '@mui/icons-material/WarningAmber'
 
 import _Draggable, { DraggableData, DraggableEvent, DraggableProps } from 'react-draggable'
 import { graphicsListStore, PlaybackGroup, PlaybackItem } from '../stores/graphicsList.js'
+import { serverDataStore } from '../stores/serverData.js'
 import { GraphicsListAPI } from '../lib/graphicsListApi.js'
 import { ListItem } from './ListItem.js'
 import { dndManager } from '../lib/dndManager.js'
@@ -63,6 +65,10 @@ export const GroupItem = observer(function GroupItem({
 
 	const isCollapsed = Boolean(group.collapsed)
 	const itemsCount = group.items?.length || 0
+
+	const missingRendererItemsCount = (group.items || []).filter((item) =>
+		serverDataStore.isRendererMissing(item.rendererId)
+	).length
 
 	const handleHeaderClick = (e: React.MouseEvent) => {
 		e.stopPropagation()
@@ -240,6 +246,24 @@ export const GroupItem = observer(function GroupItem({
 										{group.name}
 									</Typography>
 									<Chip label={`${itemsCount} item${itemsCount === 1 ? '' : 's'}`} size="small" variant="outlined" />
+									{missingRendererItemsCount > 0 && (
+										<Tooltip
+											title={`${missingRendererItemsCount} graphic${missingRendererItemsCount === 1 ? '' : 's'} in this group ${missingRendererItemsCount === 1 ? 'has a' : 'have'} non-existing renderer`}
+										>
+											<Chip
+												icon={<WarningAmberIcon sx={{ fontSize: '14px !important', color: 'inherit !important' }} />}
+												label={`${missingRendererItemsCount} missing renderer`}
+												size="small"
+												color="warning"
+												sx={{
+													height: 20,
+													fontSize: '0.68rem',
+													fontWeight: 600,
+													px: 0.25,
+												}}
+											/>
+										</Tooltip>
+									)}
 								</Stack>
 							)}
 						</Box>

@@ -85,7 +85,7 @@ class ServerData {
 				}
 				const selectedId = appSettingsStore.getSelectedRendererId() || renderer.id
 				if (selectedId && selectedId !== PRELIMINARY_RENDERER_ID) {
-					graphicsListStore.migratePreliminaryRenderer(selectedId)
+					void graphicsListStore.migratePreliminaryRenderer(selectedId)
 				}
 			}
 		})
@@ -324,6 +324,17 @@ class ServerData {
 			(g) => g.rendererId === rendererId && isEqual(g.renderTarget, renderTarget) && g.graphicId === graphicId
 		)
 		return instances.length > 0 ? instances[instances.length - 1].graphicInstanceId : undefined
+	}
+
+	public hasRenderer(rendererId: string | undefined): boolean {
+		if (!rendererId || rendererId === PRELIMINARY_RENDERER_ID) return false
+		return this.renderersList.some((r) => r.id === rendererId)
+	}
+
+	public isRendererMissing(rendererId: string | undefined): boolean {
+		if (!rendererId || rendererId === PRELIMINARY_RENDERER_ID) return true
+		if (this.connectedStatus === 'Initializing') return false
+		return !this.renderersList.some((r) => r.id === rendererId)
 	}
 
 	graphicsInstanceMapKey(entry: GraphicsInstanceMapEntry): string {

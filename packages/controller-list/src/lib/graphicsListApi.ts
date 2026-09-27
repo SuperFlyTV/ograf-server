@@ -236,10 +236,14 @@ class GraphicsListAPIClass {
 					const is404 =
 						res?.status === 404 ||
 						res?.content?.statusCode === 404 ||
-						JSON.stringify(res?.content || '').toLowerCase().includes('graphicinstance not found')
+						JSON.stringify(res?.content || '')
+							.toLowerCase()
+							.includes('graphicinstance not found')
 
 					if (is404) {
-						console.log(`Play failed with 404 for item ${item.id} (GraphicInstance not found on Renderer). Auto-load is enabled: retrying via load and play...`)
+						console.log(
+							`Play failed with 404 for item ${item.id} (GraphicInstance not found on Renderer). Auto-load is enabled: retrying via load and play...`
+						)
 						graphicsListStore.updateItemData(item.id, { graphicInstanceId: undefined })
 						await this.performAction(item, 'loadplay')
 						return

@@ -177,7 +177,12 @@ class GraphicsList {
 				selectedRendererId: appSettingsStore.getSelectedRendererId(),
 			}),
 			({ isInitialized, renderersCount, selectedRendererId }) => {
-				if (isInitialized && renderersCount > 0 && selectedRendererId && selectedRendererId !== PRELIMINARY_RENDERER_ID) {
+				if (
+					isInitialized &&
+					renderersCount > 0 &&
+					selectedRendererId &&
+					selectedRendererId !== PRELIMINARY_RENDERER_ID
+				) {
 					void this.migratePreliminaryRenderer(selectedRendererId)
 				}
 			}
@@ -1696,7 +1701,8 @@ class GraphicsList {
 							}
 							if (
 								item.rendererId === targetRendererId &&
-								(!item.renderTarget || (typeof item.renderTarget === 'object' && Object.keys(item.renderTarget).length === 0)) &&
+								(!item.renderTarget ||
+									(typeof item.renderTarget === 'object' && Object.keys(item.renderTarget).length === 0)) &&
 								defaultTarget !== undefined
 							) {
 								item.renderTarget = clone(defaultTarget)
@@ -1710,7 +1716,8 @@ class GraphicsList {
 						}
 						if (
 							entry.rendererId === targetRendererId &&
-							(!entry.renderTarget || (typeof entry.renderTarget === 'object' && Object.keys(entry.renderTarget).length === 0)) &&
+							(!entry.renderTarget ||
+								(typeof entry.renderTarget === 'object' && Object.keys(entry.renderTarget).length === 0)) &&
 							defaultTarget !== undefined
 						) {
 							entry.renderTarget = clone(defaultTarget)
