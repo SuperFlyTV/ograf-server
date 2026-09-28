@@ -15,7 +15,10 @@ export class GraphicsStoreNS {
 	private checkInterVal: NodeJS.Timeout | undefined = undefined
 	private destroyed = false
 
-	constructor(private folderPath: string) {
+	constructor(
+		private namespaceId: string,
+		private folderPath: string
+	) {
 		// Ensure the directory exists
 	}
 	public async init(): Promise<void> {
@@ -35,24 +38,6 @@ export class GraphicsStoreNS {
 	destroy(): void {
 		this.destroyed = true
 		if (this.checkInterVal !== undefined) clearInterval(this.checkInterVal)
-	}
-	/** Find a manifest file in a folder */
-	private async findManifestFile(graphicsFolder: string): Promise<string> {
-		const files = await fs.promises.readdir(graphicsFolder, {
-			withFileTypes: true,
-		})
-		for (const file of files) {
-			if (
-				file.isFile() &&
-				(file.name.endsWith('.ograf.json') || // Current v1 requirement, as of 2025-07-13
-					file.name.endsWith('.ograf') || // File name from 2025-06-13 to 2025-07-13
-					file.name === 'manifest.json') // Legacy, initial manifest file name
-			) {
-				return path.join(graphicsFolder, file.name)
-			}
-		}
-
-		throw new Error(`No OGraf manifest found in folder ${graphicsFolder}`)
 	}
 	async listGraphics(config: ConfigOptions): Promise<ServerApi.components['schemas']['GraphicListInfo'][]> {
 		const graphics: ServerApi.components['schemas']['GraphicListInfo'][] = []
@@ -103,9 +88,24 @@ export class GraphicsStoreNS {
 			return undefined
 		}
 
-		const manifestFilePath = await this.findManifestFile(fullFolderPath)
+		const manifestFilePath = path.join(fullFolderPath, this.manifestFilePath)
 
-		const pStat = fs.promises.stat(manifestFilePath)
+		if (!(await this.fileExists(manifestFilePath))) {
+			// Before we bail on this one, we'll try to do a migration of the folder first:
+			const migrated = await this.migrateFolder(fullFolderPath, id)
+			if (migrated) {
+				// Check again:
+				if (!(await this.fileExists(manifestFilePath))) {
+					console.error(`getGraphicInfo: Manifest file not found: "${manifestFilePath}", even after migration`)
+					return undefined
+				}
+			} else {
+				console.error(`getGraphicInfo: Manifest file not found: "${manifestFilePath}"`)
+				return undefined
+			}
+		}
+
+		const stat = await fs.promises.stat(manifestFilePath)
 
 		const manifest = JSON.parse(await fs.promises.readFile(manifestFilePath, 'utf8')) as GraphicsManifest
 
@@ -118,7 +118,6 @@ export class GraphicsStoreNS {
 		const url = getRootUrl() + getFullUrl(config, `/serverApi/internal/graphics/${o.id}/${o.version}/`)
 		const files = await this.listAllFiles(fullFolderPath)
 
-		const stat = await pStat
 		return {
 			graphic: manifest as any, // the types don't exactly match, due to differences in generation
 			metadata: {
@@ -232,7 +231,7 @@ export class GraphicsStoreNS {
 
 		const tempZipPath = file.path
 
-		const decompressPath = path.resolve('tmpGraphic')
+		const decompressPath = path.resolve(`tmpGraphic-${this.namespaceId}`)
 
 		const cleanup = async () => {
 			try {
@@ -649,30 +648,155 @@ export class GraphicsStoreNS {
 
 				// Find manifest in folder:
 
-				const manifestFilePath = await this.findManifestFile(oldFullFolderPath)
+				// First, check if our manifest.json-file is there:
+				const manifests: GraphicsManifest[] = []
+				{
+					const manifestFilePath = path.join(oldFullFolderPath, this.manifestFilePath)
+					if (await this.fileExists(manifestFilePath)) {
+						manifests.push(JSON.parse(await fs.promises.readFile(manifestFilePath, 'utf8')) as GraphicsManifest)
+					}
+				}
+				// If out manifest.json file is not there, we can use the other manifest files:
+				if (manifests.length === 0) {
+					// Look for manifest files in the folder:
+					const results = await this.findManifestFilesInFolder(oldFullFolderPath)
 
-				const manifest = JSON.parse(await fs.promises.readFile(manifestFilePath, 'utf8')) as GraphicsManifest
+					for (const result of results) {
+						manifests.push(result.manifest)
+					}
+				}
+				if (manifests.length === 0) {
+					throw new Error(`No OGraf manifest found in folder "${oldFullFolderPath}"`)
+				}
 
 				// Rename the folder using the manifest id:
-				const newFolderName = await this.toFileName(manifest.id, 0) // Just pick version 0
 
-				const newFullFolderPath = path.join(this.folderPath, newFolderName)
+				let dontRemoveOldFolder = false
 
-				if (await this.fileExists(newFullFolderPath)) {
-					// If there already is a new one, we'll just remove the old one:
+				// If there are multiple manifest files, we'll copy it to multiple folders:
+				for (const manifest of manifests) {
+					const newFolderName = await this.toFileName(manifest.id, 0) // Just pick version 0
+					const newFullFolderPath = path.join(this.folderPath, newFolderName)
+
+					if (newFullFolderPath !== oldFullFolderPath) {
+						if (await this.fileExists(newFullFolderPath)) {
+							// If there already is a new one, we won't copy the old one.
+
+							console.debug(
+								`There already exists a folder at "${newFullFolderPath}", skipping copy of old folder "${oldFullFolderPath}"`
+							)
+						} else {
+							// Copy to new folder:
+							await fs.promises.cp(oldFullFolderPath, newFullFolderPath, { recursive: true })
+
+							console.debug(`Copy old folder to new folder: "${oldFullFolderPath}" -> "${newFullFolderPath}"`)
+						}
+					} else {
+						dontRemoveOldFolder = true
+					}
+				}
+
+				if (!dontRemoveOldFolder) {
 					await fs.promises.rm(oldFullFolderPath, { recursive: true })
 
-					console.debug(`Removed old folder "${oldFullFolderPath}" because a new one already exists`)
-				} else {
-					await fs.promises.rename(oldFullFolderPath, newFullFolderPath)
-
-					console.debug(`Migrated old folder to new folder "${oldFullFolderPath}" -> "${newFullFolderPath}"`)
+					console.debug(`Removed invalid folder "${oldFullFolderPath}"`)
 				}
 			} catch (err) {
 				if (`${err}`.match(/No OGraf manifest found/)) continue
 				else throw err
 			}
 		}
+
+		// Ensure that we have our internal manifest file for all graphics folders:
+		for (const folder of await this.listFolders(false)) {
+			try {
+				if (!this.isFileNameValid(folder)) continue // At this point, the folder name should be valid
+
+				const { id } = this.fromFileName(folder)
+
+				const fullFolderPath = path.join(this.folderPath, folder)
+
+				await this.migrateFolder(fullFolderPath, id)
+			} catch (err) {
+				if (`${err}`.match(/No OGraf manifest found/)) continue
+				else throw err
+			}
+		}
+	}
+
+	/**
+	 * Migrates a graphics folder to ensure it contains the correct internal manifest file.
+	 * @returns true if any files changed
+	 */
+	private async migrateFolder(fullFolderPath: string, id: string): Promise<boolean> {
+		try {
+			const manifestFilePath = path.join(fullFolderPath, this.manifestFilePath)
+
+			// Find manifest in folder:
+
+			let manifest: GraphicsManifest | undefined = undefined
+			// First, check if our manifest.json-file is there?
+			{
+				if (await this.fileExists(manifestFilePath)) {
+					manifest = JSON.parse(await fs.promises.readFile(manifestFilePath, 'utf8')) as GraphicsManifest
+
+					if (manifest.id == id)
+						return false // All good, no need to do anything else
+					else manifest = undefined
+				}
+			}
+
+			if (!manifest) {
+				// Look for a manifest file in the folder that matches the expected id:
+				const results = await this.findManifestFilesInFolder(fullFolderPath)
+				for (const result of results) {
+					if (result.manifest.id === id) {
+						manifest = result.manifest
+						break
+					}
+				}
+			}
+			if (!manifest) {
+				console.error(`No OGraf manifest found in folder "${fullFolderPath}" matching the id "${id}"`)
+
+				throw new Error(`No OGraf manifest found in folder "${fullFolderPath}"`)
+			}
+
+			// Write the internal manifest file:
+			await fs.promises.writeFile(manifestFilePath, JSON.stringify(manifest, null, 2))
+			console.debug(`Written internal manifest file: "${manifestFilePath}"`)
+			return true
+		} catch (err) {
+			if (`${err}`.match(/No OGraf manifest found/)) return false
+			else throw err
+		}
+	}
+	private async findManifestFilesInFolder(
+		folderPath: string
+	): Promise<{ manifestFilePath: string; manifest: GraphicsManifest }[]> {
+		const results: { manifestFilePath: string; manifest: GraphicsManifest }[] = []
+
+		const files = await fs.promises.readdir(folderPath, {
+			withFileTypes: true,
+		})
+		for (const file of files) {
+			if (
+				file.isFile() &&
+				(file.name.endsWith('.ograf.json') || // Current v1 requirement, as of 2025-07-13
+					file.name.endsWith('.ograf') || // File name from 2025-06-13 to 2025-07-13
+					file.name === 'manifest.json') // Legacy, initial manifest file name
+			) {
+				const manifestFilePath = path.join(folderPath, file.name)
+
+				const manifest = JSON.parse(await fs.promises.readFile(manifestFilePath, 'utf8')) as GraphicsManifest
+
+				results.push({
+					manifestFilePath,
+					manifest,
+				})
+			}
+		}
+		return results
 	}
 
 	/** Returns true if a graphic exists (and is not marked for removal) */
@@ -683,7 +807,7 @@ export class GraphicsStoreNS {
 		return await this.fileExists(removalFilePath)
 	}
 	private async isManifestFile(filePath: string, fileContents: Buffer | string): Promise<boolean> {
-		if (filePath.endsWith('.ograf')) return true
+		if (!filePath.endsWith('.ograf.json')) return false
 
 		// Use content to determine which files are manifest files:
 		//{

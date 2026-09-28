@@ -66,7 +66,7 @@ export class NS {
 			? this.accountStore.graphicsFolderPath(namespaceId)
 			: path.resolve('./localGraphicsStorage')
 
-		this.graphicStore = new GraphicsStoreNS(folderPath)
+		this.graphicStore = new GraphicsStoreNS(namespaceId, folderPath)
 		this.rendererManager = new RendererManagerNS(namespaceId)
 	}
 	public async init(): Promise<void> {
