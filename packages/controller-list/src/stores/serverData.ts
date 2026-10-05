@@ -4,6 +4,7 @@ import * as OGraf from 'ograf'
 import { appSettingsStore, PRELIMINARY_RENDERER_ID } from './appSettings.js'
 import { graphicsListStore } from './graphicsList.js'
 import { isEqual } from '../lib/lib.js'
+import { UserInterfaceComponentInfo, loadGraphicUserInterfaces, registerCustomGuiComponent } from '@ograf-server/shared'
 
 class ServerData {
 	private ografApi = OgrafApi.getSingleton()
@@ -26,6 +27,7 @@ class ServerData {
 		}
 	>()
 	public graphicsInstanceMap = new ObservableMap<string, GraphicsInstanceMapEntry>()
+	public customGuisMap = observable.map<string, UserInterfaceComponentInfo[]>(undefined, { deep: false })
 
 	public get severIsOurs(): boolean {
 		return this.serverInfo?.name === 'Simple OGraf Server'
@@ -63,31 +65,33 @@ class ServerData {
 				this.triggerReloadData('renderer')
 			}
 		)
-		reaction(
-			() => graphicsListStore.items,
-			() => {
-				this.triggerReloadData('graphic')
-			}
-		)
+		queueMicrotask(() => {
+			reaction(
+				() => graphicsListStore.items,
+				() => {
+					this.triggerReloadData('graphic')
+				}
+			)
 
-		autorun(() => {
-			if (this.renderersList.length > 0) {
-				const renderer = this.renderersList[0]
-				if (
-					!appSettingsStore.selectedRendererId ||
-					appSettingsStore.selectedRendererId === PRELIMINARY_RENDERER_ID ||
-					!this.renderersList.find((r) => r.id === appSettingsStore.selectedRendererId)
-				) {
-					// Select the first renderer if none is selected or selected doesn't exist anymore:
-					runInAction(() => {
-						appSettingsStore.selectedRendererId = renderer.id
-					})
+			autorun(() => {
+				if (this.renderersList.length > 0) {
+					const renderer = this.renderersList[0]
+					if (
+						!appSettingsStore.selectedRendererId ||
+						appSettingsStore.selectedRendererId === PRELIMINARY_RENDERER_ID ||
+						!this.renderersList.find((r) => r.id === appSettingsStore.selectedRendererId)
+					) {
+						// Select the first renderer if none is selected or selected doesn't exist anymore:
+						runInAction(() => {
+							appSettingsStore.selectedRendererId = renderer.id
+						})
+					}
+					const selectedId = appSettingsStore.getSelectedRendererId() || renderer.id
+					if (selectedId && selectedId !== PRELIMINARY_RENDERER_ID) {
+						void graphicsListStore.migratePreliminaryRenderer(selectedId)
+					}
 				}
-				const selectedId = appSettingsStore.getSelectedRendererId() || renderer.id
-				if (selectedId && selectedId !== PRELIMINARY_RENDERER_ID) {
-					void graphicsListStore.migratePreliminaryRenderer(selectedId)
-				}
-			}
+			})
 		})
 		// observe(appSettingsStore.serverApiUrl, () => {
 		//   this.triggerReloadData(true);
@@ -268,9 +272,40 @@ class ServerData {
 			const r = await this.ografApi.getGraphic({
 				graphicId: graphicId,
 			})
-			if (r.status === 200) runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
+			if (r.status === 200) {
+				runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
+				void this.loadCustomGuisForGraphic(graphicId)
+			}
 		})
 		return this.graphicsInfo.get(graphicId)
+	}
+	public async loadCustomGuisForGraphic(graphicId: string): Promise<UserInterfaceComponentInfo[]> {
+		const graphicInfo = this.graphicsInfo.get(graphicId)
+		if (!graphicInfo) return []
+
+		const contentUrl = (graphicInfo.metadata as any)?.content?.url
+		const mainFile = graphicInfo.graphic.main || 'graphic.mjs'
+		let moduleUrl: string
+		if (contentUrl) {
+			moduleUrl = new URL(mainFile, contentUrl).href
+		} else {
+			const baseUrl = this.ografApi.baseURL.replace('/ograf/v1', '').replace(/\/+$/, '')
+			moduleUrl = `${baseUrl}/serverApi/internal/graphics/${graphicId}/1/${mainFile}`
+		}
+
+		try {
+			const guis = await loadGraphicUserInterfaces(moduleUrl)
+			for (const gui of guis) {
+				registerCustomGuiComponent(graphicId, gui.id, gui.componentClass)
+			}
+			runInAction(() => {
+				this.customGuisMap.set(graphicId, guis)
+			})
+			return guis
+		} catch (err) {
+			console.error(`Failed to load custom GUIs for graphic ${graphicId}:`, err)
+			return []
+		}
 	}
 	public async loadGraphicsInstances(rendererId: string, renderTarget: unknown, asap: boolean = true) {
 		return await this.doIfEnoughTimeHasPassed(

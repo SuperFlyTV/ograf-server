@@ -3,6 +3,53 @@ import { appSettingsStore } from '../stores/appSettings.js'
 import { graphicsListStore, PlaybackItem } from '../stores/graphicsList.js'
 import { serverDataStore } from '../stores/serverData.js'
 import { isEqual } from './lib.js'
+import { OgrafBridge, getStartEvent, getEndEvent } from '@ograf-server/shared'
+
+let bridgeCmdCounter = 0
+export const customGuiBridgeRegistry = {
+	bridges: new Map<string, Set<OgrafBridge>>(),
+
+	register(itemId: string, bridge: OgrafBridge): void {
+		let set = this.bridges.get(itemId)
+		if (!set) {
+			set = new Set()
+			this.bridges.set(itemId, set)
+		}
+		set.add(bridge)
+	},
+
+	unregister(itemId: string, bridge: OgrafBridge): void {
+		const set = this.bridges.get(itemId)
+		if (set) {
+			set.delete(bridge)
+			if (set.size === 0) this.bridges.delete(itemId)
+		}
+	},
+
+	notifyStart(itemId: string, actionName: string, arg: unknown): string {
+		const commandId = `cmd_${Date.now()}_${++bridgeCmdCounter}`
+		const set = this.bridges.get(itemId)
+		if (set) {
+			for (const bridge of set) {
+				const startEvent = getStartEvent(`${actionName}Start`, commandId, arg)
+				bridge.emit(`${actionName}Start`, startEvent)
+			}
+		}
+		return commandId
+	},
+
+	notifyEnd(itemId: string, actionName: string, commandId: string, arg: unknown, result: unknown): void {
+		const set = this.bridges.get(itemId)
+		if (set) {
+			for (const bridge of set) {
+				const endEvent = getEndEvent(`${actionName}End`, commandId, arg, result)
+				bridge.emit(`${actionName}End`, endEvent)
+				const aliasEvent = getEndEvent(actionName, commandId, arg, result)
+				bridge.emit(actionName, aliasEvent)
+			}
+		}
+	},
+}
 
 class GraphicsListAPIClass {
 	private ografApi = OgrafApi.getSingleton()
@@ -129,7 +176,7 @@ class GraphicsListAPIClass {
 		}
 	}
 
-	public async performAction(item: PlaybackItem, actionId: string) {
+	public async performAction(item: PlaybackItem, actionId: string, customParams?: any): Promise<any> {
 		if (!item || !actionId) return
 
 		if (actionId === 'clear' || actionId === 'clearTarget') {
@@ -141,6 +188,35 @@ class GraphicsListAPIClass {
 			await this.clearAll(item.rendererId)
 			return
 		}
+
+		let actionEventName: string
+		let actionArg: any
+		if (actionId === 'play' || actionId === 'loadplay') {
+			actionEventName = 'playAction'
+			actionArg = customParams || (item.customActionData?.['play'] as any) || {}
+		} else if (actionId === 'stop') {
+			actionEventName = 'stopAction'
+			actionArg = customParams || (item.customActionData?.['stop'] as any) || {}
+		} else if (actionId === 'update') {
+			actionEventName = 'updateAction'
+			actionArg = {
+				...((item.customActionData?.['update'] as any) || {}),
+				...(customParams || {}),
+				data: customParams?.data !== undefined ? customParams.data : item.graphicData,
+			}
+		} else if (actionId === 'load') {
+			actionEventName = 'load'
+			actionArg = { data: item.graphicData }
+		} else {
+			actionEventName = 'customAction'
+			actionArg = {
+				id: actionId,
+				payload:
+					customParams?.payload !== undefined ? customParams.payload : (item.customActionData?.[actionId] as any),
+			}
+		}
+
+		const commandId = customGuiBridgeRegistry.notifyStart(item.id, actionEventName, actionArg)
 
 		let graphicInstanceId =
 			item.graphicInstanceId || serverDataStore.getGraphicInstanceId(item.rendererId, item.renderTarget, item.graphicId)
@@ -181,7 +257,14 @@ class GraphicsListAPIClass {
 
 				if (this.isBadResponse(loadResult)) {
 					this.notifyBadResponse(`Load "${itemName}"`, loadResult)
-					return
+					customGuiBridgeRegistry.notifyEnd(
+						item.id,
+						actionEventName,
+						commandId,
+						actionArg,
+						loadResult?.content || { error: 'Load failed' }
+					)
+					return loadResult?.content
 				}
 
 				if (loadResult.status === 200) {
@@ -203,7 +286,8 @@ class GraphicsListAPIClass {
 				}
 
 				if (actionId === 'load') {
-					return
+					customGuiBridgeRegistry.notifyEnd(item.id, actionEventName, commandId, actionArg, loadResult.content)
+					return loadResult.content
 				}
 			}
 
@@ -218,7 +302,9 @@ class GraphicsListAPIClass {
 					`Cannot perform action ${actionId} for item ${item.id}: No graphicInstanceId available (item is not loaded)`
 				)
 				graphicsListStore.showNotification(`Cannot ${actionId} "${itemName}": Graphic is not loaded`, 'warning')
-				return
+				const notLoadedError = { error: `Cannot ${actionId} "${itemName}": Graphic is not loaded` }
+				customGuiBridgeRegistry.notifyEnd(item.id, actionEventName, commandId, actionArg, notLoadedError)
+				return notLoadedError
 			}
 
 			console.log(`Performing action ${actionId} for item ${item.id} (graphicInstanceId: ${graphicInstanceId})`)
@@ -229,7 +315,7 @@ class GraphicsListAPIClass {
 				res = await this.ografApi.renderTargetGraphicPlay(pathParams, {
 					renderTarget: item.renderTarget,
 					graphicInstanceId: graphicInstanceId,
-					params: (item.customActionData?.[actionId] as any) || {},
+					params: customParams || (item.customActionData?.[actionId] as any) || {},
 				})
 
 				if (this.isBadResponse(res) && appSettingsStore.autoLoad) {
@@ -245,15 +331,14 @@ class GraphicsListAPIClass {
 							`Play failed with 404 for item ${item.id} (GraphicInstance not found on Renderer). Auto-load is enabled: retrying via load and play...`
 						)
 						graphicsListStore.updateItemData(item.id, { graphicInstanceId: undefined })
-						await this.performAction(item, 'loadplay')
-						return
+						return await this.performAction(item, 'loadplay', customParams)
 					}
 				}
 			} else if (actionId === 'stop') {
 				res = await this.ografApi.renderTargetGraphicStop(pathParams, {
 					renderTarget: item.renderTarget,
 					graphicInstanceId: graphicInstanceId,
-					params: (item.customActionData?.[actionId] as any) || {},
+					params: customParams || (item.customActionData?.[actionId] as any) || {},
 				})
 			} else if (actionId === 'update') {
 				res = await this.ografApi.renderTargetGraphicUpdate(pathParams, {
@@ -261,7 +346,8 @@ class GraphicsListAPIClass {
 					graphicInstanceId: graphicInstanceId,
 					params: {
 						...((item.customActionData?.[actionId] as any) || {}),
-						data: item.graphicData,
+						...(customParams || {}),
+						data: customParams?.data !== undefined ? customParams.data : item.graphicData,
 					},
 				})
 			} else {
@@ -274,7 +360,8 @@ class GraphicsListAPIClass {
 						renderTarget: item.renderTarget,
 						graphicInstanceId: graphicInstanceId,
 						params: {
-							payload: item.customActionData?.[actionId] as any,
+							payload:
+								customParams?.payload !== undefined ? customParams.payload : (item.customActionData?.[actionId] as any),
 						},
 					}
 				)
@@ -283,9 +370,16 @@ class GraphicsListAPIClass {
 			if (this.isBadResponse(res)) {
 				this.notifyBadResponse(`${actionId.charAt(0).toUpperCase() + actionId.slice(1)} "${itemName}"`, res)
 			}
+
+			customGuiBridgeRegistry.notifyEnd(item.id, actionEventName, commandId, actionArg, res?.content)
+			return res?.content
 		} catch (error) {
 			console.error(`Failed to perform action ${actionId} on item ${item.id}`, error)
 			this.notifyBadResponse(`${actionId.charAt(0).toUpperCase() + actionId.slice(1)} "${itemName}"`, error)
+			customGuiBridgeRegistry.notifyEnd(item.id, actionEventName, commandId, actionArg, {
+				error: error instanceof Error ? error.message : String(error),
+			})
+			throw error
 		}
 	}
 

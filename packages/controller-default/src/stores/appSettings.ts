@@ -5,6 +5,17 @@ import * as OGraf from 'ograf'
 import { getDefaultDataFromSchema } from 'ograf-form'
 import { clone } from '../lib/lib.js'
 import { getDefaultServerUrl, getNameSpaceId } from '../lib/namespace.js'
+import { UserInterfaceComponentInfo, registerCustomGuiComponent } from '@ograf-server/shared'
+
+export interface OpenCustomGuiDialog {
+	id: string
+	graphicKey: string
+	componentId: string
+	graphicId: string
+	name: string
+	description?: string
+	componentClass: CustomElementConstructor
+}
 
 class AppSettings {
 	private LOCALSTORAGE_ID = 'appSettings' + getNameSpaceId()
@@ -15,6 +26,7 @@ class AppSettings {
 
 	private ografApi = OgrafApi.getSingleton()
 	public queuedGraphics = new ObservableMap<string, QueuedGraphic>()
+	public openCustomGuis = observable.map<string, OpenCustomGuiDialog>(undefined, { deep: false })
 	constructor() {
 		// Load any stored states
 		const stateToLoadStr: string | null = window.localStorage.getItem(this.LOCALSTORAGE_ID)
@@ -35,6 +47,7 @@ class AppSettings {
 			selectedRendererId: observable,
 			serverApiUrl: observable,
 			serverAuthorization: observable,
+			openCustomGuis: observable.shallow,
 		})
 
 		// Store any changes to localhost:
@@ -84,8 +97,31 @@ class AppSettings {
 			customActionData: {},
 		})
 	})
+	public openCustomGui = action((graphicKey: string, component: UserInterfaceComponentInfo) => {
+		const dialogId = `${graphicKey}__${component.id}`
+		const q = this.queuedGraphics.get(graphicKey)
+		if (!q) return
+		registerCustomGuiComponent(q.graphicId, component.id, component.componentClass)
+		this.openCustomGuis.set(dialogId, {
+			id: dialogId,
+			graphicKey,
+			componentId: component.id,
+			graphicId: q.graphicId,
+			name: component.name,
+			description: component.description,
+			componentClass: component.componentClass,
+		})
+	})
+	public closeCustomGui = action((dialogId: string) => {
+		this.openCustomGuis.delete(dialogId)
+	})
 	public removeGraphic = action((key: string) => {
 		this.queuedGraphics.delete(key)
+		for (const [dialogId, dialog] of this.openCustomGuis.entries()) {
+			if (dialog.graphicKey === key) {
+				this.openCustomGuis.delete(dialogId)
+			}
+		}
 	})
 	public clearStored() {
 		window.localStorage.removeItem(this.LOCALSTORAGE_ID)

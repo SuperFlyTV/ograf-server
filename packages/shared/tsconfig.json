@@ -19,6 +19,7 @@
     },
     "types": [],
     "lib": [
+      "DOM",
       "ES2024"
     ],
     "skipLibCheck": true

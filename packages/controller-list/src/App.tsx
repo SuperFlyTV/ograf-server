@@ -10,6 +10,7 @@ import useMediaQuery from '@mui/material/useMediaQuery'
 import { Header } from './components/Header.js'
 import { SettingsPage } from './pages/SettingsPage.js'
 import { ControllerPage } from './pages/ControllerPage.js'
+import { CustomGuiDialogsContainer } from './components/CustomGuiDialog.js'
 import { appSettingsStore } from './stores/appSettings.js'
 
 export const App: React.FC = observer(() => {
@@ -108,6 +109,7 @@ export const App: React.FC = observer(() => {
 			</AppBar>
 
 			{page === 'settings' ? <SettingsPage /> : <ControllerPage />}
+			<CustomGuiDialogsContainer />
 		</ThemeProvider>
 	)
 })

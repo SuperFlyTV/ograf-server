@@ -20,6 +20,7 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen'
 import EditIcon from '@mui/icons-material/Edit'
 import FlashOnIcon from '@mui/icons-material/FlashOn'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 
 import { graphicsListStore } from '../stores/graphicsList.js'
 import { serverDataStore } from '../stores/serverData.js'
@@ -157,6 +158,35 @@ export const ContextMenu: React.FC<{
 			)}
 
 			{(isItemContext || isGroupContext) && <Divider />}
+
+			{isItemContext &&
+				state.itemId &&
+				(() => {
+					const targetItem = graphicsListStore.getItem(state.itemId)
+					if (!targetItem) return null
+					const customGuis = serverDataStore.customGuisMap.get(targetItem.graphicId) || []
+					if (customGuis.length === 0) return null
+
+					return (
+						<>
+							{customGuis.map((gui) => (
+								<MenuItem
+									key={gui.id}
+									onClick={() => {
+										onClose()
+										graphicsListStore.openCustomGui(targetItem.id, gui)
+									}}
+								>
+									<ListItemIcon>
+										<OpenInNewIcon fontSize="small" color="primary" />
+									</ListItemIcon>
+									<ListItemText>Open {gui.name}</ListItemText>
+								</MenuItem>
+							))}
+							<Divider />
+						</>
+					)
+				})()}
 
 			{(isItemContext || isGroupContext) && (
 				<MenuItem

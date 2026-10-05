@@ -28,6 +28,7 @@ import DeleteIcon from '@mui/icons-material/Delete'
 import EditIcon from '@mui/icons-material/Edit'
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep'
 import WarningAmberIcon from '@mui/icons-material/WarningAmber'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 
 import { getDefaultDataFromSchema } from 'ograf-form'
 import { OGrafForm } from './OGrafForm.js'
@@ -699,6 +700,42 @@ export const EditPanel = observer(function EditPanel() {
 						</Stack>
 					</CardContent>
 				</Card>
+
+				{/* Custom Controllers Card (only if custom user interface web components exist) */}
+				{(() => {
+					const customGuis = serverDataStore.customGuisMap.get(singleSelectedItem.graphicId)
+					if (!customGuis && !serverDataStore.customGuisMap.has(singleSelectedItem.graphicId)) {
+						void serverDataStore.loadCustomGuisForGraphic(singleSelectedItem.graphicId)
+					}
+					if (!customGuis || customGuis.length === 0) return null
+
+					return (
+						<Card sx={{ mb: 2 }} variant="outlined">
+							<CardContent>
+								<Typography variant="subtitle2" gutterBottom fontWeight={600}>
+									Custom Controllers
+								</Typography>
+								<Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap sx={{ mt: 1 }}>
+									{customGuis.map((gui) => (
+										<Tooltip key={gui.id} title={gui.description || `Open ${gui.name}`}>
+											<Button
+												size="small"
+												variant="outlined"
+												color="primary"
+												startIcon={<OpenInNewIcon />}
+												onClick={() => {
+													graphicsListStore.openCustomGui(singleSelectedItem.id, gui)
+												}}
+											>
+												Open {gui.name}
+											</Button>
+										</Tooltip>
+									))}
+								</Stack>
+							</CardContent>
+						</Card>
+					)
+				})()}
 
 				{/* Custom Actions Card (only if custom actions exist) */}
 				{(() => {

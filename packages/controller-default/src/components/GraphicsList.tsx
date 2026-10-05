@@ -14,7 +14,10 @@ import Close from '@mui/icons-material/Close'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import IconButton from '@mui/material/IconButton'
+import Tooltip from '@mui/material/Tooltip'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import { runInAction, toJS } from 'mobx'
+import { CustomGuiDialogsContainer, defaultCustomGuiBridgeRegistry } from './CustomGuiDialog.js'
 
 export const GraphicsList: React.FC = observer(() => {
 	const entries = Array.from(appSettingsStore.queuedGraphics.entries()).sort((a, b) => {
@@ -33,6 +36,7 @@ export const GraphicsList: React.FC = observer(() => {
 					entries.map(([key]) => <QueuedGraphicItem key={key} graphicKey={key} />)
 				)}
 			</>
+			<CustomGuiDialogsContainer />
 		</Box>
 	)
 })
@@ -142,11 +146,47 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 						{/* {JSON.stringify(queuedGraphic.graphicData)} */}
 					</Box>
 				)}
+				{(() => {
+					const customGuis = serverDataStore.customGuisMap.get(queuedGraphic.graphicId)
+					if (!customGuis && !serverDataStore.customGuisMap.has(queuedGraphic.graphicId)) {
+						void serverDataStore.loadCustomGuisForGraphic(queuedGraphic.graphicId)
+					}
+					if (!customGuis || customGuis.length === 0) return null
+
+					return (
+						<Box sx={{ mt: 1.5, mb: 1.5 }}>
+							<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+								Custom Controllers
+							</Typography>
+							<Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 0.5 }}>
+								{customGuis.map((gui) => (
+									<Tooltip key={gui.id} title={gui.description || `Open ${gui.name}`}>
+										<Button
+											size="small"
+											variant="outlined"
+											color="primary"
+											startIcon={<OpenInNewIcon />}
+											onClick={() => {
+												appSettingsStore.openCustomGui(props.graphicKey, gui)
+											}}
+										>
+											Open {gui.name}
+										</Button>
+									</Tooltip>
+								))}
+							</Box>
+						</Box>
+					)
+				})()}
+
 				<Button
 					variant="contained"
 					disabled={!queuedGraphic.renderTarget}
 					onClick={() => {
 						if (!renderer) return
+						const cmdId = defaultCustomGuiBridgeRegistry.notifyStart(props.graphicKey, 'load', {
+							data: queuedGraphic.graphicData,
+						})
 						ografApi
 							.renderTargetGraphicLoad(
 								{ rendererId: renderer.id },
@@ -160,6 +200,13 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 							)
 							.then((r) => {
 								if (r.status === 200) {
+									defaultCustomGuiBridgeRegistry.notifyEnd(
+										props.graphicKey,
+										'load',
+										cmdId,
+										{ data: queuedGraphic.graphicData },
+										r.content
+									)
 									serverDataStore.addToGraphicsInstanceMap({
 										rendererId: renderer.id,
 										renderTarget: queuedGraphic.renderTarget,
@@ -168,9 +215,26 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 									})
 
 									serverDataStore.triggerReloadData(`renderTarget::${JSON.stringify(queuedGraphic.renderTarget)}`)
+								} else {
+									defaultCustomGuiBridgeRegistry.notifyEnd(
+										props.graphicKey,
+										'load',
+										cmdId,
+										{ data: queuedGraphic.graphicData },
+										r.content
+									)
 								}
 							})
-							.catch(console.error)
+							.catch((err) => {
+								defaultCustomGuiBridgeRegistry.notifyEnd(
+									props.graphicKey,
+									'load',
+									cmdId,
+									{ data: queuedGraphic.graphicData },
+									{ error: String(err) }
+								)
+								console.error(err)
+							})
 					}}
 				>
 					Load
@@ -188,6 +252,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 									onClick={() => {
 										if (!renderer) return
 
+										const cmdId = defaultCustomGuiBridgeRegistry.notifyStart(props.graphicKey, 'playAction', {})
 										ografApi
 											.renderTargetGraphicPlay(
 												{ rendererId: renderer.id },
@@ -201,7 +266,19 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 													},
 												}
 											)
-											.catch(console.error)
+											.then((r) => {
+												defaultCustomGuiBridgeRegistry.notifyEnd(props.graphicKey, 'playAction', cmdId, {}, r.content)
+											})
+											.catch((err) => {
+												defaultCustomGuiBridgeRegistry.notifyEnd(
+													props.graphicKey,
+													'playAction',
+													cmdId,
+													{},
+													{ error: String(err) }
+												)
+												console.error(err)
+											})
 									}}
 								>
 									Play
@@ -211,6 +288,12 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 									disabled={gi.disabled || !queuedGraphic.renderTarget}
 									onClick={() => {
 										if (!renderer) return
+										const updateArg = { data: toJS(queuedGraphic.graphicData) }
+										const cmdId = defaultCustomGuiBridgeRegistry.notifyStart(
+											props.graphicKey,
+											'updateAction',
+											updateArg
+										)
 										ografApi
 											.renderTargetGraphicUpdate(
 												{ rendererId: renderer.id },
@@ -223,7 +306,21 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 													},
 												}
 											)
-											.catch(console.error)
+											.then((r) => {
+												defaultCustomGuiBridgeRegistry.notifyEnd(
+													props.graphicKey,
+													'updateAction',
+													cmdId,
+													updateArg,
+													r.content
+												)
+											})
+											.catch((err) => {
+												defaultCustomGuiBridgeRegistry.notifyEnd(props.graphicKey, 'updateAction', cmdId, updateArg, {
+													error: String(err),
+												})
+												console.error(err)
+											})
 									}}
 								>
 									Update
@@ -233,6 +330,7 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 									disabled={gi.disabled || !queuedGraphic.renderTarget}
 									onClick={() => {
 										if (!renderer) return
+										const cmdId = defaultCustomGuiBridgeRegistry.notifyStart(props.graphicKey, 'stopAction', {})
 										ografApi
 											.renderTargetGraphicStop(
 												{ rendererId: renderer.id },
@@ -244,7 +342,19 @@ export const QueuedGraphicItem = observer((props: { graphicKey: string }) => {
 													},
 												}
 											)
-											.catch(console.error)
+											.then((r) => {
+												defaultCustomGuiBridgeRegistry.notifyEnd(props.graphicKey, 'stopAction', cmdId, {}, r.content)
+											})
+											.catch((err) => {
+												defaultCustomGuiBridgeRegistry.notifyEnd(
+													props.graphicKey,
+													'stopAction',
+													cmdId,
+													{},
+													{ error: String(err) }
+												)
+												console.error(err)
+											})
 									}}
 								>
 									Stop

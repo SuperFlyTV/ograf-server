@@ -5,6 +5,17 @@ import { appSettingsStore, PRELIMINARY_RENDERER_ID } from './appSettings.js'
 import { getDefaultDataFromSchema } from 'ograf-form'
 import { clone, isEqual } from '../lib/lib.js'
 import { getNameSpaceId } from '../lib/namespace.js'
+import { UserInterfaceComponentInfo, registerCustomGuiComponent } from '@ograf-server/shared'
+
+export interface OpenCustomGuiDialog {
+	id: string
+	itemId: string
+	componentId: string
+	graphicId: string
+	name: string
+	description?: string
+	componentClass: CustomElementConstructor
+}
 
 export interface PlaybackItem {
 	id: string // unique instance ID
@@ -79,6 +90,7 @@ class GraphicsList {
 	public snackbarMessage: string | null = null
 	public snackbarSeverity: SnackbarSeverity = 'info'
 	public isInitialized = false
+	public openCustomGuis = observable.map<string, OpenCustomGuiDialog>(undefined, { deep: false })
 
 	private undoStack: string[] = []
 	private redoStack: string[] = []
@@ -97,6 +109,7 @@ class GraphicsList {
 			snackbarMessage: observable,
 			snackbarSeverity: observable,
 			isInitialized: observable,
+			openCustomGuis: observable.shallow,
 
 			activeTab: computed,
 			items: computed,
@@ -169,24 +182,26 @@ class GraphicsList {
 			}
 		)
 
-		reaction(
-			() => ({
-				isInitialized: this.isInitialized,
-				renderersCount: serverDataStore.renderersList.length,
-				renderersInfoSize: serverDataStore.renderersInfo.size,
-				selectedRendererId: appSettingsStore.getSelectedRendererId(),
-			}),
-			({ isInitialized, renderersCount, selectedRendererId }) => {
-				if (
-					isInitialized &&
-					renderersCount > 0 &&
-					selectedRendererId &&
-					selectedRendererId !== PRELIMINARY_RENDERER_ID
-				) {
-					void this.migratePreliminaryRenderer(selectedRendererId)
+		queueMicrotask(() => {
+			reaction(
+				() => ({
+					isInitialized: this.isInitialized,
+					renderersCount: serverDataStore.renderersList.length,
+					renderersInfoSize: serverDataStore.renderersInfo.size,
+					selectedRendererId: appSettingsStore.getSelectedRendererId(),
+				}),
+				({ isInitialized, renderersCount, selectedRendererId }) => {
+					if (
+						isInitialized &&
+						renderersCount > 0 &&
+						selectedRendererId &&
+						selectedRendererId !== PRELIMINARY_RENDERER_ID
+					) {
+						void this.migratePreliminaryRenderer(selectedRendererId)
+					}
 				}
-			}
-		)
+			)
+		})
 
 		this.init().catch((e) => console.error('GraphicsList init failed', e))
 	}
@@ -487,6 +502,10 @@ class GraphicsList {
 	public get selectedItem(): PlaybackItem | undefined {
 		const id = this.selectedItemId
 		if (!id) return undefined
+		return this.getItem(id)
+	}
+
+	public getItem(id: string): PlaybackItem | undefined {
 		return this.items.find((i) => i.id === id)
 	}
 
@@ -825,6 +844,13 @@ class GraphicsList {
 
 		if (removed) {
 			this.entries = newList
+			runInAction(() => {
+				for (const [dialogId, dialog] of this.openCustomGuis.entries()) {
+					if (dialog.itemId === id) {
+						this.openCustomGuis.delete(dialogId)
+					}
+				}
+			})
 			dbStore.removeQueuedGraphic(id).catch(console.error)
 			this.saveListOrder().catch(console.error)
 			if (nextSelectId) {
@@ -833,6 +859,30 @@ class GraphicsList {
 				this.clearSelection()
 			}
 		}
+	}
+
+	public openCustomGui(itemId: string, component: UserInterfaceComponentInfo) {
+		const dialogId = `${itemId}__${component.id}`
+		const item = this.getItem(itemId)
+		if (!item) return
+		registerCustomGuiComponent(item.graphicId, component.id, component.componentClass)
+		runInAction(() => {
+			this.openCustomGuis.set(dialogId, {
+				id: dialogId,
+				itemId,
+				componentId: component.id,
+				graphicId: item.graphicId,
+				name: component.name,
+				description: component.description,
+				componentClass: component.componentClass,
+			})
+		})
+	}
+
+	public closeCustomGui(dialogId: string) {
+		runInAction(() => {
+			this.openCustomGuis.delete(dialogId)
+		})
 	}
 
 	public removeSelected() {

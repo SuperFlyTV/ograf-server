@@ -3,6 +3,7 @@ import { OgrafApi } from '../lib/ografApi.js'
 import * as OGraf from 'ograf'
 import { appSettingsStore } from './appSettings.js'
 import { isEqual } from '../lib/lib.js'
+import { UserInterfaceComponentInfo, loadGraphicUserInterfaces, registerCustomGuiComponent } from '@ograf-server/shared'
 
 class ServerData {
 	private ografApi = OgrafApi.getSingleton()
@@ -25,6 +26,7 @@ class ServerData {
 		}
 	>()
 	public graphicsInstanceMap = new ObservableMap<string, GraphicsInstanceMapEntry>()
+	public customGuisMap = observable.map<string, UserInterfaceComponentInfo[]>(undefined, { deep: false })
 
 	public get severIsOurs(): boolean {
 		return this.serverInfo?.name === 'Simple OGraf Server'
@@ -242,8 +244,39 @@ class ServerData {
 			const r = await this.ografApi.getGraphic({
 				graphicId: graphicId,
 			})
-			if (r.status === 200) runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
+			if (r.status === 200) {
+				runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
+				void this.loadCustomGuisForGraphic(graphicId)
+			}
 		})
+	}
+	public async loadCustomGuisForGraphic(graphicId: string): Promise<UserInterfaceComponentInfo[]> {
+		const graphicInfo = this.graphicsInfo.get(graphicId)
+		if (!graphicInfo) return []
+
+		const contentUrl = (graphicInfo.metadata as any)?.content?.url
+		const mainFile = graphicInfo.graphic.main || 'graphic.mjs'
+		let moduleUrl: string
+		if (contentUrl) {
+			moduleUrl = new URL(mainFile, contentUrl).href
+		} else {
+			const baseUrl = this.ografApi.baseURL.replace('/ograf/v1', '').replace(/\/+$/, '')
+			moduleUrl = `${baseUrl}/serverApi/internal/graphics/${graphicId}/1/${mainFile}`
+		}
+
+		try {
+			const guis = await loadGraphicUserInterfaces(moduleUrl)
+			for (const gui of guis) {
+				registerCustomGuiComponent(graphicId, gui.id, gui.componentClass)
+			}
+			runInAction(() => {
+				this.customGuisMap.set(graphicId, guis)
+			})
+			return guis
+		} catch (err) {
+			console.error(`Failed to load custom GUIs for graphic ${graphicId}:`, err)
+			return []
+		}
 	}
 	private async _loadGraphicsInstances(rendererId: string, renderTarget: unknown, asap: boolean) {
 		await this.doIfEnoughTimeHasPassed(
