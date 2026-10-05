@@ -114,14 +114,24 @@ export function getCustomGuiComponentClass(tagName: string): CustomElementConstr
 	return componentClassRegistry.get(tagName)
 }
 
+const customGuiCache = new Map<string, Promise<UserInterfaceComponentInfo[]>>()
+
 export async function loadGraphicUserInterfaces(moduleUrl: string): Promise<UserInterfaceComponentInfo[]> {
-	try {
-		const mod = await import(/* @vite-ignore */ moduleUrl)
-		return findUserInterfaceComponents(mod)
-	} catch (err) {
-		console.error(`Failed to load custom GUI module from ${moduleUrl}:`, err)
-		return []
-	}
+	const existingPromise = customGuiCache.get(moduleUrl)
+	if (existingPromise) return existingPromise
+
+	const loadPromise = (async () => {
+		try {
+			const mod = await import(/* @vite-ignore */ moduleUrl)
+			return findUserInterfaceComponents(mod)
+		} catch (err) {
+			console.error(`Failed to load custom GUI module from ${moduleUrl}:`, err)
+			return []
+		}
+	})()
+
+	customGuiCache.set(moduleUrl, loadPromise)
+	return loadPromise
 }
 
 export interface OgrafBridgeCallbacks {

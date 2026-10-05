@@ -22,6 +22,7 @@ import FlashOnIcon from '@mui/icons-material/FlashOn'
 import CloudUploadIcon from '@mui/icons-material/CloudUpload'
 import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 
+import { observer } from 'mobx-react'
 import { graphicsListStore } from '../stores/graphicsList.js'
 import { serverDataStore } from '../stores/serverData.js'
 import { GraphicsListAPI } from '../lib/graphicsListApi.js'
@@ -40,7 +41,7 @@ export const ContextMenu: React.FC<{
 	onOpenAddGraphicMenu?: (e: React.MouseEvent<HTMLElement>) => void
 	onRenameGroup?: (groupId: string) => void
 	onUploadGraphic?: () => void
-}> = ({ state, onClose, onRenameGroup, onUploadGraphic }) => {
+}> = observer(({ state, onClose, onRenameGroup, onUploadGraphic }) => {
 	if (!state) return null
 
 	const selectedCount = graphicsListStore.selectedIds.length
@@ -164,8 +165,11 @@ export const ContextMenu: React.FC<{
 				(() => {
 					const targetItem = graphicsListStore.getItem(state.itemId)
 					if (!targetItem) return null
-					const customGuis = serverDataStore.customGuisMap.get(targetItem.graphicId) || []
-					if (customGuis.length === 0) return null
+					const customGuis = serverDataStore.customGuisMap.get(targetItem.graphicId)
+					if (!customGuis && !serverDataStore.customGuisMap.has(targetItem.graphicId)) {
+						void serverDataStore.loadCustomGuisForGraphic(targetItem.graphicId)
+					}
+					if (!customGuis || customGuis.length === 0) return null
 
 					return (
 						<>
@@ -375,4 +379,4 @@ export const ContextMenu: React.FC<{
 			)}
 		</Menu>
 	)
-}
+})

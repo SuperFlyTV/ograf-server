@@ -156,6 +156,10 @@ class ServerData {
 					await this.loadGraphic(q.graphicId, typeof asap === 'string' ? asap.includes(`graphic`) : asap)
 				}
 
+				if (!this.customGuisMap.has(q.graphicId)) {
+					void this.loadCustomGuisForGraphic(q.graphicId)
+				}
+
 				if (q.renderTarget && q.rendererId && q.rendererId !== PRELIMINARY_RENDERER_ID) {
 					renderTargetMap.set(`${q.rendererId}::${JSON.stringify(q.renderTarget)}`, {
 						rendererId: q.rendererId,
@@ -274,7 +278,6 @@ class ServerData {
 			})
 			if (r.status === 200) {
 				runInAction(() => mapSetIfNotEqual(this.graphicsInfo, graphicId, r.content))
-				void this.loadCustomGuisForGraphic(graphicId)
 			}
 		})
 		return this.graphicsInfo.get(graphicId)
@@ -285,12 +288,13 @@ class ServerData {
 
 		const contentUrl = (graphicInfo.metadata as any)?.content?.url
 		const mainFile = graphicInfo.graphic.main || 'graphic.mjs'
-		let moduleUrl: string
+		let moduleUrl: string = ''
 		if (contentUrl) {
-			moduleUrl = new URL(mainFile, contentUrl).href
+			const baseUrl = contentUrl.endsWith('/') ? contentUrl : `${contentUrl}/`
+			moduleUrl = new URL(mainFile, baseUrl).href
 		} else {
-			const baseUrl = this.ografApi.baseURL.replace('/ograf/v1', '').replace(/\/+$/, '')
-			moduleUrl = `${baseUrl}/serverApi/internal/graphics/${graphicId}/1/${mainFile}`
+			console.error('No metadata.content.url found for graphic ' + graphicId)
+			return []
 		}
 
 		try {
