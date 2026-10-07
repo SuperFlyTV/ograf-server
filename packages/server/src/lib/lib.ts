@@ -23,9 +23,11 @@ export function getFullUrl(config: ConfigOptions, url: string, baseName = 'api')
 	return `/${baseName}${url}`
 }
 
-export function getRootUrl(): string {
-	let url = process.env.ROOT_URL ?? `http://127.0.0.1:${DEFAULT_PORT}`
+export function getRootUrl(config: ConfigOptions): string {
+	let url = process.env.ROOT_URL ?? `http://127.0.0.1:${getPort(config)}`
 	if (url?.endsWith('/')) url = url.slice(0, -1)
 	return url
 }
-export const DEFAULT_PORT = 8080
+export function getPort(config: ConfigOptions): number {
+	return config.port ?? 8080
+}

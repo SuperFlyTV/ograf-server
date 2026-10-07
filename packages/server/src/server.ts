@@ -10,7 +10,7 @@ import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
 import { AccountStore } from './managers/AccountStore.js'
 import { ConfigOptions } from './config.js'
-import { DEFAULT_PORT, getRootUrl } from './lib/lib.js'
+import { getPort, getRootUrl } from './lib/lib.js'
 
 export async function initializeServer(config: ConfigOptions): Promise<void> {
 	const app = new Koa()
@@ -123,11 +123,11 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 	})
 	setupRendererApi(config, server, namespaces) // WebSocket API (RendererAPI), on the 'upgrade' event
 
-	const PORT = DEFAULT_PORT
-	server.listen(PORT)
+	const port = getPort(config)
+	server.listen(port)
 
-	console.log(`Server running on port ${PORT}`)
-	console.log(`Serving on url \x1b[36m ${getRootUrl()}/\x1b[0m`)
+	console.log(`Server running on port ${port}`)
+	console.log(`Serving on url \x1b[36m ${getRootUrl(config)}/\x1b[0m`)
 }
 
 async function serveFromPath(ctx: Koa.ParameterizedContext, folderPath: string, url: string) {

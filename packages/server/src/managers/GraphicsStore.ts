@@ -116,7 +116,7 @@ export class GraphicsStoreNS {
 		}
 
 		const url =
-			getRootUrl() +
+			getRootUrl(config) +
 			getFullUrl(config, `/serverApi/internal/graphics/${o.id}/${o.version}/`).replace(':namespaceId', this.namespaceId)
 		const files = await this.listAllFiles(fullFolderPath)
 

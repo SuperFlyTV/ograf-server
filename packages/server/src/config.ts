@@ -13,6 +13,12 @@ export const options = defineArguments({
 		default: process.env.NAMESPACE_SETTINGS_NAMESPACE_PATH || undefined,
 		describe: 'Path to folder where to store info about namespaces. If not set, namespaces are disabled.',
 	},
+	port: {
+		type: 'number',
+		default: process.env.PORT || undefined,
+		describe: 'Port of the web server',
+		alias: 'p',
+	},
 	// ografPath: {
 	// 	type: 'string',
 	// 	default: process.env.NAMESPACE_SETTINGS_OGRAF_PATH || undefined,
@@ -22,14 +28,20 @@ export const options = defineArguments({
 
 export interface ConfigOptions {
 	namespacePath: string | undefined
+	port: number | undefined
 	// ografPath: string | undefined
 }
 
 export async function getConfig(): Promise<ConfigOptions> {
 	const argv = await Promise.resolve(yargs(getProcessArgv()).options(options).argv)
 
+	let port =
+		typeof argv.port === 'number' ? argv.port : typeof argv.port === 'string' ? parseInt(argv.port, 10) : undefined
+	if (Number.isNaN(port)) port = undefined
+
 	const config: ConfigOptions = {
 		namespacePath: argv.namespacePath,
+		port: port,
 		// ografPath: argv.ografPath,
 	}
 
