@@ -6,8 +6,8 @@ export function getDefaultServerUrl(baseName = 'api'): string {
 	}
 	{
 		// Using non-namespace mode
-		const m = window.location.pathname.match(/^\/controller\/default/)
-		if (m && m.groups) {
+		const m = window.location.pathname.match(/^\/controller\/list/)
+		if (m) {
 			return `${window.location.origin}/${baseName}`
 		}
 	}
