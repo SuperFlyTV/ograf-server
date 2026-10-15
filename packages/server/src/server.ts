@@ -58,6 +58,8 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 					await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
 				} else if (controllerType === 'list') {
 					await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+				} else if (controllerType === 'grid') {
+					await serveFromPath(ctx, path.resolve('../controller-grid/dist'), subPath)
 				}
 				// <<Add other controllers here later>>
 			}
@@ -87,6 +89,8 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 				await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
 			} else if (controllerType === 'list') {
 				await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+			} else if (controllerType === 'grid') {
+				await serveFromPath(ctx, path.resolve('../controller-grid/dist'), subPath)
 			}
 			// <<Add other controllers here later>>
 		})

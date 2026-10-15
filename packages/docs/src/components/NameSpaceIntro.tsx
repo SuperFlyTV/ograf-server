@@ -63,6 +63,7 @@ export const Introduction: React.FC<{
 	const rendererUrl = `${serverUrl}/renderer/${namespaceId}/default/?name=${encodeURIComponent(rendererName)}&id=${encodeURIComponent(rendererId)}&background=${encodeURIComponent(background)}`
 	const controllerUrl = `${serverUrl}/controller/${namespaceId}/default/`
 	const controllerListUrl = `${serverUrl}/controller/${namespaceId}/list/`
+	const controllerGridUrl = `${serverUrl}/controller/${namespaceId}/grid/`
 
 	return (
 		<Box sx={{ py: 3 }}>
@@ -149,9 +150,13 @@ export const Introduction: React.FC<{
 						<Link href={controllerUrl} target="_blank" rel="noopener noreferrer">
 							Simple Controller
 						</Link>
-						{' or '}
+						{', '}
 						<Link href={controllerListUrl} target="_blank" rel="noopener noreferrer">
 							List Controller
+						</Link>
+						{' or '}
+						<Link href={controllerGridUrl} target="_blank" rel="noopener noreferrer">
+							Grid Controller
 						</Link>
 						)
 					</Typography>
@@ -223,6 +228,10 @@ export const Introduction: React.FC<{
 								Link to List Controller:
 							</Typography>
 							<UrlLink url={controllerListUrl} />
+							<Typography variant="body1" sx={{ mb: 1, mt: 2 }}>
+								Link to Grid Controller:
+							</Typography>
+							<UrlLink url={controllerGridUrl} />
 						</CardContent>
 					</Card>
 				</Grid>

@@ -24,6 +24,7 @@ export const NoNameSpaceIntro: React.FC = () => {
 	const rendererUrl = `${serverUrl}/renderer/default/?name=${encodeURIComponent(rendererName)}&id=${encodeURIComponent(rendererId)}&background=${encodeURIComponent(background)}`
 	const controllerUrl = `${serverUrl}/controller/default/`
 	const controllerListUrl = `${serverUrl}/controller/list/`
+	const controllerGridUrl = `${serverUrl}/controller/grid/`
 
 	return (
 		<Box sx={{ py: 3 }}>
@@ -149,6 +150,10 @@ export const NoNameSpaceIntro: React.FC = () => {
 								Link to List Controller:
 							</Typography>
 							<UrlLink url={controllerListUrl} />
+							<Typography variant="body1" sx={{ mb: 1, mt: 2 }}>
+								Link to Grid Controller:
+							</Typography>
+							<UrlLink url={controllerGridUrl} />
 						</CardContent>
 					</Card>
 				</Grid>
