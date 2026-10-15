@@ -1,5 +1,7 @@
+import { getNameSpaceId } from '../lib/namespace.js'
+
 export class DB {
-	private dbName = 'ograf-controller-list-db'
+	private dbName = 'ograf-controller-list-db-' + getNameSpaceId()
 	private dbVersion = 1
 
 	private db: IDBDatabase | null = null
