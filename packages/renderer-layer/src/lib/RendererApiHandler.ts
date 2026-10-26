@@ -329,7 +329,7 @@ export class RendererApiHandler implements MethodsOnRenderer {
 					},
 					default: this.layersManager.getAllLayers()[0].renderTarget,
 				},
-				// renderCharacteristics?: components["schemas"]["RenderCharacteristics"];
+				renderCharacteristics: this.layersManager.getRenderCharacteristics(),
 				status: {
 					status: 'OK', // OK, WARNING, ERROR
 					// message: ''

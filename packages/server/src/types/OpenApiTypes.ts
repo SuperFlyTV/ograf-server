@@ -103,6 +103,7 @@ export const RenderCharacteristics = z.object({
 		})
 	),
 	frameRate: z.optional(z.number()),
+	accessToPublicInternet: z.optional(z.boolean()),
 })
 
 export const ShallowGDDObjectSchema = z

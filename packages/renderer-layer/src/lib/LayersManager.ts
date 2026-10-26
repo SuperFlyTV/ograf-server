@@ -31,14 +31,15 @@ export class LayersManager {
 		return Object.values<LayerHandler>(this.layers)
 	}
 
-	public getRenderCharacteristics(): OGraf.RenderCharacteristics {
+	public getRenderCharacteristics(): OGraf.RenderCharacteristics &
+		OGraf.ServerApi.components['schemas']['RenderCharacteristics'] {
 		return {
 			// accessToPublicInternet:
 			resolution: {
 				width: window.innerWidth,
 				height: window.innerHeight,
 			},
-			frameRate: this.fps,
+			frameRate: Math.round(this.fps * 100) / 100,
 			accessToPublicInternet: this.isOnline,
 		} satisfies OGraf.RenderCharacteristics
 	}
