@@ -18,10 +18,11 @@ export const NoNameSpaceIntro: React.FC = () => {
 	const [rendererName, setRendererName] = useState('Renderer-window')
 	const [rendererId, setRendererId] = useState('1')
 	const [background, setBackground] = useState('transparent')
+	const [webcam, setWebcam] = useState('')
 
 	const serverUrl = getServerUrl()
 	const ografApiUrl = `${serverUrl}/api/ograf/v1/`
-	const rendererUrl = `${serverUrl}/renderer/default/?name=${encodeURIComponent(rendererName)}&id=${encodeURIComponent(rendererId)}&background=${encodeURIComponent(background)}`
+	const rendererUrl = `${serverUrl}/renderer/default/?name=${encodeURIComponent(rendererName)}&id=${encodeURIComponent(rendererId)}&background=${encodeURIComponent(background)}${background === 'webcam' && webcam ? `&webcam=${encodeURIComponent(webcam)}` : ''}`
 	const controllerUrl = `${serverUrl}/controller/default/`
 	const controllerListUrl = `${serverUrl}/controller/list/`
 	const controllerGridUrl = `${serverUrl}/controller/grid/`
@@ -185,6 +186,7 @@ export const NoNameSpaceIntro: React.FC = () => {
 									>
 										<MenuItem value="transparent">Transparent</MenuItem>
 										<MenuItem value="checkerboard">Checkerboard</MenuItem>
+										<MenuItem value="webcam">Webcam</MenuItem>
 										<MenuItem value="black">Black</MenuItem>
 										<MenuItem value="white">White</MenuItem>
 										<MenuItem value="red">Red</MenuItem>
@@ -192,6 +194,14 @@ export const NoNameSpaceIntro: React.FC = () => {
 										<MenuItem value="blue">Blue</MenuItem>
 									</Select>
 								</FormControl>
+								{background === 'webcam' ? (
+									<TextField
+										label="Webcam (index, name, id, or -1 to list)"
+										value={webcam}
+										onChange={(e) => setWebcam(e.target.value)}
+										fullWidth
+									/>
+								) : null}
 
 								<Box>
 									<Typography variant="body2" sx={{ mb: 1 }}>
