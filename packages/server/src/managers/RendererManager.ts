@@ -22,9 +22,17 @@ export class RendererManagerNS {
 	private rendererInstances = new Set<RendererInstance>()
 	private rendererRegistrations = new Map<string, RendererRegistration>()
 
-	constructor(public readonly namespaceId: string) {}
+	constructor(
+		public readonly namespaceId: string,
+		private onActivity?: () => void
+	) {}
+
+	public touchAccount(): void {
+		this.onActivity?.()
+	}
 
 	public addRenderer(jsonRpcConnection: JSONRPCServerAndClient<void, void>): RendererInstance {
+		this.touchAccount()
 		// const id = RendererInstance.ID()
 		const rendererInstance = new RendererInstance(this, jsonRpcConnection)
 		this.rendererInstances.add(rendererInstance)
@@ -369,6 +377,7 @@ class RendererInstance implements RendererAPI.MethodsOnServer {
 
 	/** Sends a request to the Renderer. Rejects with "Request timeout" if it doesn't answer in time. */
 	private async request(method: string, payload: unknown, timeout = RPC_TIMEOUT): Promise<any> {
+		this.manager.touchAccount()
 		return this.jsonRpcConnection.timeout(timeout).request(method, payload as any)
 	}
 

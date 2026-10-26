@@ -15,10 +15,14 @@ import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
 import Grid from '@mui/material/Grid'
 import Button from '@mui/material/Button'
+import Alert from '@mui/material/Alert'
 import { getServerUrl } from '../lib/lib.js'
 import { RegisterForm } from './RegisterForm.js'
+import { ServerSettings } from '@ograf-server/shared'
 
-export const NameSpaceIntro: React.FC = () => {
+export const NameSpaceIntro: React.FC<{
+	serverSettings: ServerSettings
+}> = ({ serverSettings }) => {
 	const [namespaceId, setNamespaceId] = React.useState<string | null>(null)
 
 	React.useEffect(() => {
@@ -32,6 +36,7 @@ export const NameSpaceIntro: React.FC = () => {
 				{namespaceId ? (
 					<Introduction
 						namespaceId={namespaceId}
+						serverSettings={serverSettings}
 						onReset={() => {
 							setNamespaceId(null)
 							localStorage.removeItem('namespaceId')
@@ -52,8 +57,9 @@ export const NameSpaceIntro: React.FC = () => {
 
 export const Introduction: React.FC<{
 	namespaceId: string
+	serverSettings: ServerSettings
 	onReset: () => void
-}> = ({ namespaceId, onReset }) => {
+}> = ({ namespaceId, serverSettings, onReset }) => {
 	const [rendererName, setRendererName] = useState('Renderer-window')
 	const [rendererId, setRendererId] = useState('1')
 	const [background, setBackground] = useState('transparent')
@@ -179,9 +185,24 @@ export const Introduction: React.FC<{
 				>
 					{namespaceId}
 				</Typography>
-				<Typography variant="h6" sx={{ mt: 2, color: 'warning.main' }}>
-					This is your namespace, don't lose it!
-				</Typography>
+
+				{serverSettings.cleanupGraphics !== undefined && serverSettings.cleanupGraphics > 0 ? (
+					<Alert severity="warning">
+						<Typography variant="body1">
+							This is a temporary namespace, any uploaded graphics will be cleaned up after{' '}
+							{formatDuration(serverSettings.cleanupGraphics)} of inactivity.
+						</Typography>
+					</Alert>
+				) : (
+					<Typography variant="h6" sx={{ mt: 2, color: 'warning.main' }}>
+						This is your namespace, don't lose it!
+					</Typography>
+				)}
+				{serverSettings.infoText && (
+					<Alert severity="info">
+						<Typography component="div" dangerouslySetInnerHTML={{ __html: serverSettings.infoText }} />
+					</Alert>
+				)}
 				<Box sx={{ mt: 2 }}>
 					<Button variant="outlined" color="secondary" onClick={onReset}>
 						Register Another Namespace
@@ -308,4 +329,20 @@ const UrlLink: React.FC<{ url: string }> = ({ url }) => {
 			</Typography>
 		</Typography>
 	)
+}
+
+function formatDuration(seconds: number): string {
+	if (seconds >= 86400 * 2 || (seconds >= 86400 && seconds % 86400 === 0)) {
+		const days = Math.round(seconds / 86400)
+		return `${days} ${days === 1 ? 'day' : 'days'}`
+	}
+	if (seconds >= 3600) {
+		const hours = Math.round(seconds / 3600)
+		return `${hours} ${hours === 1 ? 'hour' : 'hours'}`
+	}
+	if (seconds >= 60) {
+		const minutes = Math.round(seconds / 60)
+		return `${minutes} ${minutes === 1 ? 'minute' : 'minutes'}`
+	}
+	return `${seconds} ${seconds === 1 ? 'second' : 'seconds'}`
 }

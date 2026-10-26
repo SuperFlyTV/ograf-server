@@ -43,7 +43,11 @@ export const MainPage: React.FC = () => {
 								.
 							</Typography>
 						</Box>
-						{serverSettings.data?.namespaceEnabled ? <NameSpaceIntro /> : <NoNameSpaceIntro />}
+						{serverSettings.data?.namespaceEnabled ? (
+							<NameSpaceIntro serverSettings={serverSettings.data} />
+						) : (
+							<NoNameSpaceIntro />
+						)}
 						{serverSettings.error && (
 							<>
 								<Alert severity="error">Error loading server settings: {serverSettings.error.message}</Alert>

@@ -4,8 +4,6 @@ import { RendererManagerNS } from './RendererManager.js'
 import path from 'path'
 
 export class Namespaces {
-	private IDLE_TIMEOUT = 5 * 60 * 1000 // 5 minutes
-
 	private cache = new Map<string, NS>()
 
 	static isValidNamespaceId(namespaceId: string): boolean {
@@ -19,8 +17,9 @@ export class Namespaces {
 		// })
 
 		setInterval(() => {
-			this.cleanUp()
-		}, this.IDLE_TIMEOUT)
+			this.cleanUp().catch(console.error)
+		}, this.accountStore.cleanupIntervalMs)
+		this.cleanUp().catch(console.error)
 	}
 
 	async getNS(namespaceId: string): Promise<NS | undefined> {
@@ -35,7 +34,10 @@ export class Namespaces {
 		if (!Namespaces.isValidNamespaceId(namespaceId)) return undefined
 
 		const cached = this.cache.get(namespaceId)
-		if (cached) return cached
+		if (cached) {
+			await this.accountStore.touchAccount(namespaceId)
+			return cached
+		}
 
 		if (this.accountStore.enable) {
 			if (!(await this.accountStore.exists(namespaceId))) return undefined
@@ -44,14 +46,18 @@ export class Namespaces {
 		const ns = new NS(this.accountStore, namespaceId)
 		await ns.init()
 		this.cache.set(namespaceId, ns)
+		await this.accountStore.touchAccount(namespaceId)
 		return ns
 	}
 
-	private cleanUp() {
-		// Go through namespaces and remove those that haven't been accessed
-		// for (const ns of this.cache.values()) {
-		// 	ns.renderManager.destroy()
-		// }
+	private async cleanUp() {
+		await this.accountStore.cleanUpAccounts((namespaceId) => {
+			const ns = this.cache.get(namespaceId)
+			if (ns) {
+				ns.destroy()
+				this.cache.delete(namespaceId)
+			}
+		})
 	}
 }
 export class NS {
@@ -60,14 +66,19 @@ export class NS {
 
 	constructor(
 		private accountStore: AccountStore,
-		namespaceId: string
+		private namespaceId: string
 	) {
 		const folderPath = this.accountStore.enable
 			? this.accountStore.graphicsFolderPath(namespaceId)
 			: path.resolve('./localGraphicsStorage')
 
 		this.graphicStore = new GraphicsStoreNS(namespaceId, folderPath)
-		this.rendererManager = new RendererManagerNS(namespaceId)
+		this.rendererManager = new RendererManagerNS(namespaceId, () => {
+			this.accountStore.touchAccount(namespaceId).catch(console.error)
+		})
+	}
+	public async touch(): Promise<void> {
+		await this.accountStore.touchAccount(this.namespaceId)
 	}
 	public async init(): Promise<void> {
 		await this.graphicStore.init()

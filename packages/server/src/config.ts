@@ -13,6 +13,21 @@ export const options = defineArguments({
 		default: process.env.NAMESPACE_SETTINGS_NAMESPACE_PATH || undefined,
 		describe: 'Path to folder where to store info about namespaces. If not set, namespaces are disabled.',
 	},
+	cleanupGraphics: {
+		type: 'number',
+		default: process.env.NAMESPACE_SETTINGS_CLEANUP_GRAPHICS || undefined,
+		describe: 'How long to wait before cleaning up graphics for an unused namespace (in seconds).',
+	},
+	cleanupAccount: {
+		type: 'number',
+		default: process.env.NAMESPACE_SETTINGS_CLEANUP_ACCOUNT || undefined,
+		describe: 'How long to wait before cleaning up an unused namespace account (in seconds).',
+	},
+	infoText: {
+		type: 'string',
+		default: process.env.NAMESPACE_SETTINGS_INFO_TEXT || undefined,
+		describe: 'Additional HTML info text to display on the namespace introduction page.',
+	},
 	port: {
 		type: 'number',
 		default: process.env.PORT || undefined,
@@ -28,6 +43,9 @@ export const options = defineArguments({
 
 export interface ConfigOptions {
 	namespacePath: string | undefined
+	cleanupGraphics: number | undefined
+	cleanupAccount: number | undefined
+	infoText: string | undefined
 	port: number | undefined
 	// ografPath: string | undefined
 }
@@ -35,12 +53,15 @@ export interface ConfigOptions {
 export async function getConfig(): Promise<ConfigOptions> {
 	const argv = await Promise.resolve(yargs(getProcessArgv()).options(options).argv)
 
-	let port =
-		typeof argv.port === 'number' ? argv.port : typeof argv.port === 'string' ? parseInt(argv.port, 10) : undefined
-	if (Number.isNaN(port)) port = undefined
+	const port = parseOptionalInt(argv.port)
+	const cleanupGraphics = parseOptionalInt(argv.cleanupGraphics)
+	const cleanupAccount = parseOptionalInt(argv.cleanupAccount)
 
 	const config: ConfigOptions = {
 		namespacePath: argv.namespacePath,
+		cleanupGraphics,
+		cleanupAccount,
+		infoText: argv.infoText,
 		port: port,
 		// ografPath: argv.ografPath,
 	}
@@ -51,6 +72,12 @@ export async function getConfig(): Promise<ConfigOptions> {
 	}
 
 	return config
+}
+
+function parseOptionalInt(value: number | string | undefined): number | undefined {
+	const parsed = typeof value === 'number' ? value : typeof value === 'string' ? parseInt(value, 10) : undefined
+	if (parsed === undefined || Number.isNaN(parsed)) return undefined
+	return parsed
 }
 
 // ---------------------------------------------------------------------------------

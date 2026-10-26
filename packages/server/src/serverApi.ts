@@ -37,9 +37,12 @@ export function setupServerApi(
 		return getFullUrl(config, '/ograf/v1' + openApiUrl.replace(/\{([^}]+)\}/g, ':$1'))
 	}
 	// type Manifest = ServerApi.components["schemas"]["Manifest"];
-	router.get([getOgrafApiUrl('/'), getOgrafApiUrl('')], (ctx: CTX) => {
+	router.get([getOgrafApiUrl('/'), getOgrafApiUrl('')], async (ctx: CTX) => {
 		type Method = ServerApi.paths['/']['get']
 		try {
+			const ns = await namespaces.getNS(ctx.params.namespaceId)
+			if (!ns) return handleNamespaceNotFound(ctx)
+
 			// const request: Request<Method> = getRequestObject(ctx);
 			return handleReturn<Method>(ctx, 200, {
 				headers: {},
@@ -854,6 +857,9 @@ export function setupServerApi(
 		try {
 			const settings: ServerSettings = {
 				namespaceEnabled: accountStore.enable,
+				cleanupGraphics: config.cleanupGraphics,
+				cleanupAccount: config.cleanupAccount,
+				infoText: config.infoText,
 			}
 			return handleReturn<any>(ctx, 200, {
 				headers: {},

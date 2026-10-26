@@ -92,6 +92,7 @@ function setupClientConnection(ws: WebSocket, rendererManager: RendererManagerNS
 
 	// Handle incoming messages:
 	ws.on('message', (message: Buffer) => {
+		rendererManager.touchAccount()
 		const messageString = message.toString()
 
 		Promise.resolve()
