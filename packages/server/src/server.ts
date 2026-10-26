@@ -46,7 +46,7 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 	// Controller:
 	if (accountStore.enable) {
 		httpRouter.get(
-			/^\/controller\/(?<namespaceId>[^/]*)\/(?<controllerType>\w*)(?<subPath>\/?.*)/,
+			/^\/controller\/(?<namespaceId>[^/]*)\/(?<controllerType>[\w-]*)(?<subPath>\/?.*)/,
 			async (ctx: Koa.ParameterizedContext) => {
 				// let namespaceId = ctx.params.namespaceId
 				const controllerType = ctx.params.controllerType
@@ -60,6 +60,8 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 					await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
 				} else if (controllerType === 'grid') {
 					await serveFromPath(ctx, path.resolve('../controller-grid/dist'), subPath)
+				} else if (controllerType === 'ai-audio') {
+					await serveFromPath(ctx, path.resolve('../controller-ai-audio/dist'), subPath)
 				}
 				// <<Add other controllers here later>>
 			}
@@ -80,20 +82,25 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 			}
 		)
 	} else {
-		httpRouter.get(/^\/controller\/(?<controllerType>\w*)(?<subPath>\/?.*)/, async (ctx: Koa.ParameterizedContext) => {
-			const controllerType = ctx.params.controllerType
-			let subPath = ctx.params.subPath
-			if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
-			subPath = subPath.replace(/^\/+/, '') // remove leading slashes
-			if (controllerType === 'default') {
-				await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
-			} else if (controllerType === 'list') {
-				await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
-			} else if (controllerType === 'grid') {
-				await serveFromPath(ctx, path.resolve('../controller-grid/dist'), subPath)
+		httpRouter.get(
+			/^\/controller\/(?<controllerType>[\w-]*)(?<subPath>\/?.*)/,
+			async (ctx: Koa.ParameterizedContext) => {
+				const controllerType = ctx.params.controllerType
+				let subPath = ctx.params.subPath
+				if (!subPath || subPath === '' || subPath === '/') subPath = '/index.html'
+				subPath = subPath.replace(/^\/+/, '') // remove leading slashes
+				if (controllerType === 'default') {
+					await serveFromPath(ctx, path.resolve('../controller-default/dist'), subPath)
+				} else if (controllerType === 'list') {
+					await serveFromPath(ctx, path.resolve('../controller-list/dist'), subPath)
+				} else if (controllerType === 'grid') {
+					await serveFromPath(ctx, path.resolve('../controller-grid/dist'), subPath)
+				} else if (controllerType === 'ai-audio') {
+					await serveFromPath(ctx, path.resolve('../controller-ai-audio/dist'), subPath)
+				}
+				// <<Add other controllers here later>>
 			}
-			// <<Add other controllers here later>>
-		})
+		)
 		// Renderer
 		httpRouter.get(/^\/renderer\/(?<rendererType>\w*)(?<subPath>\/?.*)/, async (ctx: Koa.ParameterizedContext) => {
 			const rendererType = ctx.params.rendererType

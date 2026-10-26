@@ -940,6 +940,30 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@modelcontextprotocol/client@npm:^2.0.0":
+  version: 2.3.1
+  resolution: "@modelcontextprotocol/client@npm:2.3.1"
+  dependencies:
+    "@modelcontextprotocol/core": "npm:2.3.1"
+    cross-spawn: "npm:^7.0.5"
+    eventsource: "npm:^3.0.2"
+    eventsource-parser: "npm:^3.0.8"
+    jose: "npm:^6.1.3"
+    pkce-challenge: "npm:^5.0.0"
+    zod: "npm:^4.2.0"
+  checksum: 10c0/256acec240dc90dd3d0f572dfc5ea17f10824e12241144a084025c92442e80b4333eec3f86c27568d57d439991760e60487e36d31c9264a3d58832a5cccb012c
+  languageName: node
+  linkType: hard
+
+"@modelcontextprotocol/core@npm:2.3.1":
+  version: 2.3.1
+  resolution: "@modelcontextprotocol/core@npm:2.3.1"
+  dependencies:
+    zod: "npm:^4.2.0"
+  checksum: 10c0/73b5b0b0b58cdb6b1cc59cdc702004ff881d00e065c182473a9e69507ec499ce5705ff494aa08b076e2151ba6bc039ecc514162ccb9d7a20d2fa98f2df7afedc
+  languageName: node
+  linkType: hard
+
 "@mui/core-downloads-tracker@npm:^7.3.8":
   version: 7.3.8
   resolution: "@mui/core-downloads-tracker@npm:7.3.8"
@@ -1122,6 +1146,40 @@ __metadata:
   checksum: 10c0/26e376d780f60ff16e874a0ac9bc3399186846baae0b6e1352286385ac134d900cc5dafaded77f38d77f86898fc923ae1cee9d7399f0275b1aa24878915d722b
   languageName: node
   linkType: hard
+
+"@ograf-server/controller-ai-audio@workspace:packages/controller-ai-audio":
+  version: 0.0.0-use.local
+  resolution: "@ograf-server/controller-ai-audio@workspace:packages/controller-ai-audio"
+  dependencies:
+    "@emotion/react": "npm:^11.14.0"
+    "@emotion/styled": "npm:^11.14.1"
+    "@fontsource/roboto": "npm:^5.2.8"
+    "@mui/icons-material": "npm:^7.3.4"
+    "@mui/material": "npm:^7.3.4"
+    "@ograf-server/shared": "npm:*"
+    "@openai/agents": "npm:^0.20.0"
+    "@sofie-automation/code-standard-preset": "npm:^3.2.0"
+    "@types/react": "npm:^19.2.2"
+    "@types/react-dom": "npm:^19.2.2"
+    "@vitejs/plugin-react": "npm:^4.3.4"
+    eslint: "npm:^9.38.0"
+    jsonschema: "npm:^1.4.1"
+    jssip: "npm:^3.13.9"
+    mobx: "npm:^6.15.0"
+    mobx-react: "npm:^9.2.1"
+    ograf: "npm:1.2.0"
+    ograf-form: "npm:^0.1.3"
+    prettier: "npm:^3.6.2"
+    react: "npm:^19.2.0"
+    react-dom: "npm:^19.2.0"
+    sass: "npm:1.77.6"
+    typescript: "npm:~5.7.0"
+    url: "npm:^0.11.4"
+    vite: "npm:^5.4.1"
+    vite-plugin-checker: "npm:^0.11.0"
+    zod: "npm:^4.6.7"
+  languageName: unknown
+  linkType: soft
 
 "@ograf-server/controller-default@workspace:packages/controller-default":
   version: 0.0.0-use.local
@@ -1317,6 +1375,65 @@ __metadata:
     typescript: "npm:~5.7.0"
   languageName: unknown
   linkType: soft
+
+"@openai/agents-core@npm:0.20.0":
+  version: 0.20.0
+  resolution: "@openai/agents-core@npm:0.20.0"
+  dependencies:
+    "@modelcontextprotocol/client": "npm:^2.0.0"
+    "@standard-schema/spec": "npm:^1.1.0"
+    debug: "npm:^4.4.3"
+    openai: "npm:^7.2.0"
+  peerDependencies:
+    zod: ^4.0.0
+  dependenciesMeta:
+    "@modelcontextprotocol/client":
+      optional: true
+  peerDependenciesMeta:
+    zod:
+      optional: true
+  checksum: 10c0/6f23edf41bec83de333a2218c5f9ada5d6b0d702b0e29e4042850854042db67bba146291495953dbe2524a65b84b3e6abe5305df3e851d597af1551512e66211
+  languageName: node
+  linkType: hard
+
+"@openai/agents-openai@npm:0.20.0":
+  version: 0.20.0
+  resolution: "@openai/agents-openai@npm:0.20.0"
+  dependencies:
+    "@openai/agents-core": "npm:0.20.0"
+    openai: "npm:^7.2.0"
+  peerDependencies:
+    zod: ^4.0.0
+  checksum: 10c0/102b99908518beef2edaf990ed256e2c865c0cfbabefb354b22a94b53107ce0c35ad475809acf360a02e75144f9638a6eb12e4ff0b66d1732b9c5507bbac0862
+  languageName: node
+  linkType: hard
+
+"@openai/agents-realtime@npm:0.20.0":
+  version: 0.20.0
+  resolution: "@openai/agents-realtime@npm:0.20.0"
+  dependencies:
+    "@openai/agents-core": "npm:0.20.0"
+    "@types/ws": "npm:^8.18.1"
+    ws: "npm:^8.21.3"
+  peerDependencies:
+    zod: ^4.0.0
+  checksum: 10c0/f9e07ab9912c82db830389d5907b5af640e05d84718f9a8e3ec91d5c29f8ae79366eeb62c5f149821501270ab1e08c0831158cb1be8936e7936b7f9d74cf2465
+  languageName: node
+  linkType: hard
+
+"@openai/agents@npm:^0.20.0":
+  version: 0.20.0
+  resolution: "@openai/agents@npm:0.20.0"
+  dependencies:
+    "@openai/agents-core": "npm:0.20.0"
+    "@openai/agents-openai": "npm:0.20.0"
+    "@openai/agents-realtime": "npm:0.20.0"
+    openai: "npm:^7.2.0"
+  peerDependencies:
+    zod: ^4.0.0
+  checksum: 10c0/c6286b9d2613535d1875c2487c76408c11063c6c2acc98f5c216cda2a6373678b581449e06c4696d3d9977174b3cc04ffb724e6ec99bd31558435b3f805c4841
+  languageName: node
+  linkType: hard
 
 "@pkgr/core@npm:^0.2.9":
   version: 0.2.9
@@ -1566,6 +1683,13 @@ __metadata:
   peerDependencies:
     eslint: ^9
   checksum: 10c0/3a2e023a049548c0952c5c95d899ccac9ad52f6688d59179c95c45599910986492061aeaba99dd1a0aa229b815216ad52c0fd96d87ed7fd7de5db2e32d8dcf88
+  languageName: node
+  linkType: hard
+
+"@standard-schema/spec@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "@standard-schema/spec@npm:1.1.0"
+  checksum: 10c0/d90f55acde4b2deb983529c87e8025fa693de1a5e8b49ecc6eb84d1fd96328add0e03d7d551442156c7432fd78165b2c26ff561b970a9a881f046abb78d6a526
   languageName: node
   linkType: hard
 
@@ -2927,7 +3051,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cross-spawn@npm:^7.0.6":
+"cross-spawn@npm:^7.0.5, cross-spawn@npm:^7.0.6":
   version: 7.0.6
   resolution: "cross-spawn@npm:7.0.6"
   dependencies:
@@ -3682,6 +3806,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"events@npm:^3.3.0":
+  version: 3.3.0
+  resolution: "events@npm:3.3.0"
+  checksum: 10c0/d6b6f2adbccbcda74ddbab52ed07db727ef52e31a61ed26db9feb7dc62af7fc8e060defa65e5f8af9449b86b52cc1a1f6a79f2eafcf4e62add2b7a1fa4a432f6
+  languageName: node
+  linkType: hard
+
+"eventsource-parser@npm:^3.0.1, eventsource-parser@npm:^3.0.8":
+  version: 3.1.1
+  resolution: "eventsource-parser@npm:3.1.1"
+  checksum: 10c0/dd3236c61140587253dcaaf947de528ac0e7371caffdc53c77afaeee36a17661f00e251a6ea16af56c99be5ac138303e67b5d750630e7c41b02e3564e8ad8c44
+  languageName: node
+  linkType: hard
+
+"eventsource@npm:^3.0.2":
+  version: 3.0.7
+  resolution: "eventsource@npm:3.0.7"
+  dependencies:
+    eventsource-parser: "npm:^3.0.1"
+  checksum: 10c0/c48a73c38f300e33e9f11375d4ee969f25cbb0519608a12378a38068055ae8b55b6e0e8a49c3f91c784068434efe1d9f01eb49b6315b04b0da9157879ce2f67d
+  languageName: node
+  linkType: hard
+
 "exponential-backoff@npm:^3.1.1":
   version: 3.1.3
   resolution: "exponential-backoff@npm:3.1.3"
@@ -4413,6 +4560,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"jose@npm:^6.1.3":
+  version: 6.2.12
+  resolution: "jose@npm:6.2.12"
+  checksum: 10c0/e8582b946fabcae228819982dda4849908c353e9cb098f02f773635aa0d2f4917f17484c7441b8d526e564013b4cf96951455c94f81d0a39ee765bad44ce293d
+  languageName: node
+  linkType: hard
+
 "js-tokens@npm:^3.0.0 || ^4.0.0, js-tokens@npm:^4.0.0":
   version: 4.0.0
   resolution: "js-tokens@npm:4.0.0"
@@ -4488,6 +4642,17 @@ __metadata:
   version: 1.5.0
   resolution: "jsonschema@npm:1.5.0"
   checksum: 10c0/c24ddb8d741f02efc0da3ad9b597a275f6b595062903d3edbfaa535c3f9c4c98613df68da5cb6635ed9aeab30d658986fea61d7662fc5b2b92840d5a1e21235e
+  languageName: node
+  linkType: hard
+
+"jssip@npm:^3.13.9":
+  version: 3.13.9
+  resolution: "jssip@npm:3.13.9"
+  dependencies:
+    debug: "npm:^4.3.1"
+    events: "npm:^3.3.0"
+    sdp-transform: "npm:^2.14.1"
+  checksum: 10c0/574acbae6688abcabf64c42b5534a5c708d957e708372b0011ea588de259b60f5756f2660eaf6414339f4e08963ae5346f3f23f6cd8a75645b1bcb97814a20fc
   languageName: node
   linkType: hard
 
@@ -5117,6 +5282,33 @@ __metadata:
   languageName: node
   linkType: hard
 
+"openai@npm:^7.2.0":
+  version: 7.39.0
+  resolution: "openai@npm:7.39.0"
+  peerDependencies:
+    "@aws-sdk/credential-provider-node": ">=3.972.0 <4"
+    "@smithy/hash-node": ">=4.3.0 <5"
+    "@smithy/signature-v4": ">=5.4.0 <6"
+    undici: ">=5 <9"
+    ws: ^8.21.0
+    zod: ^3.25 || ^4.0
+  peerDependenciesMeta:
+    "@aws-sdk/credential-provider-node":
+      optional: true
+    "@smithy/hash-node":
+      optional: true
+    "@smithy/signature-v4":
+      optional: true
+    undici:
+      optional: true
+    ws:
+      optional: true
+    zod:
+      optional: true
+  checksum: 10c0/c7881f9cb1368f2aa11610a2e492ee1163eb51ddecf8dff9db8d886008b453a54f5ab82701c42ecda12eeeafa83e046e12d344d16a7a8338f6382c7fdab49305
+  languageName: node
+  linkType: hard
+
 "optionator@npm:^0.9.3":
   version: 0.9.4
   resolution: "optionator@npm:0.9.4"
@@ -5333,6 +5525,13 @@ __metadata:
   version: 2.0.4
   resolution: "pinkie@npm:2.0.4"
   checksum: 10c0/25228b08b5597da42dc384221aa0ce56ee0fbf32965db12ba838e2a9ca0193c2f0609c45551ee077ccd2060bf109137fdb185b00c6d7e0ed7e35006d20fdcbc6
+  languageName: node
+  linkType: hard
+
+"pkce-challenge@npm:^5.0.0":
+  version: 5.0.1
+  resolution: "pkce-challenge@npm:5.0.1"
+  checksum: 10c0/207f4cb976682f27e8324eb49cf71937c98fbb8341a0b8f6142bc6f664825b30e049a54a21b5c034e823ee3c3d412f10d74bd21de78e17452a6a496c2991f57c
   languageName: node
   linkType: hard
 
@@ -5824,6 +6023,15 @@ __metadata:
   version: 0.27.0
   resolution: "scheduler@npm:0.27.0"
   checksum: 10c0/4f03048cb05a3c8fddc45813052251eca00688f413a3cee236d984a161da28db28ba71bd11e7a3dd02f7af84ab28d39fb311431d3b3772fed557945beb00c452
+  languageName: node
+  linkType: hard
+
+"sdp-transform@npm:^2.14.1":
+  version: 2.15.0
+  resolution: "sdp-transform@npm:2.15.0"
+  bin:
+    sdp-verify: checker.js
+  checksum: 10c0/96c060f113a3d5418defa168db609f7e23e5bd7954fa1cf7784f103dbe702e24d667e5310d2ac6d88abdb32322af83d6ebd0df08e07f4f172d5ed5888f921386
   languageName: node
   linkType: hard
 
@@ -6805,6 +7013,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ws@npm:^8.21.3":
+  version: 8.22.0
+  resolution: "ws@npm:8.22.0"
+  peerDependencies:
+    bufferutil: ^4.0.1
+    utf-8-validate: ">=5.0.2"
+  peerDependenciesMeta:
+    bufferutil:
+      optional: true
+    utf-8-validate:
+      optional: true
+  checksum: 10c0/7304d14ef38898dd366a528a85e2da389c4eebf30f4ce8a007bd2dce6025f9b619cefe44fe2354f0bad0ec541b1c9a4da06a3f3e046ab56f01fd52d5784ecfb2
+  languageName: node
+  linkType: hard
+
 "xtend@npm:^4.0.0":
   version: 4.0.2
   resolution: "xtend@npm:4.0.2"
@@ -6903,5 +7126,12 @@ __metadata:
   version: 3.25.76
   resolution: "zod@npm:3.25.76"
   checksum: 10c0/5718ec35e3c40b600316c5b4c5e4976f7fee68151bc8f8d90ec18a469be9571f072e1bbaace10f1e85cf8892ea12d90821b200e980ab46916a6166a4260a983c
+  languageName: node
+  linkType: hard
+
+"zod@npm:^4.2.0, zod@npm:^4.6.7":
+  version: 4.6.7
+  resolution: "zod@npm:4.6.7"
+  checksum: 10c0/4ce2eb14034317b7254e347ca37b5ad591cf8333147030cf05b9b5d31692d45073f7f2747aa50cf8c6b29012194d2b22978cecc89969cf34a0d18e89d0ee7d7b
   languageName: node
   linkType: hard

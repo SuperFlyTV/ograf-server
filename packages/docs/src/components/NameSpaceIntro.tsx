@@ -10,6 +10,7 @@ import InputLabel from '@mui/material/InputLabel'
 import Link from '@mui/material/Link'
 import Stack from '@mui/material/Stack'
 import Card from '@mui/material/Card'
+import CardActionArea from '@mui/material/CardActionArea'
 import CardContent from '@mui/material/CardContent'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -65,6 +66,7 @@ export const Introduction: React.FC<{
 	const controllerUrl = `${serverUrl}/controller/${namespaceId}/default/`
 	const controllerListUrl = `${serverUrl}/controller/${namespaceId}/list/`
 	const controllerGridUrl = `${serverUrl}/controller/${namespaceId}/grid/`
+	const controllerAiAudioUrl = `${serverUrl}/controller/${namespaceId}/ai-audio/`
 
 	return (
 		<Box sx={{ py: 3 }}>
@@ -155,9 +157,13 @@ export const Introduction: React.FC<{
 						<Link href={controllerListUrl} target="_blank" rel="noopener noreferrer">
 							List Controller
 						</Link>
-						{' or '}
+						{', '}
 						<Link href={controllerGridUrl} target="_blank" rel="noopener noreferrer">
 							Grid Controller
+						</Link>
+						{' or '}
+						<Link href={controllerAiAudioUrl} target="_blank" rel="noopener noreferrer">
+							AI Audio Controller
 						</Link>
 						)
 					</Typography>
@@ -218,21 +224,39 @@ export const Introduction: React.FC<{
 
 						{/* Controller Link */}
 						<CardContent>
-							<Typography variant="h5" component="h3" sx={{ mb: 2 }}>
+							<Typography variant="h5" component="h3" sx={{ mb: 1.5 }}>
 								Controllers
 							</Typography>
-							<Typography variant="body1" sx={{ mb: 1 }}>
-								Link to Simple Controller:
-							</Typography>
-							<UrlLink url={controllerUrl} />
-							<Typography variant="body1" sx={{ mb: 1, mt: 2 }}>
-								Link to List Controller:
-							</Typography>
-							<UrlLink url={controllerListUrl} />
-							<Typography variant="body1" sx={{ mb: 1, mt: 2 }}>
-								Link to Grid Controller:
-							</Typography>
-							<UrlLink url={controllerGridUrl} />
+							<Grid container spacing={1}>
+								<Grid size={{ xs: 12, sm: 6 }}>
+									<ControllerCard
+										name="Simple Controller"
+										description="Basic control with API command log."
+										url={controllerUrl}
+									/>
+								</Grid>
+								<Grid size={{ xs: 12, sm: 6 }}>
+									<ControllerCard
+										name="List Controller"
+										description="Organize and play OGrafs in lists."
+										url={controllerListUrl}
+									/>
+								</Grid>
+								<Grid size={{ xs: 12, sm: 6 }}>
+									<ControllerCard
+										name="Grid Controller"
+										description="Controls in customizable grid"
+										url={controllerGridUrl}
+									/>
+								</Grid>
+								<Grid size={{ xs: 12, sm: 6 }}>
+									<ControllerCard
+										name="AI Audio Controller"
+										description="Listens to live audio, suggests graphics"
+										url={controllerAiAudioUrl}
+									/>
+								</Grid>
+							</Grid>
 						</CardContent>
 					</Card>
 				</Grid>
@@ -326,5 +350,43 @@ const UrlLink: React.FC<{ url: string }> = ({ url }) => {
 				(Click to open)
 			</Typography>
 		</Typography>
+	)
+}
+
+const ControllerCard: React.FC<{ name: string; description: string; url: string }> = ({ name, description, url }) => {
+	return (
+		<Card
+			variant="outlined"
+			sx={{
+				height: '100%',
+				'&:hover': {
+					bgcolor: 'action.hover',
+					borderColor: 'primary.main',
+				},
+			}}
+		>
+			<CardActionArea
+				component="a"
+				href={url}
+				target="_blank"
+				rel="noopener noreferrer"
+				sx={{
+					height: '100%',
+					p: 1.25,
+					display: 'flex',
+					flexDirection: 'column',
+					alignItems: 'flex-start',
+					justifyContent: 'flex-start',
+					textAlign: 'left',
+				}}
+			>
+				<Typography variant="subtitle2" color="primary" sx={{ fontWeight: 'bold', mb: 0.25 }}>
+					{name}
+				</Typography>
+				<Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem', lineHeight: 1.3 }}>
+					{description}
+				</Typography>
+			</CardActionArea>
+		</Card>
 	)
 }

@@ -929,12 +929,166 @@ export function setupServerApi(
 		})
 	)
 	router.post(
-		getFullUrl(config, `/serverApi/internal/graphics/graphic`),
-		upload.single('graphic'),
+		getFullUrl(config, `/serverApi/internal/elks/setup`),
 		handleError(async (ctx: CTX) => {
-			const ns = await namespaces.getNS(ctx.params.namespaceId)
-			if (!ns) return handleNamespaceNotFound(ctx)
-			return ns.graphicStore.uploadGraphic(ctx)
+			const body = (ctx.request.body || {}) as {
+				apiUsername?: string
+				apiPassword?: string
+				selectedPhoneNumber?: string
+				configureRouting?: boolean
+			}
+			const apiUsername = (body.apiUsername || '').trim()
+			const apiPassword = (body.apiPassword || '').trim()
+			if (!apiUsername || !apiPassword) {
+				ctx.status = 400
+				;(ctx as any).body = { error: '46elks API Username and API Password are required.' }
+				return
+			}
+
+			const authHeader = 'Basic ' + Buffer.from(`${apiUsername}:${apiPassword}`).toString('base64')
+			const listRes = await fetch('https://api.46elks.com/a1/numbers', {
+				method: 'GET',
+				headers: {
+					Authorization: authHeader,
+				},
+			})
+
+			if (!listRes.ok) {
+				const errText = await listRes.text()
+				ctx.status = listRes.status
+				;(ctx as any).body = {
+					error:
+						listRes.status === 401 || listRes.status === 403
+							? 'Invalid 46elks API Username or Password.'
+							: errText || `46elks API error (${listRes.status})`,
+				}
+				return
+			}
+
+			const listJson = (await listRes.json()) as any
+			const rawNumbers: any[] = Array.isArray(listJson) ? listJson : Array.isArray(listJson?.data) ? listJson.data : []
+			const activeNumbers = rawNumbers.filter((n) => n && n.active !== 'no')
+
+			const isWebrtcNum = (n: any): boolean => {
+				const caps: string[] = Array.isArray(n.capabilities) ? n.capabilities : []
+				const numStr = String(n.number || '')
+				return (
+					Boolean(n.secret) ||
+					caps.includes('webrtc') ||
+					n.category === 'webrtc' ||
+					numStr.startsWith('+4600') ||
+					numStr.startsWith('4600')
+				)
+			}
+
+			let webrtcNumber = activeNumbers.find(isWebrtcNum) || null
+
+			if (!webrtcNumber) {
+				try {
+					const allocRes = await fetch('https://api.46elks.com/a1/numbers', {
+						method: 'POST',
+						headers: {
+							Authorization: authHeader,
+							'Content-Type': 'application/x-www-form-urlencoded',
+						},
+						body: new URLSearchParams({
+							country: 'se',
+							capabilities: 'voice,webrtc',
+						}).toString(),
+					})
+					if (allocRes.ok) {
+						const allocated = (await allocRes.json()) as any
+						if (allocated && allocated.number) {
+							webrtcNumber = allocated
+						}
+					}
+				} catch (allocErr) {
+					console.warn('Could not auto-allocate 46elks WebRTC number:', allocErr)
+				}
+			}
+
+			const voiceNumbers = activeNumbers.filter((n) => {
+				if (webrtcNumber && n.id === webrtcNumber.id) return false
+				if (isWebrtcNum(n)) return false
+				const caps: string[] = Array.isArray(n.capabilities) ? n.capabilities : []
+				return caps.includes('voice') || caps.length === 0
+			})
+
+			const requestedPhone = (body.selectedPhoneNumber || '').trim()
+			let targetVoiceNumber =
+				(requestedPhone
+					? voiceNumbers.find((n) => n.number === requestedPhone || n.id === requestedPhone)
+					: undefined) ||
+				voiceNumbers[0] ||
+				null
+
+			if (body.configureRouting !== false && targetVoiceNumber && webrtcNumber?.number) {
+				const connectTarget = String(webrtcNumber.number).startsWith('+')
+					? String(webrtcNumber.number)
+					: `+${String(webrtcNumber.number)}`
+				const desiredVoiceStart = JSON.stringify({ connect: connectTarget })
+				let alreadyConfigured = false
+				if (typeof targetVoiceNumber.voice_start === 'string') {
+					try {
+						const parsed = JSON.parse(targetVoiceNumber.voice_start)
+						if (parsed && (parsed.connect === connectTarget || parsed.connect === connectTarget.replace(/^\+/, ''))) {
+							alreadyConfigured = true
+						}
+					} catch {
+						// voice_start might be a URL string
+					}
+				}
+
+				if (!alreadyConfigured && targetVoiceNumber.id) {
+					try {
+						const updateRes = await fetch(
+							`https://api.46elks.com/a1/numbers/${encodeURIComponent(targetVoiceNumber.id)}`,
+							{
+								method: 'POST',
+								headers: {
+									Authorization: authHeader,
+									'Content-Type': 'application/x-www-form-urlencoded',
+								},
+								body: new URLSearchParams({
+									voice_start: desiredVoiceStart,
+								}).toString(),
+							}
+						)
+						if (updateRes.ok) {
+							const updatedJson = (await updateRes.json()) as any
+							targetVoiceNumber = { ...targetVoiceNumber, ...updatedJson }
+						}
+					} catch (updateErr) {
+						console.warn('Could not update voice_start on 46elks number:', updateErr)
+					}
+				}
+			}
+
+			ctx.status = 200
+			;(ctx as any).body = {
+				webrtcNumber: webrtcNumber
+					? {
+							id: String(webrtcNumber.id || ''),
+							number: String(webrtcNumber.number || ''),
+							secret: String(webrtcNumber.secret || ''),
+						}
+					: null,
+				selectedVoiceNumber: targetVoiceNumber
+					? {
+							id: String(targetVoiceNumber.id || ''),
+							number: String(targetVoiceNumber.number || ''),
+							name: String(targetVoiceNumber.name || ''),
+							voice_start: String(targetVoiceNumber.voice_start || ''),
+						}
+					: null,
+				voiceNumbers: voiceNumbers.map((n) => ({
+					id: String(n.id || ''),
+					number: String(n.number || ''),
+					name: String(n.name || ''),
+					country: String(n.country || ''),
+					voice_start: String(n.voice_start || ''),
+				})),
+			}
 		})
 	)
 	if (accountStore.enable) {

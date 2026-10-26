@@ -1,0 +1,208 @@
+import * as React from 'react'
+import { observer } from 'mobx-react'
+import Dialog from '@mui/material/Dialog'
+import DialogTitle from '@mui/material/DialogTitle'
+import DialogContent from '@mui/material/DialogContent'
+import DialogActions from '@mui/material/DialogActions'
+import Button from '@mui/material/Button'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
+import Stack from '@mui/material/Stack'
+import IconButton from '@mui/material/IconButton'
+import Alert from '@mui/material/Alert'
+import CircularProgress from '@mui/material/CircularProgress'
+import CloseIcon from '@mui/icons-material/Close'
+import CloudUploadIcon from '@mui/icons-material/CloudUpload'
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline'
+import { aiAudioStore } from '../stores/aiAudioStore.js'
+import { uploadGraphicZip } from '../lib/uploadGraphic.js'
+
+export interface UploadGraphicDropzoneProps {
+	onUploaded?: (uploadedIds: string[]) => void
+	compact?: boolean
+}
+
+export const UploadGraphicDropzone: React.FC<UploadGraphicDropzoneProps> = observer(({ onUploaded, compact }) => {
+	const [selectedFile, setSelectedFile] = React.useState<File | null>(null)
+	const [isUploading, setIsUploading] = React.useState(false)
+	const [uploadResult, setUploadResult] = React.useState<{ success: boolean; message: string } | null>(null)
+	const [isDragging, setIsDragging] = React.useState(false)
+
+	const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+	const handleFileSelect = (file: File | null) => {
+		if (!file) return
+		if (!file.name.toLowerCase().endsWith('.zip')) {
+			setUploadResult({ success: false, message: 'Please select a valid .zip archive.' })
+			return
+		}
+		setSelectedFile(file)
+		setUploadResult(null)
+	}
+
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(true)
+	}
+
+	const handleDragLeave = (e: React.DragEvent) => {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(false)
+	}
+
+	const handleDrop = (e: React.DragEvent) => {
+		e.preventDefault()
+		e.stopPropagation()
+		setIsDragging(false)
+		if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+			handleFileSelect(e.dataTransfer.files[0])
+		}
+	}
+
+	const handleUpload = async () => {
+		if (!selectedFile) return
+		setIsUploading(true)
+		setUploadResult(null)
+
+		try {
+			const uploadedIds = await uploadGraphicZip(selectedFile)
+			const msg =
+				uploadedIds.length > 0
+					? `Successfully uploaded: ${uploadedIds.join(', ')}`
+					: 'Graphic package uploaded successfully.'
+			setUploadResult({ success: true, message: msg })
+			setSelectedFile(null)
+			aiAudioStore.showNotification(msg, 'success')
+			onUploaded?.(uploadedIds)
+		} catch (err: unknown) {
+			const errMsg = err instanceof Error ? err.message : 'Network error occurred during upload'
+			setUploadResult({ success: false, message: `Upload error: ${errMsg}` })
+			aiAudioStore.showError(`Upload error: ${errMsg}`)
+		} finally {
+			setIsUploading(false)
+		}
+	}
+
+	return (
+		<Box>
+			<input
+				ref={fileInputRef}
+				type="file"
+				accept=".zip"
+				style={{ display: 'none' }}
+				onChange={(e) => {
+					if (e.target.files && e.target.files.length > 0) {
+						handleFileSelect(e.target.files[0])
+						e.target.value = ''
+					}
+				}}
+			/>
+
+			<Stack
+				direction={compact ? { xs: 'column', sm: 'row' } : 'column'}
+				spacing={1.5}
+				alignItems={compact ? 'center' : 'stretch'}
+			>
+				<Box
+					onDragOver={handleDragOver}
+					onDragLeave={handleDragLeave}
+					onDrop={handleDrop}
+					onClick={() => fileInputRef.current?.click()}
+					sx={{
+						flexGrow: 1,
+						border: '2px dashed',
+						borderColor: isDragging ? 'primary.main' : selectedFile ? 'success.main' : 'divider',
+						borderRadius: 2,
+						p: compact ? 1.5 : 2.5,
+						textAlign: 'center',
+						cursor: 'pointer',
+						bgcolor: isDragging ? 'action.hover' : 'background.paper',
+						transition: 'all 0.2s ease-in-out',
+						'&:hover': {
+							borderColor: 'primary.main',
+							bgcolor: 'action.hover',
+						},
+					}}
+				>
+					<CloudUploadIcon
+						sx={{
+							fontSize: compact ? 28 : 40,
+							color: selectedFile ? 'success.main' : 'primary.main',
+							mb: compact ? 0.25 : 0.75,
+						}}
+					/>
+					{selectedFile ? (
+						<Box>
+							<Typography variant="body2" fontWeight={600} color="text.primary">
+								{selectedFile.name}
+							</Typography>
+							<Typography variant="caption" color="text.secondary">
+								{(selectedFile.size / 1024).toFixed(1)} KB
+							</Typography>
+						</Box>
+					) : (
+						<Typography variant={compact ? 'body2' : 'subtitle1'} fontWeight={500}>
+							Drop an OGraf graphic <code>.zip</code> file here or click to browse
+						</Typography>
+					)}
+				</Box>
+
+				<Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+					<Button
+						variant="contained"
+						onClick={() => void handleUpload()}
+						disabled={!selectedFile || isUploading}
+						startIcon={isUploading ? <CircularProgress size={18} color="inherit" /> : <CloudUploadIcon />}
+					>
+						{isUploading ? 'Uploading...' : 'Upload Graphic'}
+					</Button>
+				</Box>
+			</Stack>
+
+			{uploadResult && (
+				<Alert
+					severity={uploadResult.success ? 'success' : 'error'}
+					sx={{ mt: 1.5 }}
+					icon={uploadResult.success ? <CheckCircleOutlineIcon fontSize="inherit" /> : undefined}
+					onClose={() => setUploadResult(null)}
+				>
+					{uploadResult.message}
+				</Alert>
+			)}
+		</Box>
+	)
+})
+
+export interface UploadGraphicDialogProps {
+	open: boolean
+	onClose: () => void
+	onUploaded?: (uploadedIds: string[]) => void
+}
+
+export const UploadGraphicDialog: React.FC<UploadGraphicDialogProps> = observer(({ open, onClose, onUploaded }) => {
+	return (
+		<Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+			<DialogTitle sx={{ m: 0, p: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+				<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+					<CloudUploadIcon color="primary" />
+					<Typography variant="h6" component="span" fontWeight={600}>
+						Upload Graphic (.zip)
+					</Typography>
+				</Box>
+				<IconButton aria-label="close" onClick={onClose} size="small">
+					<CloseIcon />
+				</IconButton>
+			</DialogTitle>
+			<DialogContent dividers sx={{ p: 3 }}>
+				<UploadGraphicDropzone onUploaded={onUploaded} />
+			</DialogContent>
+			<DialogActions sx={{ px: 3, py: 1.5 }}>
+				<Button onClick={onClose} color="inherit">
+					Close
+				</Button>
+			</DialogActions>
+		</Dialog>
+	)
+})
