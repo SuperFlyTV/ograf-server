@@ -18,7 +18,7 @@ import { z, ZodError } from 'zod/v4'
 import { ErrorReturnValue, GraphicInstanceError, ServerSettings } from '@ograf-server/shared'
 import { JSONRPCErrorException } from 'json-rpc-2.0'
 import { Namespaces } from './managers/NS.js'
-import { AccountStore } from './managers/AccountStore.js'
+import { IAccountStore } from './managers/AccountStore.js'
 import { ConfigOptions } from './config.js'
 
 const upload = multer({
@@ -30,7 +30,7 @@ const upload = multer({
 export function setupServerApi(
 	config: ConfigOptions,
 	router: Router,
-	accountStore: AccountStore,
+	accountStore: IAccountStore,
 	namespaces: Namespaces
 ): void {
 	const getOgrafApiUrl = (openApiUrl: string): string => {

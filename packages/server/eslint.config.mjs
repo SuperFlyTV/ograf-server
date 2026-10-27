@@ -1,7 +1,7 @@
 import { generateEslintConfig } from '@sofie-automation/code-standard-preset/eslint/main.mjs'
 
 const config = await generateEslintConfig({
-	ignores: ['localGraphicsStorage/**', 'public/**', '*.mjs', 'dev/**'],
+	ignores: ['localGraphicsStorage/**', 'public/**', '*.mjs', 'dev/**', 'ns/**', 'namespaces/**'],
 	tsconfigName: './tsconfig.json',
 })
 

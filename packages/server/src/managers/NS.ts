@@ -1,24 +1,39 @@
-import { AccountStore } from './AccountStore.js'
-import { GraphicsStoreNS } from './GraphicsStore.js'
+import type { S3Client } from '@aws-sdk/client-s3'
+import { ConfigOptions } from '../config.js'
+import { IAccountStore } from './AccountStore.js'
+import { createGraphicsStoreNS, createS3Client, IGraphicsStoreNS } from './GraphicsStore.js'
 import { RendererManagerNS } from './RendererManager.js'
-import path from 'path'
 
 export class Namespaces {
 	private cache = new Map<string, NS>()
+	private s3Client: S3Client | undefined
 
 	static isValidNamespaceId(namespaceId: string): boolean {
 		// Only allow certain characters in namespaceId to prevent path traversal attacks:
 		return /^[ a-zA-Z0-9_-]+$/.test(namespaceId)
 	}
 
-	constructor(private accountStore: AccountStore) {
-		// this.cache.onRemove((_namespaceId, ns) => {
-		// 	ns.destroy()
-		// })
+	constructor(
+		private accountStore: IAccountStore,
+		private config: ConfigOptions = {
+			namespacePath: undefined,
+			cleanupGraphics: undefined,
+			cleanupAccount: undefined,
+			infoText: undefined,
+			port: undefined,
+		}
+	) {
+		if (typeof this.config.s3Bucket === 'string' && this.config.s3Bucket) {
+			this.s3Client = createS3Client(this.config)
+		}
+
+		// Add up to 10% random jitter so multiple server replicas don't run cleanup in lockstep:
+		const baseInterval = this.accountStore.cleanupIntervalMs
+		const jitteredInterval = baseInterval + Math.floor(Math.random() * Math.max(100, baseInterval * 0.1))
 
 		setInterval(() => {
 			this.cleanUp().catch(console.error)
-		}, this.accountStore.cleanupIntervalMs)
+		}, jitteredInterval)
 		this.cleanUp().catch(console.error)
 	}
 
@@ -35,7 +50,13 @@ export class Namespaces {
 
 		const cached = this.cache.get(namespaceId)
 		if (cached) {
-			await this.accountStore.touchAccount(namespaceId)
+			const alive = await this.accountStore.touchAccount(namespaceId)
+			if (!alive) {
+				// Account was removed externally or by another server instance
+				cached.destroy()
+				this.cache.delete(namespaceId)
+				return undefined
+			}
 			return cached
 		}
 
@@ -43,7 +64,7 @@ export class Namespaces {
 			if (!(await this.accountStore.exists(namespaceId))) return undefined
 		}
 
-		const ns = new NS(this.accountStore, namespaceId)
+		const ns = new NS(this.accountStore, namespaceId, this.config, this.s3Client)
 		await ns.init()
 		this.cache.set(namespaceId, ns)
 		await this.accountStore.touchAccount(namespaceId)
@@ -51,28 +72,61 @@ export class Namespaces {
 	}
 
 	private async cleanUp() {
-		await this.accountStore.cleanUpAccounts((namespaceId) => {
-			const ns = this.cache.get(namespaceId)
-			if (ns) {
-				ns.destroy()
-				this.cache.delete(namespaceId)
-			}
+		await this.accountStore.cleanUpAccounts({
+			onRemoveNamespace: async (namespaceId) => {
+				const ns = this.cache.get(namespaceId)
+				if (ns) {
+					await ns.graphicStore.deleteAllGraphics()
+					ns.destroy()
+					this.cache.delete(namespaceId)
+				} else {
+					const tempStore = createGraphicsStoreNS(this.config, this.accountStore, namespaceId, this.s3Client)
+					await tempStore.deleteAllGraphics()
+				}
+			},
+			onCleanupGraphics: async (namespaceId) => {
+				const ns = this.cache.get(namespaceId)
+				if (ns) {
+					await ns.graphicStore.deleteAllGraphics()
+				} else {
+					const tempStore = createGraphicsStoreNS(this.config, this.accountStore, namespaceId, this.s3Client)
+					await tempStore.deleteAllGraphics()
+				}
+			},
 		})
+
+		// Evict any locally cached namespaces that were deleted by another server process:
+		if (this.accountStore.enable) {
+			for (const [namespaceId, ns] of this.cache.entries()) {
+				try {
+					if (!(await this.accountStore.exists(namespaceId))) {
+						ns.destroy()
+						this.cache.delete(namespaceId)
+					}
+				} catch (err) {
+					console.error(`Failed to check existence of cached namespace ${namespaceId}:`, err)
+				}
+			}
+		}
 	}
 }
 export class NS {
-	public graphicStore: GraphicsStoreNS
+	public graphicStore: IGraphicsStoreNS
 	public rendererManager: RendererManagerNS
 
 	constructor(
-		private accountStore: AccountStore,
-		private namespaceId: string
+		private accountStore: IAccountStore,
+		private namespaceId: string,
+		config: ConfigOptions = {
+			namespacePath: undefined,
+			cleanupGraphics: undefined,
+			cleanupAccount: undefined,
+			infoText: undefined,
+			port: undefined,
+		},
+		s3Client?: S3Client
 	) {
-		const folderPath = this.accountStore.enable
-			? this.accountStore.graphicsFolderPath(namespaceId)
-			: path.resolve('./localGraphicsStorage')
-
-		this.graphicStore = new GraphicsStoreNS(namespaceId, folderPath)
+		this.graphicStore = createGraphicsStoreNS(config, this.accountStore, namespaceId, s3Client)
 		this.rendererManager = new RendererManagerNS(namespaceId, () => {
 			this.accountStore.touchAccount(namespaceId).catch(console.error)
 		})

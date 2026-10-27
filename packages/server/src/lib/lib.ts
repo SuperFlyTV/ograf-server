@@ -1,7 +1,7 @@
 import Router from '@koa/router'
 import { ParameterizedContext, DefaultState, DefaultContext } from 'koa'
 import * as InternalServerAPI from '../types/internalServerAPI.js'
-import { ConfigOptions } from '../config.js'
+import { ConfigOptions, isNamespaceEnabled } from '../config.js'
 
 export function literal<T>(o: T): T {
 	return o
@@ -17,7 +17,7 @@ export type CTX = ParameterizedContext<
 >
 
 export function getFullUrl(config: ConfigOptions, url: string, baseName = 'api'): string {
-	if (config.namespacePath) {
+	if (isNamespaceEnabled(config)) {
 		return `/${baseName}/:namespaceId${url}`
 	}
 	return `/${baseName}${url}`

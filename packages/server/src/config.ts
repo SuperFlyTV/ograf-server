@@ -34,6 +34,56 @@ export const options = defineArguments({
 		describe: 'Port of the web server',
 		alias: 'p',
 	},
+	mongodbUri: {
+		type: 'string',
+		default: process.env.MONGODB_URI || undefined,
+		describe: 'MongoDB connection URI for storing namespace accounts. If set, enables namespaces using MongoDB.',
+	},
+	mongodbDbName: {
+		type: 'string',
+		default: process.env.MONGODB_DB_NAME || undefined,
+		describe: 'MongoDB database name for storing namespace accounts (defaults to database in URI or "ograf-server").',
+	},
+	mongodbCollection: {
+		type: 'string',
+		default: process.env.MONGODB_COLLECTION || undefined,
+		describe: 'MongoDB collection name for storing namespace accounts (defaults to "accounts").',
+	},
+	s3Bucket: {
+		type: 'string',
+		default: process.env.S3_BUCKET || undefined,
+		describe: 'S3 bucket name for storing graphics files. If set, graphics are stored in S3 instead of on disk.',
+	},
+	s3Endpoint: {
+		type: 'string',
+		default: process.env.S3_ENDPOINT || undefined,
+		describe: 'S3-compatible endpoint URL (e.g. for MinIO, Cloudflare R2, DigitalOcean Spaces).',
+	},
+	s3Region: {
+		type: 'string',
+		default: process.env.S3_REGION || undefined,
+		describe: 'S3 region (defaults to "us-east-1").',
+	},
+	s3AccessKeyId: {
+		type: 'string',
+		default: process.env.S3_ACCESS_KEY_ID || undefined,
+		describe: 'S3 access key ID.',
+	},
+	s3SecretAccessKey: {
+		type: 'string',
+		default: process.env.S3_SECRET_ACCESS_KEY || undefined,
+		describe: 'S3 secret access key.',
+	},
+	s3ForcePathStyle: {
+		type: 'boolean',
+		default: parseOptionalBoolean(process.env.S3_FORCE_PATH_STYLE),
+		describe: 'Whether to force path-style URLs for S3 objects (useful for S3-compatible stores like MinIO).',
+	},
+	s3Prefix: {
+		type: 'string',
+		default: process.env.S3_PREFIX || undefined,
+		describe: 'Optional key prefix for objects stored in the S3 bucket.',
+	},
 	// ografPath: {
 	// 	type: 'string',
 	// 	default: process.env.NAMESPACE_SETTINGS_OGRAF_PATH || undefined,
@@ -47,7 +97,29 @@ export interface ConfigOptions {
 	cleanupAccount: number | undefined
 	infoText: string | undefined
 	port: number | undefined
+	mongodbUri?: string | undefined
+	mongodbDbName?: string | undefined
+	mongodbCollection?: string | undefined
+	s3Bucket?: string | undefined
+	s3Endpoint?: string | undefined
+	s3Region?: string | undefined
+	s3AccessKeyId?: string | undefined
+	s3SecretAccessKey?: string | undefined
+	s3ForcePathStyle?: boolean | undefined
+	s3Prefix?: string | undefined
 	// ografPath: string | undefined
+}
+
+export function isNamespaceEnabled(config: ConfigOptions): boolean {
+	return typeof config.namespacePath === 'string' || typeof config.mongodbUri === 'string'
+}
+
+export function sanitizeConfigForLogging(config: ConfigOptions): ConfigOptions {
+	return {
+		...config,
+		mongodbUri: config.mongodbUri ? config.mongodbUri.replace(/(:\/\/[^:]+:)[^@]+(@)/, '$1***$2') : undefined,
+		s3SecretAccessKey: config.s3SecretAccessKey ? '***' : undefined,
+	}
 }
 
 export async function getConfig(): Promise<ConfigOptions> {
@@ -56,6 +128,7 @@ export async function getConfig(): Promise<ConfigOptions> {
 	const port = parseOptionalInt(argv.port)
 	const cleanupGraphics = parseOptionalInt(argv.cleanupGraphics)
 	const cleanupAccount = parseOptionalInt(argv.cleanupAccount)
+	const s3ForcePathStyle = parseOptionalBoolean(argv.s3ForcePathStyle)
 
 	const config: ConfigOptions = {
 		namespacePath: argv.namespacePath,
@@ -63,6 +136,16 @@ export async function getConfig(): Promise<ConfigOptions> {
 		cleanupAccount,
 		infoText: argv.infoText,
 		port: port,
+		mongodbUri: argv.mongodbUri,
+		mongodbDbName: argv.mongodbDbName,
+		mongodbCollection: argv.mongodbCollection,
+		s3Bucket: argv.s3Bucket,
+		s3Endpoint: argv.s3Endpoint,
+		s3Region: argv.s3Region,
+		s3AccessKeyId: argv.s3AccessKeyId,
+		s3SecretAccessKey: argv.s3SecretAccessKey,
+		s3ForcePathStyle,
+		s3Prefix: argv.s3Prefix,
 		// ografPath: argv.ografPath,
 	}
 
@@ -78,6 +161,16 @@ function parseOptionalInt(value: number | string | undefined): number | undefine
 	const parsed = typeof value === 'number' ? value : typeof value === 'string' ? parseInt(value, 10) : undefined
 	if (parsed === undefined || Number.isNaN(parsed)) return undefined
 	return parsed
+}
+
+function parseOptionalBoolean(value: boolean | string | undefined): boolean | undefined {
+	if (typeof value === 'boolean') return value
+	if (typeof value === 'string') {
+		const lower = value.trim().toLowerCase()
+		if (lower === 'true' || lower === '1') return true
+		if (lower === 'false' || lower === '0') return false
+	}
+	return undefined
 }
 
 // ---------------------------------------------------------------------------------

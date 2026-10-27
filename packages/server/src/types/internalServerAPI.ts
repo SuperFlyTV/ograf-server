@@ -1,5 +1,6 @@
 import { ErrorReturnValue } from '@ograf-server/shared'
 import * as fs from 'fs'
+import { Readable } from 'stream'
 /*
  * ================================================================================================
  *
@@ -24,6 +25,7 @@ export interface Endpoints {
 		body: {}
 		returnValue:
 			| fs.ReadStream // The contents of the requested resource file
+			| Readable
 			| ErrorReturnValue
 	}
 	/**

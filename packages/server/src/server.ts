@@ -8,7 +8,7 @@ import bodyParser from 'koa-bodyparser'
 import { Namespaces } from './managers/NS.js'
 import { setupServerApi } from './serverApi.js'
 import { setupRendererApi } from './rendererApi.js'
-import { AccountStore } from './managers/AccountStore.js'
+import { createAccountStore } from './managers/AccountStore.js'
 import { ConfigOptions } from './config.js'
 import { getPort, getRootUrl } from './lib/lib.js'
 
@@ -26,8 +26,9 @@ export async function initializeServer(config: ConfigOptions): Promise<void> {
 	const httpRouter = new Router()
 
 	// Initialize internal business logic
-	const accountStore = new AccountStore(config)
-	const namespaces = new Namespaces(accountStore)
+	const accountStore = createAccountStore(config)
+	await accountStore.init()
+	const namespaces = new Namespaces(accountStore, config)
 
 	// Setup APIs:
 	setupServerApi(config, httpRouter, accountStore, namespaces) // HTTP API (ServerAPI)

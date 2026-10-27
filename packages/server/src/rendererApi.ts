@@ -4,7 +4,7 @@ import { WebSocket, WebSocketServer } from 'ws'
 import { JSONRPCServerAndClient, JSONRPCServer, JSONRPCClient } from 'json-rpc-2.0'
 import { RendererManagerNS } from './managers/RendererManager.js'
 import { Namespaces } from './managers/NS.js'
-import { ConfigOptions } from './config.js'
+import { ConfigOptions, isNamespaceEnabled } from './config.js'
 
 /**
  * Sets up the Renderer API: a websocket endpoint at /rendererApi/v1
@@ -20,7 +20,7 @@ import { ConfigOptions } from './config.js'
 export function setupRendererApi(config: ConfigOptions, server: HttpServer, namespaces: Namespaces): void {
 	const wsServer = new WebSocketServer({ noServer: true })
 
-	const pathPattern = config.namespacePath
+	const pathPattern = isNamespaceEnabled(config)
 		? /^\/api\/(?<namespaceId>[^/]+)\/rendererApi\/v1\/?$/
 		: /^\/api\/rendererApi\/v1\/?$/
 
